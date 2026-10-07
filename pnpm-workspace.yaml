@@ -1,0 +1,7 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+pmOnFail: ignore
+storeDir: .pnpm-store
+engineStrict: true
+saveExact: true

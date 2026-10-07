@@ -1,0 +1,13 @@
+{
+  "name": "lingyu-shop",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@12.9.1",
+  "engines": {
+    "node": "24.21.0",
+    "pnpm": "12.9.1"
+  },
+  "scripts": {
+    "check": "node scripts/check-workspace.mjs"
+  }
+}
