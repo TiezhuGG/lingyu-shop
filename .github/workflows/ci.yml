@@ -1,0 +1,24 @@
+name: Engineering checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+      - run: npm install --global pnpm@12.9.1
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm typecheck
+      - run: pnpm db:validate
+      - run: pnpm db:generate
+      - run: pnpm build
+      - run: pnpm --filter @lingyu/miniapp build:h5
+      - run: pnpm test
+      - run: git diff --exit-code

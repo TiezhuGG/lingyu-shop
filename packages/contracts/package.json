@@ -1,5 +1,9 @@
 {
   "name": "@lingyu/contracts",
   "version": "0.0.0",
-  "private": true
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.json"
+  }
 }

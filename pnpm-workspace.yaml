@@ -5,3 +5,11 @@ pmOnFail: ignore
 storeDir: .pnpm-store
 engineStrict: true
 saveExact: true
+allowBuilds:
+  esbuild: true
+  vue-demi: true
+  core-js: false
+  core-js-pure: false
+  prisma: false
+  '@prisma/client': false
+  '@prisma/engines': false

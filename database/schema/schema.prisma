@@ -1,0 +1,16 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Engineering probe only. This is not the commerce inventory/order model.
+model EngineeringProbe {
+  id        Int @id
+  available Int
+
+  @@map("engineering_probe")
+}

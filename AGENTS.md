@@ -16,4 +16,11 @@
 - `pnpm -r list --depth -1`：列出 workspace 包。
 - `git status --short`、`git diff --check`、`git diff`：检查状态、空白错误和已跟踪差异；新文件需单独审阅。
 
-应用启动、测试与构建命令在实际接入并验证后再加入。
+- `pnpm typecheck`、`pnpm build`：全部应用和源码共享包类型检查/构建，小程序 build 默认微信目标。
+- `pnpm --filter @lingyu/miniapp build:h5`：H5 构建，不代替微信验收。
+- `pnpm test`：先构建；运行编译后 API/Worker 的工程集成测试。
+- `pnpm dev:admin`、`pnpm dev:api`、`pnpm --filter @lingyu/miniapp dev:h5`：启动开发入口；配置与限制见 docs/development.md。
+
+数据库及未验证的启动命令在实际验证后再加入。
+
+- `pnpm db:validate`、`pnpm db:generate`：Prisma 工程探针 schema 校验与生成，不证明数据库连接/事务。

@@ -1,5 +1,5 @@
 # miniapp
 
-uni-app + Vue 3 + TypeScript 小程序；框架尚未接入。
+uni-app + Vue 3 + TypeScript 小程序工程入口。
 
-当前仅为 workspace 骨架，不提供启动、应用构建或业务能力。
+已验证微信/H5 构建及 H5 开发启动，目前只有工程占位页。无真实 AppID、无业务能力，微信真机未验证。完整说明见 docs/development.md。

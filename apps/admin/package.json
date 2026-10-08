@@ -1,5 +1,22 @@
 {
   "name": "@lingyu/admin",
   "version": "0.0.0",
-  "private": true
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vue-tsc --noEmit && vite build",
+    "typecheck": "vue-tsc --noEmit",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "vue": "3.5.43",
+    "vue-router": "4.6.3",
+    "pinia": "3.0.4"
+  },
+  "devDependencies": {
+    "vite": "8.3.3",
+    "@vitejs/plugin-vue": "6.0.9",
+    "vue-tsc": "3.3.12"
+  }
 }
