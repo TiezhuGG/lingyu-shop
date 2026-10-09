@@ -5,10 +5,21 @@
       "style": {
         "navigationBarTitleText": "灵域商城"
       }
-    }
+    },
+    { "path": "pages/market/index", "style": { "navigationBarTitleText": "市集" } },
+    { "path": "pages/mine/index", "style": { "navigationBarTitleText": "我的" } }
   ],
+  "tabBar": {
+    "color": "#7a847e", "selectedColor": "#07a95a", "backgroundColor": "#ffffff", "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "发现" },
+      { "pagePath": "pages/market/index", "text": "市集" },
+      { "pagePath": "pages/mine/index", "text": "我的" }
+    ]
+  },
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarBackgroundColor": "#f5f7f4"
+    "navigationBarBackgroundColor": "#ffffff",
+    "backgroundColor": "#f7f8fa"
   }
 }

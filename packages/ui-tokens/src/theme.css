@@ -1,0 +1,12 @@
+.lingyu-theme {
+  --ly-primary: #07a95a;
+  --ly-primary-soft: #e9f8ef;
+  --ly-price: #e84343;
+  --ly-text: #25382e;
+  --ly-muted: #7a847e;
+  --ly-bg: #f7f8fa;
+  --ly-surface: #fff;
+  --ly-border: #edf0ee;
+  --ly-radius: 16px;
+  --ly-space: 16px;
+}

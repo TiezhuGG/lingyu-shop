@@ -63,10 +63,12 @@ pnpm test
 | 命令 | 地址/行为 |
 |---|---|
 | `pnpm dev:admin` | http://127.0.0.1:5173，后台工程页 |
-| `pnpm --filter @lingyu/miniapp dev:h5` | http://127.0.0.1:5174，小程序 H5 工程入口 |
+| `pnpm --filter @lingyu/miniapp dev:h5` | http://127.0.0.1:5174，小程序 H5 三入口界面预览 |
 | `pnpm dev:api` | http://127.0.0.1:3000/health，工程健康检查，无数据库 readiness |
 
 API/Worker dev 先编译、再监视 dist；修改源码需另开终端执行 `pnpm --filter @lingyu/api build` 或对应 worker build。不宣称源码热重载。Worker 编译入口已由集成测试验证；持续运行/dev 模式尚未单独验证。
+
+小程序入口为发现/市集/我的原生 tab 页面。当前仅显示已标记的示例图文与商品；开发模式顶部“状态预览”可检查加载/空白/错误和重试，生产构建隐藏该控制但保留示例标记。搜索、登录、加购、结算、订单与生活服务尚未开放；没有新增环境变量或 API 配置要求。视觉 CSS 由 `@lingyu/ui-tokens/theme.css` 提供，版本及原启动命令不变。
 
 小程序微信产物在 apps/miniapp/dist/build/mp-weixin，H5 在 apps/miniapp/dist/build/h5；无 AppID，未验证开发者工具导入、微信真机、账号能力或上传。`dev:miniapp` 已配置但尚未实测微信 watch，不列作已验证命令。
 

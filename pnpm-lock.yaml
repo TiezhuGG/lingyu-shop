@@ -81,6 +81,9 @@ importers:
       '@dcloudio/uni-mp-weixin':
         specifier: 3.0.0-alpha-5030120260930001
         version: 3.0.0-alpha-5030120260930001(debug@4.4.3(supports-color@5.5.0))(postcss@8.5.29)(rollup@4.64.0)(supports-color@5.5.0)(vue@3.4.21(typescript@5.9.3))
+      '@lingyu/ui-tokens':
+        specifier: workspace:*
+        version: link:../../packages/ui-tokens
       pinia:
         specifier: 2.1.7
         version: 2.1.7(typescript@5.9.3)(vue@3.4.21(typescript@5.9.3))
