@@ -30,3 +30,5 @@
 - `docker compose --env-file .env -f infra/containers/compose.yaml up -d --wait`：启动本地独立 PostgreSQL/Redis；凭证仅在忽略的 .env，不删除数据卷。
 - `pnpm db:poc`：真实专用 lingyu_shop_poc 工程迁移、锁/回滚/约束与 Prisma 冲突重试探针，不代表业务库存验收。
 - `pnpm redis:poc`：本项目 Redis 的 AOF、停机/重启恢复和随机测试键清理；会短暂停止 Redis，只用于独立开发容器。
+- `pnpm db:init:local`：仅用本地 Compose 管理连接创建缺失的业务/测试库，不覆盖已有库或业务 URL。
+- `pnpm test:database`：真实隔离测试库上的装配、故障恢复和关停验收；会暂时禁止 lingyu_shop_test 连接，检测到已有连接则拒绝执行，不用于业务库。

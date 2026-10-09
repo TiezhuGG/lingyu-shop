@@ -50,7 +50,7 @@ flowchart TD
   MOD --> RC[(Redis: 按需缓存 / 限流)]
 ```
 
-新增 server-modules 的实际 workspace manifest、exports、编译依赖与目录检查在 T01-D 中交付，本批只设计，不提前改变八包基线。API 和 Worker 只做进程装配；Worker 不通过复制规则或 import API 的 main.ts 复用业务。两个入口共用同一后端模块版本，库存/资金仍由模块公开接口操作。
+server-modules 的 workspace manifest、exports、编译依赖与目录检查已随 T01-D1 交付，当前为九个子包；后续业务模块仍按任务实施。API 和 Worker 只做进程装配；Worker 不通过复制规则或 import API 的 main.ts 复用业务。两个入口共用同一后端模块版本，库存/资金仍由模块公开接口操作。
 
 模块分组是开发与代码归属安排，不表示每个模块都是一个部署服务：
 

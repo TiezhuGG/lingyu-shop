@@ -1,5 +1,25 @@
 # 开发进度
 
+## 2026-10-09：T01-D1 公共装配与数据库生命周期
+
+批初读取 AGENTS、tasks/progress、D1 相关设计、ADR-001/002、路线/技术设计架构与健康章节、现有代码/CI；无局部 AGENTS。起点 03690fa，工作区干净，上一批由用户提交。先保存 t01-d1-lifecycle 开工设计，再实现，不创建 commit/push。
+
+交付第九个子包 server-modules 的公开 exports、manifest、类型/构建与生成，API/Worker 共同装配 FoundationModule。workspace 校验同时检查前端客户端依赖图不能进入后端。配置先于 Nest 校验，错误不含输入凭证；业务 URL 显式配置且隔离 PoC/test。只在独立本地 Compose 创建缺失的 lingyu_shop / lingyu_shop_test，重复初始化不覆盖；根忽略的 .env 补齐本地配置，未输出或提交凭证。
+
+业务 schema/client/未来迁移目录与原 PoC 分离，无业务模型/表。最初沿用旧资料 allow-no-models 参数被 7.10 CLI 拒绝，改用其默认无模型生成；随后 workspace generator 解析失败，补包内同版 Prisma devDependency 后正常生成，未升级任何版本。当前迁移目录仅锁文件，首张事实表由 D3/业务规格交付。
+
+DatabaseService 拥有私有 Prisma/pg 池、连接/语句超时和进程连接标识。启动验证数据库；health 保留旧工程响应，live 与 ready 分开。共享关停协调先 draining/停接入，再关闭 Nest 和连接池，重复操作幂等，总超时非零退出。当前没有业务事务/消费者，不将本批池排空当成长事务或任务排空验收。
+
+验证：冻结离线安装、9 包/依赖边界 check、全工程 typecheck/build、常规测试 8/8；真实 Windows 测试 3/3（仅 test 的 IPC 关停）。测试库无人连接前置、临时禁用连接/终止测试库会话、ready 503 脱敏且 live 200、恢复 ready、两入口连接归零、在途查询完成/关闭后拒绝 readiness、连接失败限时退出均通过。最初排空用例未等连接取得即关池，修正为真实已取得连接后复测通过。
+
+本机后半程 schema-engine-windows.exe 被占用导致默认生成 EPERM；只读 Restart Manager 报告 RpcLocator/PID 7752，未结束服务或关闭防护。Prisma 下载器得到的隔离引擎版本与锁定 engines-version 同为 0edf323efd1d98336f3f0a68684b56f689b900d3；当前命令设置 PRISMA_SCHEMA_ENGINE_BINARY 后完整类型/构建复验通过。默认命令初次成功、后续受占用失败，不声称本机占用已修复；源码/CI 不依赖该临时副本。
+
+Linux 追加实测：官方 Node 24.21.0 bookworm-slim 镜像 digest d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20，真实数据库同套测试 3/3，子进程实际发送 SIGTERM。直接 Windows junction 挂载解析失败，首次临时扁平链接选错 path-to-regexp 版本且失败，最终按实际 120 个运行依赖的精确图制作临时 Linux 制品、补显式 peer 链接后通过；未更改安装依赖或锁定版本。另尝试官方 Linux Node tar 校验和通过，但 WSL 解包时间/权限错误，未将其当验收。两次合并命令被自动审批审查超时而未执行，拆开重试后获准完成，没有绕过审批。所有临时工具在忽略目录；容器 --rm 清理，原数据卷不动。
+
+CI 新增隔离 PostgreSQL 服务与本地初始化/PoC/业务生命周期测试步骤，Linux 使用 SIGTERM；远程 run 尚未执行，T01-B2 不因此完成。最终审阅完整 tracked diff 和未跟踪文件、UTF-8/空白与忽略规则，确认无凭证/生成制品入库；更新启动/恢复手册及当前规格，未提交或推送。T01-D1 完成，T01-D 整体仍进行中。
+
+下一批 T01-D2：先验证 DTO/OpenAPI 单一来源生成器与两端 TS 兼容，再交付请求 ID、统一安全错误与契约生成探针；之后 D3 正式事务/审计，再按依赖推进身份与真实商品。微信真机、生产权限/恢复、真实交易仍未验收。
+
 ## 2026-10-09：T01-C 真实数据环境恢复与验证
 
 用户授权优先恢复 T01-C，再推进公共基础与真实商品；期间用户完成 WSL/Docker 调试后要求重试。批初工作区干净，起点 `639123f`；读取根 AGENTS、任务/进度/开发方式、Docker 手册、ADR-001/002、执行路线、数据设计章节、Compose、迁移与 PoC。未发现局部规则。用户已有 AppID/微信配置保留，没有修改系统功能、注册表、Docker代理设置或自动重启 Windows。

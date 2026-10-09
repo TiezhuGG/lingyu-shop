@@ -9,3 +9,5 @@ coverage/
 !.env.example
 *.log
 .DS_Store
+packages/server-modules/generated/
+.local-tools/

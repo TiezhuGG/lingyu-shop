@@ -1,0 +1,8 @@
+// Business client only. No commerce tables exist at T01-D1.
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated"
+}
+datasource db {
+  provider = "postgresql"
+}

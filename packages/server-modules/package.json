@@ -1,0 +1,32 @@
+{
+  "name": "@lingyu/server-modules",
+  "version": "0.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "generate": "prisma generate --config prisma.config.ts",
+    "typecheck": "pnpm generate && tsc --noEmit",
+    "build": "pnpm generate && tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@nestjs/common": "12.1.2",
+    "@prisma/client": "7.10.0",
+    "@prisma/client-runtime-utils": "7.10.0",
+    "@prisma/adapter-pg": "7.10.0",
+    "pg": "8.23.1",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1",
+    "prisma": "7.10.0"
+  }
+}

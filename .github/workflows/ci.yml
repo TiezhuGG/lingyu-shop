@@ -7,6 +7,20 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.11@sha256:2d2b8998d31037bf721cfdf764d76ba74171b4fab3431b7f72c27c56ddbdf9e3
+        env:
+          POSTGRES_USER: lingyu_dev
+          POSTGRES_PASSWORD: ci_disposable_password
+          POSTGRES_DB: lingyu_shop_poc
+        ports:
+          - 15432:5432
+        options: >-
+          --health-cmd "pg_isready -U lingyu_dev -d lingyu_shop_poc"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      POC_DATABASE_URL: postgresql://lingyu_dev:ci_disposable_password@127.0.0.1:15432/lingyu_shop_poc
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,4 +35,7 @@ jobs:
       - run: pnpm build
       - run: pnpm --filter @lingyu/miniapp build:h5
       - run: pnpm test
+      - run: pnpm db:init:local
+      - run: pnpm db:poc
+      - run: pnpm test:database
       - run: git diff --exit-code

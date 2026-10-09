@@ -11,7 +11,7 @@
 | Git | 2.56.0.windows.1 | `D:\Git\cmd\git.exe` |
 | Shell | PowerShell 当前可用，cmd.exe 为历史替代 | 旧批次PowerShell曾因CET启动失败；当前pnpm使用.cmd入口避免脚本策略限制 |
 
-根 package.json 固定 Node 与 pnpm 基线，pnpm-workspace.yaml 启用 engineStrict、saveExact，.npmrc 保留对应设置。pmOnFail: ignore 禁用包管理器自动下载，仍由 engines.pnpm 约束版本；存储使用本项目 .pnpm-store（Git 忽略）。框架依赖已接入并留有本地兼容验证，Prisma探针已接入；真实PostgreSQL/Redis、微信真机、支持周期与安全审核尚未完成。安装版本不代表全部运行语义已验证。
+根 package.json 固定 Node 与 pnpm 基线，pnpm-workspace.yaml 启用 engineStrict、saveExact，.npmrc 保留对应设置。pmOnFail: ignore 禁用包管理器自动下载，仍由 engines.pnpm 约束版本；存储使用本项目 .pnpm-store（Git 忽略）。框架依赖已接入并留有本地兼容验证，Prisma探针已接入；真实 PostgreSQL/Redis 已通过工程探针；微信真机、支持周期与安全审核尚未完成。安装版本不代表全部运行语义已验证。
 
 ## 已验证操作
 
@@ -54,7 +54,7 @@ pnpm --filter @lingyu/miniapp build:h5
 pnpm test
 ```
 
-`pnpm test` 使用编译后制品且不会自动build，执行者必须先运行 `pnpm build`。根 build 包含微信小程序、后台、API、Worker 和三个源码共享包；config 为直接使用的配置，无虚假构建脚本。历史 peer 检查无问题；DCloud 间接依赖 phin 有弃用告警，未据此宣称依赖安全审核通过。
+`pnpm test` 使用编译后制品且不会自动build，执行者必须先运行 `pnpm build`。根 build 包含微信小程序、后台、API、Worker 和四个源码共享包；config 为直接使用的配置，无虚假构建脚本。历史 peer 检查无问题；DCloud 间接依赖 phin 有弃用告警，未据此宣称依赖安全审核通过。
 
 当前Windows若 `pnpm` 被PowerShell脚本策略拒绝，使用已安装的 `pnpm.cmd`，无需修改系统执行策略。受限代理环境中原生进程可能异常退出，必要时经权限流程在沙箱外验证；不能将无输出视为Git干净或测试通过。实际批次结果写入progress。
 
@@ -64,7 +64,7 @@ pnpm test
 |---|---|
 | `pnpm dev:admin` | http://127.0.0.1:5173，后台工程页 |
 | `pnpm --filter @lingyu/miniapp dev:h5` | http://127.0.0.1:5174，小程序 H5 三入口界面预览 |
-| `pnpm dev:api` | http://127.0.0.1:3000/health，工程健康检查，无数据库 readiness |
+| `pnpm dev:api` | http://127.0.0.1:3000/health，/health/live 存活，/health/ready 数据库就绪 |
 
 API/Worker dev 先编译、再监视 dist；修改源码需另开终端执行 `pnpm --filter @lingyu/api build` 或对应 worker build。不宣称源码热重载。Worker 编译入口已由集成测试验证；持续运行/dev 模式尚未单独验证。
 
@@ -86,13 +86,13 @@ uni-app 源码不能直接作为原生微信小程序编译；`app.json` 由 uni
 
 代理受限环境中构建/开发服务需要允许编译子进程，否则可能 spawn EPERM；提升执行权限后本批验证通过，不能据此要求关闭系统安全防护。
 
-Docker Engine/CLI 29.8.2、Compose 5.5.1 已验证；用户修复 WSL/Docker 后，独立 PostgreSQL/Redis 容器运行并通过 T01-C 真实探针。端口仅绑定 loopback，尚未创建商城业务数据库。GitHub Actions 配置已建立，远程成功证据仍待 T01-B2。
+Docker Engine/CLI 29.8.2、Compose 5.5.1 已验证；用户修复 WSL/Docker 后，独立 PostgreSQL/Redis 容器运行并通过 T01-C 真实探针。端口仅绑定 loopback，已建立隔离业务库和测试库，目前无业务表。GitHub Actions 配置已建立，远程成功证据仍待 T01-B2。
 
 ## PostgreSQL / Redis 工程探针
 
 Prisma/client/adapter 7.10.0，pg 8.23.1 同版锁定；自定义生成目录的客户端运行还需要显式 `@prisma/client-runtime-utils` 7.10.0，不能仅凭 generate 成功判断可运行。generated 客户端不提交；schema 和工程迁移入库。Prisma 配置位于根 prisma.config.ts，使用 adapter-pg 接入运行时。
 
-根 `.env` 保存本地 POSTGRES_PASSWORD、POC_DATABASE_URL、REDIS_URL，不提交。按 `.env.example` 填相同密码，URL 对应用户 lingyu_dev、端口 15432、数据库 lingyu_shop_poc。业务 DATABASE_URL 尚未接入，不将 PoC 库用于商城。启动与验证：
+根 `.env` 保存本地 POSTGRES_PASSWORD、POC_DATABASE_URL、REDIS_URL，不提交。按 `.env.example` 填相同密码，URL 对应用户 lingyu_dev、端口 15432、数据库 lingyu_shop_poc。业务 DATABASE_URL 已接入独立 lingyu_shop，不将 PoC 库用于商城。启动与验证：
 
 ```text
 docker compose --env-file .env -f infra/containers/compose.yaml up -d --wait
@@ -106,4 +106,18 @@ pnpm.cmd redis:poc
 
 `redis:poc` 使用本项目 Compose Redis，检查 AOF/noeviction、WAITAOF 后的随机键在正常停止/启动后恢复，检查停机连接失败并删除自己的键。会短暂停止 Redis，不在共享/生产环境执行，不使用 FLUSHDB。正常重启验证不能证明断电恢复。
 
-当前 `pnpm test` 包含 2 项进程集成测试与 5 项探针保护/重试控制测试；纯逻辑用例不代替上述真实数据库命令。镜像 PostgreSQL 17.11、Redis 8.2.10 及官方 index digest 已在 Compose 固定，实测 linux/amd64。Docker 排障、启动/停止与遗留数据处置见 [运行手册](runbooks/docker-windows.md)，实际证据只写入 progress。
+当前 `pnpm test` 包含 2 项进程配置测试、1 项后端配置测试与 5 项探针保护/重试控制测试；纯逻辑用例不代替上述真实数据库命令。镜像 PostgreSQL 17.11、Redis 8.2.10 及官方 index digest 已在 Compose 固定，实测 linux/amd64。Docker 排障、启动/停止与遗留数据处置见 [运行手册](runbooks/docker-windows.md)，实际证据只写入 progress。
+
+## T01-D1：后端启动与隔离数据库
+
+先启动本项目 Compose，再执行 `pnpm.cmd db:init:local`：只允许 loopback:15432、lingyu_dev 的 PoC 管理连接，创建缺失的 lingyu_shop / lingyu_shop_test，不重建/清空已有库。根忽略的 .env 存在且缺业务 URL 时补入 DATABASE_URL；不覆盖已有 URL/NODE_ENV。测试和生产不自动初始化，生产另用最小权限账号和迁移账号。
+
+本地 API/Worker 的 dev/start 读取根 .env；NODE_ENV 必须显式为 development/test/production，DATABASE_URL 必填且不能指向 PoC。test 环境只接受 lingyu_shop_test，非 test 拒绝该库。API 默认端口 3000、每进程 DB_POOL_MAX=5（1..20）、DB_TIMEOUT_MS=3000（100..30000）、SHUTDOWN_TIMEOUT_MS=10000（1000..60000）；端口范围 1..65535。默认 API+Worker 总池预算 10，加运维余量；扩容时按实例数重新计算。
+
+新包 server-modules 构建/类型检查前自动生成其业务客户端；必须安装包内同版 Prisma CLI 和 client，否则 Prisma workspace 解析会失败。Prisma 7.10 默认允许无模型，无需旧版 allow-no-models 参数。业务 schema/未来迁移在 packages/server-modules/prisma，生成目录在该包 generated，均与原 PoC 分离；当前业务/测试库无业务表。部署携带 dist、generated 和运行依赖，启动不迁移。回退应用不 drop/reset 库。
+
+`pnpm build` 后，`pnpm test` 运行 8 项无需 Docker 的配置/工程测试；`pnpm test:database` 单独运行 3 项真实 PostgreSQL 测试。后者在确认测试库无人连接后短时 ALLOW_CONNECTIONS=false 并终止仅测试库会话，finally 恢复；中断时先通过 PoC 管理连接执行 `ALTER DATABASE lingyu_shop_test ALLOW_CONNECTIONS true` 再重试。Windows 用仅 test 启用的 IPC 触发关停，Linux 发送 SIGTERM；生产无 IPC 关停入口。当前 Worker 无消费者，事务上下文/审计归 D3，任务排空归 T12。
+
+Windows 本批后半程遇 Prisma schema-engine-windows.exe 被其他程序占用而 EPERM；只读 Restart Manager 报告 RpcLocator，占用服务未停止。可等待占用释放后重试生成，或仅在当前终端设置 PRISMA_SCHEMA_ENGINE_BINARY 指向 Prisma 下载器取得、核对同版本 commit 的隔离副本后构建；不修改源码默认命令，不关闭防护、不强制结束服务。此副本在忽略的 .local-tools，不能作为远程/干净安装依赖。
+
+Linux 本地实测：官方 Node 24.21.0 bookworm-slim 镜像（digest d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20）中，同一套数据库测试 3/3 通过，子进程真实收到 SIGTERM。Windows junction 不能直接挂入 Linux 使用；本次临时制品保留精确运行依赖图，在 Linux 重建链接后执行，未使用扁平化版本替代。容器只读挂载制品/本地环境文件，使用隔离 Compose 网络；测试开关 LINGYU_TEST_COMPOSE=1 只把已通过 loopback 守卫的 PoC 管理地址映射为固定 postgres:5432。该临时制品不是正式部署方案，远程 CI 需 push 后另行取得运行证据。

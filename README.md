@@ -12,3 +12,5 @@
 - scripts：工程结构校验、真实数据库与 Redis 工程探针。
 
 先阅读 [开发路线与实施架构](docs/development-roadmap.md)、[原型验收映射](docs/acceptance/prototype-mapping.md)，再查看 [协作规则](AGENTS.md)、[开发说明](docs/development.md)、[任务](docs/tasks.md) 和 [进度](docs/progress.md)。默认先完成 5000 的 P1-A/P1-B，再增量实现 50000；详细依赖以任务细化表为准。
+
+后端 T01-D1 提供 API/Worker 共用配置与数据库生命周期，业务库独立于 PoC；本地启动前执行 `pnpm db:init:local`，并配置根 .env。`/health/live` 与 `/health/ready` 区分存活与数据库就绪。`pnpm test:database` 为单独的真实数据库验收，当前仍无商城业务接口。
