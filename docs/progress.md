@@ -1,5 +1,27 @@
 # 开发进度
 
+## 2026-10-09：T01-C 真实数据环境恢复与验证
+
+用户授权优先恢复 T01-C，再推进公共基础与真实商品；期间用户完成 WSL/Docker 调试后要求重试。批初工作区干净，起点 `639123f`；读取根 AGENTS、任务/进度/开发方式、Docker 手册、ADR-001/002、执行路线、数据设计章节、Compose、迁移与 PoC。未发现局部规则。用户已有 AppID/微信配置保留，没有修改系统功能、注册表、Docker代理设置或自动重启 Windows。
+
+恢复过程：开始 Docker 初始化超时，WSL 执行/终止也无响应；用户处理后 Engine/CLI 29.8.2、Compose 5.5.1 可用，Windows build 26300、WSL 3.0.1 已核实。无本项目已有容器或根 .env，生成随机本地开发密码到忽略的 .env，不输出凭证。使用独立 lingyu-shop-dev 项目、命名卷、loopback PostgreSQL 15432 / Redis 16379。
+
+镜像拉取首次因 auth.docker.io OAuth TLS handshake timeout 中断；CLI 元数据直连另遇 DNS/IPv6 超时，通过当前命令复用已有 127.0.0.1:7897 代理取得官方 manifest。单层临时网络下载尝试遇 EOF，摘要检查拒绝不完整内容，没有导入。只读 Google 官方缓存核对得到相同 PostgreSQL digest，未切换 Compose 镜像来源；Docker Hub 重试成功。未关闭 TLS 校验、删除缓存/卷或使用未知镜像。
+
+固定并实测 linux/amd64：PostgreSQL 17.11，index digest `sha256:2d2b8998d31037bf721cfdf764d76ba74171b4fab3431b7f72c27c56ddbdf9e3`；Redis 8.2.10，index digest `sha256:47670742d7924adbcdb404d1288b6327815b23141969c0939b8e5d61f78c2634`。本地 RepoDigests、容器内版本与 Compose 核对一致。两容器 healthy，保留运行供后续开发。
+
+先交付 t01-c-data-verification 设计，再补工程探针。真实运行暴露两处修复：自定义 Prisma 生成目录无法解析 client-runtime-utils，根显式加入同版 7.10.0（原锁文件已含该传递包，无版本升级）；Prisma 7.10 原生查询死锁实际为 P2010，SQLSTATE 在 meta.driverAdapterError.cause.originalCode，不能只检查 P2034/meta.code。已按结构化 kind+SQLSTATE 修正重试分类，序列化冲突实测为 P2034。
+
+PostgreSQL 证据：迁移在空专用库部署；参数化 FOR UPDATE 的 20 请求/1 份仅成功一次；异常事务回滚、非负 CHECK（SQLSTATE 23514）；两个 Prisma 事务写入后真实死锁，失败写回滚并整笔有限重试，最终两行各仅计入两次已提交写入；Serializable 读改写冲突重试时重新读取，最终为 2；实际使用两连接池且结束无等待。保留卷正常重启 PostgreSQL 后再次 migrate deploy 和整套探针通过；工程表最终 0 行。创建改为原子插入，已有固定 ID 拒绝覆盖；只清理本次自有行并等待全部并发任务结束，不吞清理失败。
+
+Redis 证据：PING、AOF=yes/noeviction、随机键 SET NX 与 WAITAOF 本地落盘；停止服务时 loopback 连接失败；start --wait 后连接和同一键恢复，最后仅删除自己的键。没有 FLUSHDB/FLUSHALL；只覆盖正常重启，不声称断电、HA 或备份验收。
+
+工程验证：Prisma validate/generate、脚本语法、pnpm check、全工程 typecheck/build、pnpm test 7/7、Compose config 检查通过。最终冻结离线安装因供应链校验所需的元数据缺失失败；保持策略不变，当前进程复用已有代理执行 frozen-lockfile --prefer-offline，797 项锁文件策略校验和安装通过，无依赖升级。5 项探针保护/重试控制测试不能代替上述真实数据库证据。最初客户端缺依赖和嵌套错误映射用例失败后均修复复测；最终脚本再次通过真实探针。锁文件仅显式链接既有同版 runtime。最后检查完整 tracked diff、新脚本/规格内容、UTF-8/空白、.env/generated 忽略规则，不包含凭证、生成客户端或完整 diff 日志。未创建 commit 或 push。
+
+交付 docs/development、Docker 手册、env.example、AGENTS 已验证命令、README 与 tasks；当前能力写入 data-environment spec。T01-C1/C2/C3 完成；T01-D 设计拆为 D1 包/配置/数据库生命周期、D2 HTTP/契约、D3 事务/审计，尚未实现正式公共服务。原有 API 仍仅 health，不宣称商品或业务事务已交付。
+
+下一批：按 t01-d-foundation 先实施 D1，建立与 PoC 分离的业务/测试数据库和迁移边界，再 D2/D3；之后 T02 身份权限→T03 单仓/商品发布→T05 真实浏览/购物车→FLOW-01。真实账号/经营信息按对应 T00-B 子项确认，远程 CI/支持周期安全审查、微信真机与真实交易仍未完成。
+
 ## 2026-10-09：T01-B1-F1 微信 app.json 查找路径修复
 
 用户报告开发者工具在项目根目录找不到 app.json。批初读取 AGENTS、tasks/progress/development、ADR-001 和小程序 manifest/微信产物；Git 工作区干净，保留用户已有根 project.config.json 的 AppID 和设置。诊断：微信构建目录已有 app.json，但根项目配置缺少 miniprogramRoot，开发者工具从仓库根查找原生入口。

@@ -27,3 +27,6 @@
 数据库及未验证的启动命令在实际验证后再加入。
 
 - `pnpm db:validate`、`pnpm db:generate`：Prisma 工程探针 schema 校验与生成，不证明数据库连接/事务。
+- `docker compose --env-file .env -f infra/containers/compose.yaml up -d --wait`：启动本地独立 PostgreSQL/Redis；凭证仅在忽略的 .env，不删除数据卷。
+- `pnpm db:poc`：真实专用 lingyu_shop_poc 工程迁移、锁/回滚/约束与 Prisma 冲突重试探针，不代表业务库存验收。
+- `pnpm redis:poc`：本项目 Redis 的 AOF、停机/重启恢复和随机测试键清理；会短暂停止 Redis，只用于独立开发容器。

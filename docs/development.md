@@ -86,14 +86,24 @@ uni-app 源码不能直接作为原生微信小程序编译；`app.json` 由 uni
 
 代理受限环境中构建/开发服务需要允许编译子进程，否则可能 spawn EPERM；提升执行权限后本批验证通过，不能据此要求关闭系统安全防护。
 
-Docker CLI 29.8.2/Compose 5.5.1 已检测；引擎未运行且启动缺少安装注册信息。没有数据库/Redis 环境，T01-C 的真实验证尚未实施。GitHub Actions 配置已建立，远程尚未运行；本批不推送。
+Docker Engine/CLI 29.8.2、Compose 5.5.1 已验证；用户修复 WSL/Docker 后，独立 PostgreSQL/Redis 容器运行并通过 T01-C 真实探针。端口仅绑定 loopback，尚未创建商城业务数据库。GitHub Actions 配置已建立，远程成功证据仍待 T01-B2。
 
-## Prisma 工程探针（部分验证）
+## PostgreSQL / Redis 工程探针
 
-Prisma/client/adapter 7.10.0，pg 8.23.1 同版锁定；`pnpm db:validate`、`pnpm db:generate` 已通过。generated 客户端不提交；schema 和工程迁移入库。Prisma 必需配置位于根 prisma.config.ts，url 已从 schema 移出，使用 adapter-pg 接入运行时。
+Prisma/client/adapter 7.10.0，pg 8.23.1 同版锁定；自定义生成目录的客户端运行还需要显式 `@prisma/client-runtime-utils` 7.10.0，不能仅凭 generate 成功判断可运行。generated 客户端不提交；schema 和工程迁移入库。Prisma 配置位于根 prisma.config.ts，使用 adapter-pg 接入运行时。
 
-`pnpm db:poc` 已配置但尚未完成真实执行；目前因缺少 POC_DATABASE_URL 失败。只接受本机 lingyu_shop_poc 专用库，可能写入/更新/删除工程探针记录 91001/91002；不能承载业务数据。没有测试订单表、库存账本或支付模拟。真实数据连接、迁移、锁和重试均待环境恢复后验证。
+根 `.env` 保存本地 POSTGRES_PASSWORD、POC_DATABASE_URL、REDIS_URL，不提交。按 `.env.example` 填相同密码，URL 对应用户 lingyu_dev、端口 15432、数据库 lingyu_shop_poc。业务 DATABASE_URL 尚未接入，不将 PoC 库用于商城。启动与验证：
 
-Docker 排障实际证据与系统操作限制见 [运行手册](runbooks/docker-windows.md)。本机 Windows build 22000.708，需要先处理 Docker 当前支持要求；提升工具执行权限无法替代 Windows 管理员令牌。
+```text
+docker compose --env-file .env -f infra/containers/compose.yaml up -d --wait
+pnpm.cmd db:validate
+pnpm.cmd db:generate
+pnpm.cmd db:poc
+pnpm.cmd redis:poc
+```
 
-项目 Compose 文件的 `docker compose -f infra/containers/compose.yaml config --no-interpolate --quiet` 已通过，证明结构可解析，不证明容器可启动。端口、专用库和待验证启动步骤见运行手册；镜像目前使用开发系列标签，补丁版本及 digest 固定尚未完成。
+`db:poc` 仅接受无额外连接参数的 loopback 专用库，原子创建 91001/91002，已有记录时拒绝覆盖；成功或失败后只清理本次自有记录，所有并发事务结束后才清理。验证迁移、20 请求竞争 1 份、回滚、非负约束、Prisma 原生查询死锁 P2010 的嵌套 SQLSTATE、Serializable 的 P2034 与整笔有限重试、两连接池。正常重启 PostgreSQL 后再次部署和探针通过；不代表订单、库存账本或业务迁移已实现。
+
+`redis:poc` 使用本项目 Compose Redis，检查 AOF/noeviction、WAITAOF 后的随机键在正常停止/启动后恢复，检查停机连接失败并删除自己的键。会短暂停止 Redis，不在共享/生产环境执行，不使用 FLUSHDB。正常重启验证不能证明断电恢复。
+
+当前 `pnpm test` 包含 2 项进程集成测试与 5 项探针保护/重试控制测试；纯逻辑用例不代替上述真实数据库命令。镜像 PostgreSQL 17.11、Redis 8.2.10 及官方 index digest 已在 Compose 固定，实测 linux/amd64。Docker 排障、启动/停止与遗留数据处置见 [运行手册](runbooks/docker-windows.md)，实际证据只写入 progress。

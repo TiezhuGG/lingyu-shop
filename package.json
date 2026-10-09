@@ -11,20 +11,22 @@
     "check": "node scripts/check-workspace.mjs",
     "typecheck": "pnpm -r typecheck",
     "build": "pnpm -r build",
-    "test": "node --test tests/integration/runtime.test.mjs",
+    "test": "node --test tests/integration/runtime.test.mjs tests/integration/database-tools.test.mjs",
     "dev:admin": "pnpm --filter @lingyu/admin dev",
     "dev:api": "pnpm --filter @lingyu/api dev",
     "dev:miniapp": "pnpm --filter @lingyu/miniapp dev:mp-weixin",
     "dev:worker": "pnpm --filter @lingyu/worker dev",
     "db:validate": "prisma validate",
     "db:generate": "prisma generate",
-    "db:poc": "node --env-file-if-exists=.env scripts/database-poc.mjs"
+    "db:poc": "node --env-file-if-exists=.env scripts/database-poc.mjs",
+    "redis:poc": "node scripts/redis-poc.mjs"
   },
   "devDependencies": {
     "typescript": "5.9.3",
     "@types/node": "24.10.0",
     "prisma": "7.10.0",
     "@prisma/client": "7.10.0",
+    "@prisma/client-runtime-utils": "7.10.0",
     "@prisma/adapter-pg": "7.10.0",
     "pg": "8.23.1"
   }

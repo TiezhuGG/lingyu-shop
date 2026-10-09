@@ -1,8 +1,8 @@
 name: lingyu-shop-dev
 services:
   postgres:
-    # Development series tags; resolve exact patch/digest after engine recovery.
-    image: postgres:17
+    # Official multi-platform image index; patch and digest verified together.
+    image: postgres:17.11@sha256:2d2b8998d31037bf721cfdf764d76ba74171b4fab3431b7f72c27c56ddbdf9e3
     environment:
       POSTGRES_DB: lingyu_shop_poc
       POSTGRES_USER: lingyu_dev
@@ -17,7 +17,7 @@ services:
       timeout: 3s
       retries: 20
   redis:
-    image: redis:8.2
+    image: redis:8.2.10@sha256:47670742d7924adbcdb404d1288b6327815b23141969c0939b8e5d61f78c2634
     command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
     ports:
       - "127.0.0.1:16379:6379"
