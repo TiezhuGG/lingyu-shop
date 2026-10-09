@@ -1,5 +1,15 @@
 # 开发进度
 
+## 2026-10-09：T01-B1-F1 微信 app.json 查找路径修复
+
+用户报告开发者工具在项目根目录找不到 app.json。批初读取 AGENTS、tasks/progress/development、ADR-001 和小程序 manifest/微信产物；Git 工作区干净，保留用户已有根 project.config.json 的 AppID 和设置。诊断：微信构建目录已有 app.json，但根项目配置缺少 miniprogramRoot，开发者工具从仓库根查找原生入口。
+
+修复：根 project.config.json 增加 `apps/miniapp/dist/build/mp-weixin/` 路径；开发文档补充根目录/产物目录导入、源码重新构建、dev/build 区分以及 manifest AppID 与根配置的区别。不手写根 app.json、不更改账号、不修改私有工具设置。任务细化为 T01-B1-F1，仅配置与产物验收。
+
+验证：重新执行 miniapp 微信构建通过；解析根项目配置，校验目标目录 app.json/app.js/app.wxss 与三个页面的 js/json/wxml 均存在。首次产物检查误要求每页都有 wxss 而失败；当前页面使用全局 app.wxss，没有独立页面样式文件，这是正常编译结果，校正检查后通过。当前完整 diff 与空白检查通过。无业务/依赖修改，不重复 API/Worker 测试；未操作微信开发者工具，用户重新编译/模拟器与真机结果待验证。未创建 commit 或 push。
+
+下一步：用户重新打开当前微信项目并编译；真实账号功能前同步自己的 mp-weixin.appid。原 T01-C 数据环境阻塞不受此次修复影响。
+
 ## 2026-10-09：T05-A 一期三入口界面外壳
 
 起点 `5c1b449`，工作区干净。已读取根 AGENTS、tasks/progress/development、路线/原型映射、ADR-002、总体设计前端与验收章节和当前小程序代码；无局部 AGENTS。用户要求按任务推进，批末检查当前完整 diff 并给出 commit 标题/正文供审阅，由用户 push，已写入 AGENTS。没有创建提交或推送。

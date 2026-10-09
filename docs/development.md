@@ -70,7 +70,19 @@ API/Worker dev 先编译、再监视 dist；修改源码需另开终端执行 `p
 
 小程序入口为发现/市集/我的原生 tab 页面。当前仅显示已标记的示例图文与商品；开发模式顶部“状态预览”可检查加载/空白/错误和重试，生产构建隐藏该控制但保留示例标记。搜索、登录、加购、结算、订单与生活服务尚未开放；没有新增环境变量或 API 配置要求。视觉 CSS 由 `@lingyu/ui-tokens/theme.css` 提供，版本及原启动命令不变。
 
-小程序微信产物在 apps/miniapp/dist/build/mp-weixin，H5 在 apps/miniapp/dist/build/h5；无 AppID，未验证开发者工具导入、微信真机、账号能力或上传。`dev:miniapp` 已配置但尚未实测微信 watch，不列作已验证命令。
+小程序微信产物在 apps/miniapp/dist/build/mp-weixin，H5 在 apps/miniapp/dist/build/h5；manifest 中的微信 AppID 尚未配置，未验证开发者工具导入、微信真机、账号能力或上传。`dev:miniapp` 已配置但尚未实测微信 watch，不列作已验证命令。
+
+### 微信开发者工具：找不到 app.json
+
+uni-app 源码不能直接作为原生微信小程序编译；`app.json` 由 uni 编译生成，不在仓库根目录或 `src` 中手写。根 `project.config.json` 的 `miniprogramRoot` 指向 `apps/miniapp/dist/build/mp-weixin/`，可以导入仓库根目录进行构建产物预览：
+
+1. 在仓库根目录运行 `pnpm.cmd --filter @lingyu/miniapp build`，等待 Build complete。
+2. 微信开发者工具打开 `C:\Users\lll\Desktop\lingyu-shop`，重新编译；若工具仍使用旧配置，关闭项目再重新打开。
+3. 确认产物目录包含 `app.json`、`app.js`、`app.wxss`。修改 Vue/TS 源码后重新运行上述构建，再点击工具里的编译。
+
+也可以直接导入 `C:\Users\lll\Desktop\lingyu-shop\apps\miniapp\dist\build\mp-weixin`，使用该目录生成的项目配置。实时开发则运行 `pnpm.cmd --filter @lingyu/miniapp dev:mp-weixin`，保持进程运行，导入 `apps/miniapp/dist/dev/mp-weixin`；不要将 build 与 dev 目录混用。微信 watch 命令仍未在本机实测，H5 服务不会生成微信产物。
+
+仓库根微信配置已包含用户设置的 AppID，`src/manifest.json` 的 `mp-weixin.appid` 仍为空，所以直接导入生成目录时当前配置使用 `touristappid`；需要真实账号能力时在 manifest 中配置自己的小程序 AppID 后重新构建。AppID 不等于 AppSecret；此修复不证明账号权限、开发者工具模拟器或微信真机已经验收。
 
 代理受限环境中构建/开发服务需要允许编译子进程，否则可能 spawn EPERM；提升执行权限后本批验证通过，不能据此要求关闭系统安全防护。
 
