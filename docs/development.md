@@ -2,16 +2,16 @@
 
 ## 实测基线
 
-2026-10-07，Windows，项目目录 `C:\Users\1\Desktop\lingyu-shop`。
+原始实测日期2026-10-07；当前项目目录 `C:\Users\lll\Desktop\lingyu-shop`。当前框架与数据库探针情况见下文，初始化描述仅作历史记录。
 
 | 工具 | 实测版本 | 路径/说明 |
 |---|---|---|
 | Node.js | 24.21.0 | `D:\node-v24.21.0-win-x64\node.exe` |
 | pnpm | 12.9.1 | `D:\node-v24.21.0-win-x64\pnpm.cmd` |
 | Git | 2.56.0.windows.1 | `D:\Git\cmd\git.exe` |
-| Shell | cmd.exe 可用 | PowerShell 启动失败：系统不完全支持 CET。当前验证使用 cmd.exe |
+| Shell | PowerShell 当前可用，cmd.exe 为历史替代 | 旧批次PowerShell曾因CET启动失败；当前pnpm使用.cmd入口避免脚本策略限制 |
 
-根 package.json 固定 Node 与 pnpm 基线，pnpm-workspace.yaml 启用 engineStrict、saveExact，.npmrc 保留对应设置。pmOnFail: ignore 禁用包管理器自动下载，仍由 engines.pnpm 约束版本；存储使用本项目 .pnpm-store（Git 忽略）。当前无第三方依赖；框架、数据库、Redis、微信基础库及其支持周期/许可证/兼容矩阵尚未验证。上述版本是本机实测基线，不代表整套框架兼容性已通过。
+根 package.json 固定 Node 与 pnpm 基线，pnpm-workspace.yaml 启用 engineStrict、saveExact，.npmrc 保留对应设置。pmOnFail: ignore 禁用包管理器自动下载，仍由 engines.pnpm 约束版本；存储使用本项目 .pnpm-store（Git 忽略）。框架依赖已接入并留有本地兼容验证，Prisma探针已接入；真实PostgreSQL/Redis、微信真机、支持周期与安全审核尚未完成。安装版本不代表全部运行语义已验证。
 
 ## 已验证操作
 
@@ -34,7 +34,7 @@ git diff
 
 ## 初始化时的启动、测试和构建边界（历史记录）
 
-当前 4 个应用与 4 个共享包仅含目录及 manifest，没有运行入口、框架依赖、dev/test/build 脚本。当前无应用可启动；未运行应用测试、应用构建、数据库迁移或微信真机测试。不得使用空脚本伪装成功。
+初始化时4个应用与4个共享包仅含目录及manifest，没有运行入口、框架依赖、dev/test/build脚本。该状态已被T01续批替代；以下段落保留历史背景，不是当前启动方式。
 
 .env.example 只有数据库和 Redis 占位配置，尚未连接服务。未来复制到本地 .env 后填写本地开发值，不提交密钥。ORM 未选定实际版本，不预生成 schema 或迁移 API。
 
@@ -54,7 +54,9 @@ pnpm --filter @lingyu/miniapp build:h5
 pnpm test
 ```
 
-`pnpm test` 使用编译后制品，先执行 build。根 build 包含微信小程序、后台、API、Worker 和三个源码共享包；config 为直接使用的配置，无虚假构建脚本。本次 peer 检查无问题；DCloud 间接依赖 phin 有弃用告警，未据此宣称依赖安全审核通过。
+`pnpm test` 使用编译后制品且不会自动build，执行者必须先运行 `pnpm build`。根 build 包含微信小程序、后台、API、Worker 和三个源码共享包；config 为直接使用的配置，无虚假构建脚本。历史 peer 检查无问题；DCloud 间接依赖 phin 有弃用告警，未据此宣称依赖安全审核通过。
+
+当前Windows若 `pnpm` 被PowerShell脚本策略拒绝，使用已安装的 `pnpm.cmd`，无需修改系统执行策略。受限代理环境中原生进程可能异常退出，必要时经权限流程在沙箱外验证；不能将无输出视为Git干净或测试通过。实际批次结果写入progress。
 
 开发启动（已验证能启动）：
 

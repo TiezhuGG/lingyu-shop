@@ -11,4 +11,4 @@
 - infra：containers、deploy、monitoring。
 - scripts：工程结构校验。
 
-阅读 [协作规则](AGENTS.md)、[开发说明](docs/development.md)、[任务](docs/tasks.md) 和 [进度](docs/progress.md)。
+先阅读 [开发路线与实施架构](docs/development-roadmap.md)、[原型验收映射](docs/acceptance/prototype-mapping.md)，再查看 [协作规则](AGENTS.md)、[开发说明](docs/development.md)、[任务](docs/tasks.md) 和 [进度](docs/progress.md)。默认先完成 5000 的 P1-A/P1-B，再增量实现 50000；详细依赖以任务细化表为准。

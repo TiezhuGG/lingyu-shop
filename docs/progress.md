@@ -1,5 +1,23 @@
 # 开发进度
 
+## 2026-10-08：两原型审查与实施规划（T00-A）
+
+用户授权分析整个项目、直接修订架构与任务文档，并要求先设计后开发，先5000后50000。本批仅交付设计与文档，没有新增业务代码、迁移或依赖版本。开始读取AGENTS、任务/进度/开发方式、总体设计各章节、ADR-001、工程入口/schema/PoC/测试/CI；未发现适用局部AGENTS。起点bc3dad2，Git工作区干净。
+
+原型证据：重新读取两个公开HTML/CSS/JS，UTF-8快照和SHA256保存在docs/reference；第一原型浏览器初始状态成功读取，未进行逐入口浏览器点击/真机操作。5000三入口、标签样式切换、自提配送切换、抽屉加减/清空有脚本；发布/搜索/券/订单/结算等缺实际动作。50000定义12个页面和首页内feed导航，直播明确未设计，大量入口仅toast，提交为定时模拟付款。范围映射区分源交互、展示和正式功能补齐。
+
+审查结论：现有框架与总体交易架构保留；API只有/health，Worker无任务，两端工程占位，共享业务包空导出，Prisma只有EngineeringProbe。T01不标整体完成。已完成T00-A设计，T00-B业务确认仍进行中。
+
+交付：development-roadmap（架构/模块归属/分阶段门槛/流程/规则责任与确认时点）、prototype-mapping（P1/P2子项与任务/验收）、ADR-002（后端复用与任务基础）、phase1-baseline待实现规格；tasks扩展成具体子任务并保留历史表；总体设计v1.1增加执行修订，AGENTS/README更新入口，development校正历史与当前描述及测试命令。
+
+主要调整：T01拆本地兼容、远程CI/安全、真实数据验证；T12-A先于订单；地址/服务解除对整个社区依赖；T01-D计划新增server-modules但本批不新增workspace包；默认P1-A→P1-B→P2，用户若只需演示版须记录替代门槛；多仓/称重/AI为可选后续。真实规则未定项只阻塞相关任务。根pnpm test实际不自动build，已修正说明。
+
+验证：pnpm.cmd check、typecheck、db:validate、db:generate、全部应用/源码包build、miniapp build:h5、pnpm.cmd test全部通过（2/2工程进程测试）。首次diff --check发现修改的版本行保留了Markdown尾空格，已修正；最终diff --check、tracked差异/新文件审阅、本地Markdown链接与UTF-8字符检查、两快照SHA256核对均通过。未用工程测试证明任何业务功能。未更改启动入口、系统执行策略或运行时版本。
+
+环境：Node24.21.0/pnpm12.9.1核实；PowerShell可读取文件，pnpm.ps1被执行策略拒绝时改用pnpm.cmd。沙箱内Git/Node原生进程异常退出，按权限流程在沙箱外成功运行。docker info本次仍报dockerDesktopLinuxEngine管道不存在，真实PostgreSQL/Redis、事务迁移/锁/Prisma重试未运行；远程CI、安全/支持周期、微信登录/真机、真实支付均未验收。没有修改系统、清库、提交或推送。
+
+下一批：T01-C1/C2/C3恢复真实数据验证与T00-B相关输入；随后T01-D公共基础→T02→T03/T05贯通FLOW-01。数据库阻塞期间可先T05-A视觉外壳/独立规格，但fixture不能替代真实数据库或微信验收。
+
 ## 2026-10-08：T01 当前成果提交与同步
 
 用户明确授权为当前成果创建提交并推送 origin/main。开始已检查根规则、任务/进度/开发记录、ADR、Git 状态及远程；本批仅整理和交付此前 T01 改动，没有新增商城业务。

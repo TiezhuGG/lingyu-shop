@@ -1,0 +1,2146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>即时零售小程序 · 可点击交互原型 V1.9</title>
+<style>
+  :root{
+    --primary:#00C26E; --primary-strong:#00A85E; --primary-soft:#E8F9F1; --primary-tint:#F2FCF7;
+    --price:#F5333F; --promo:#FF7A18; --member:#C8A24A;
+    --t1:#1F2329; --t2:#61666D; --t3:#9AA0A6;
+    --line:#EEF0F2; --line-strong:#E3E6EA; --bg:#F4F5F6; --white:#FFF; --blue:#2B7FFF;
+  }
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+  html,body{margin:0;padding:0}
+  body{background:#F7F8FA;color:var(--t1);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    font-size:14px;line-height:1.6}
+  .layout{display:flex;gap:34px;max-width:1180px;margin:0 auto;padding:32px 28px 70px;align-items:flex-start}
+
+  /* ---- 左栏 ---- */
+  .side{width:330px;flex:0 0 auto;position:sticky;top:32px}
+  .side h1{font-size:20px;margin:0 0 6px}
+  .side .sub{font-size:12.5px;color:var(--t2);margin:0 0 20px}
+  .panel{background:#FFF;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  .panel h2{font-size:13px;margin:0 0 12px;color:var(--t2);font-weight:600;letter-spacing:.04em}
+  .jump{display:flex;flex-wrap:wrap;gap:7px}
+  .jump button{font:inherit;font-size:12px;padding:6px 11px;border-radius:999px;border:1px solid var(--line-strong);
+    background:#FFF;color:var(--t1);cursor:pointer;transition:.15s}
+  .jump button:hover{border-color:var(--primary);color:var(--primary-strong);background:var(--primary-tint)}
+  .jump button.cur{background:var(--primary);border-color:var(--primary);color:#FFF;font-weight:600}
+  ol.steps{margin:0;padding-left:18px;font-size:12.5px;color:var(--t2)}
+  ol.steps li{margin-bottom:5px}
+  ol.steps b{color:var(--t1)}
+  .kv{display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0;border-bottom:1px dashed var(--line)}
+  .kv:last-child{border-bottom:none}
+  .kv span:last-child{font-family:ui-monospace,Menlo,monospace;color:var(--primary-strong);font-weight:600}
+  .btn-reset{width:100%;font:inherit;font-size:12.5px;padding:9px;border-radius:8px;border:1px solid var(--line-strong);
+    background:#FFF;color:var(--t2);cursor:pointer}
+  .btn-reset:hover{border-color:var(--price);color:var(--price)}
+
+  /* ---- 设备 ---- */
+  .stage{flex:0 0 auto;position:relative}
+  .phone{width:395px;height:842px;background:var(--bg);border-radius:46px;border:9px solid #16181C;
+    position:relative;overflow:hidden;box-shadow:0 22px 54px rgba(23,26,31,.18),0 2px 6px rgba(23,26,31,.08);
+    display:flex;flex-direction:column}
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:26px;
+    background:#16181C;border-radius:0 0 16px 16px;z-index:80}
+  .status-bar{height:26px;flex:0 0 auto;display:flex;justify-content:space-between;align-items:flex-end;
+    padding:0 22px 3px;font-size:11px;font-weight:700;transition:background .2s,color .2s}
+  .status-bar .right{display:flex;gap:4px;align-items:center}
+  .status-bar .batt{width:20px;height:9px;border:1px solid currentColor;border-radius:2px;position:relative;opacity:.9}
+  .status-bar .batt::after{content:"";position:absolute;inset:1.5px;background:currentColor;border-radius:1px;right:5px}
+
+  .nav-bar{height:44px;flex:0 0 auto;display:flex;align-items:center;padding:0 14px;position:relative;z-index:40;
+    transition:background .2s}
+  .nav-bar.bordered{border-bottom:1px solid var(--line)}
+  .nav-title{position:absolute;left:0;right:0;text-align:center;font-size:16px;font-weight:600;pointer-events:none}
+  .back-ic{width:30px;height:30px;margin-left:-6px;position:relative;flex:0 0 auto;cursor:pointer}
+  .back-ic::before{content:"";position:absolute;left:8px;top:9px;width:10px;height:10px;
+    border-left:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);border-radius:1px}
+  .nav-right{margin-left:auto;display:flex;gap:14px;align-items:center;z-index:2;font-size:12.5px}
+
+  .body{flex:1 1 auto;min-height:0;position:relative;background:var(--bg)}
+  .screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+    animation:fade .22s ease}
+  .screen::-webkit-scrollbar{width:0}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .tabbar{flex:0 0 auto;height:56px;background:#FFF;border-top:1px solid var(--line);
+    display:flex;position:relative;z-index:60}
+  .tabbar .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    color:var(--t3);font-size:10.5px;position:relative;cursor:pointer;transition:.15s}
+  .tabbar .tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;
+    stroke-linecap:round;stroke-linejoin:round}
+  .tabbar .tab.on{color:var(--primary);font-weight:600}
+  .tabbar .tab .badge{position:absolute;top:3px;left:calc(50% + 7px);min-width:16px;height:16px;
+    background:var(--price);color:#FFF;border-radius:999px;font-size:10px;line-height:16px;
+    text-align:center;padding:0 4px;font-weight:600}
+  .tabbar .tab .badge:empty{display:none}
+  .home-ind{flex:0 0 auto;height:22px;display:flex;align-items:center;justify-content:center;background:#FFF}
+  .home-ind i{width:130px;height:5px;border-radius:3px;background:#D8DCE1;display:block}
+
+  .bottom-bar{flex:0 0 auto;min-height:54px;background:#FFF;border-top:1px solid var(--line);
+    display:flex;align-items:center;padding:8px 12px;gap:10px;position:relative;z-index:60}
+
+  /* ---- 组件 ---- */
+  .thumb{border-radius:8px;position:relative;overflow:hidden;flex:0 0 auto}
+  .thumb::after{content:"";position:absolute;width:70%;height:70%;right:-18%;bottom:-22%;
+    background:rgba(255,255,255,.38);border-radius:50%}
+  .th-a{background:linear-gradient(140deg,#B7E5C9,#7BD0A0)}
+  .th-b{background:linear-gradient(140deg,#FFD9AE,#F6AE5B)}
+  .th-c{background:linear-gradient(140deg,#FFC9CD,#F58C9B)}
+  .th-d{background:linear-gradient(140deg,#C4DAFF,#8BAFF6)}
+  .th-e{background:linear-gradient(140deg,#FFEDB2,#F8CF5D)}
+  .th-f{background:linear-gradient(140deg,#D9CDFF,#A58DF1)}
+  .th-g{background:linear-gradient(140deg,#C0E9F1,#80CDE1)}
+  .th-h{background:linear-gradient(140deg,#E5D6C1,#C5A77F)}
+  .tag{display:inline-block;font-size:10px;line-height:15px;padding:0 5px;border-radius:3px;
+    border:1px solid currentColor;font-weight:500;white-space:nowrap}
+  .tag-solid{background:var(--promo);color:#FFF;border-color:var(--promo)}
+  .tag-green{color:var(--primary-strong)} .tag-red{color:var(--price)}
+  .tag-orange{color:var(--promo)} .tag-blue{color:var(--blue)} .tag-member{color:var(--member)}
+  .price{color:var(--price);font-weight:700;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .price .sym{font-size:11px}.price .int{font-size:17px}.price .dec{font-size:11px}
+  .price-lg .int{font-size:22px}.price-lg .sym,.price-lg .dec{font-size:13px}
+  .strike{color:var(--t3);text-decoration:line-through;font-size:11px}
+  .card{background:#FFF;border-radius:12px;margin:0 12px 10px}
+  .addbtn{width:22px;height:22px;border-radius:50%;background:var(--primary);color:#FFF;
+    display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;cursor:pointer;
+    flex:0 0 auto;user-select:none}
+  .addbtn:active{transform:scale(.88)}
+  .stepper{display:flex;align-items:center;gap:10px;font-size:13px}
+  .stepper .s-btn{width:22px;height:22px;border-radius:50%;border:1px solid var(--line-strong);color:var(--t2);
+    display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;user-select:none}
+  .stepper .s-btn.plus{background:var(--primary);border-color:var(--primary);color:#FFF}
+  .stepper .s-btn:active{transform:scale(.88)}
+  .btn-primary{height:38px;padding:0 22px;border-radius:19px;background:linear-gradient(120deg,#00C26E,#2ED184);
+    color:#FFF;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;
+    cursor:pointer;border:none;font-family:inherit}
+  .btn-ghost{height:38px;padding:0 20px;border-radius:19px;border:1.5px solid var(--primary);color:var(--primary-strong);
+    display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;cursor:pointer;
+    background:#FFF;font-family:inherit}
+  .btn-primary:active,.btn-ghost:active{transform:scale(.97)}
+  .btn-disabled{background:#D8DCE1!important;color:#FFF!important;cursor:not-allowed!important;border:none!important}
+  .prog{height:5px;border-radius:3px;background:#E9ECEF;overflow:hidden}
+  .prog i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#FFB020,#FF7A18);transition:width .3s}
+  .chk{width:18px;height:18px;border-radius:50%;border:1.5px solid #D8DCE1;flex:0 0 auto;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;color:#FFF;font-size:11px;transition:.15s}
+  .chk.on{background:var(--primary);border-color:var(--primary)}
+  .chk.dis{opacity:.45;cursor:not-allowed}
+  .tabbar .tab .ip{width:24px;height:24px;border-radius:50%;
+    background:linear-gradient(140deg,#4BD08A,#00B865);display:flex;align-items:center;
+    justify-content:center;flex:0 0 auto}
+  .tabbar .tab .ip svg{width:24px;height:24px}
+  .tabbar .tab .live{width:24px;height:24px;border-radius:50%;
+    background:linear-gradient(140deg,#4BD08A,#00B865);display:flex;align-items:center;
+    justify-content:center;flex:0 0 auto;position:relative}
+  .tabbar .tab .live svg{width:15px;height:15px}
+  .tabbar .tab .live .badge{top:-5px;left:auto;right:-7px;min-width:15px;height:15px;
+    line-height:15px;font-size:9px;border:1.5px solid #FFF}
+
+  /* ---------- 沉浸式头图 ---------- */
+  .hero{background:#C3170B;padding:2px 14px 8px;color:#FFF;position:relative;overflow:hidden
+  }
+  /* 轮播图升为整个头部的背景层——红色与轮播共用的底 */
+  .hero-photo{position:absolute;inset:0;z-index:0;pointer-events:none;background:
+    radial-gradient(54% 28% at 74% 18%,rgba(255,238,216,.46),rgba(255,238,216,0) 70%),
+    radial-gradient(70% 36% at 58% 58%,rgba(255,204,120,.66),rgba(255,204,120,0) 64%),
+    radial-gradient(92% 76% at 56% 92%,#E9641F 0%,#C02C11 38%,#8C1507 70%,#5E0E03 100%),
+    linear-gradient(160deg,#A81A0C 0%,#7C1206 55%,#4E0C03 100%)
+  }
+  /* 红色渐隐遮罩：顶部纯色 → 向下透明，红色与轮播在此融合（一体化关键） */
+  .hero-veil{position:absolute;inset:0;z-index:1;pointer-events:none;background:
+    linear-gradient(180deg,#C3170B 0%,#C3170B 11%,rgba(195,23,11,.95) 22%,
+      rgba(195,23,11,.74) 36%,rgba(195,23,11,.42) 50%,
+      rgba(195,23,11,.16) 64%,rgba(195,23,11,0) 78%)
+  }
+  .hero-top,.hero-search,.hero-bn{position:relative;z-index:2}}
+  .hero-sm{padding-bottom:16px}
+  .hero-top{display:flex;align-items:center;justify-content:space-between;height:34px}
+  .hero-loc{display:flex;align-items:center;gap:5px;font-size:14.5px;font-weight:600}
+  .hero-pin{width:15px;height:15px;fill:none;stroke:#FFF;stroke-width:2;stroke-linecap:round}
+  .caret{width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;
+    border-top:5px solid #FFF;display:block;margin-left:1px;opacity:.92}
+  .hero-acts{display:flex;align-items:center;gap:9px}
+  .hero-pill{background:rgba(255,255,255,.24);border-radius:999px;padding:3px 9px;font-size:10.5px;
+    display:flex;align-items:center;gap:4px;white-space:nowrap}
+  .hero-dots{font-size:15px;letter-spacing:1px;opacity:.95;line-height:1}
+  .hero-ring{width:16px;height:16px;border-radius:50%;border:2px solid #FFF;opacity:.95;
+    display:block;position:relative}
+  .hero-ring::after{content:"";position:absolute;inset:3.5px;border-radius:50%;background:#FFF}
+  .hero-search{display:flex;align-items:center;background:#FFF;border-radius:20px;height:40px;
+    padding:3px 3px 3px 0;margin-top:8px}
+  .hero-ph{flex:1 1 auto;padding:0 14px;color:#9AA0A6;font-size:12.5px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hero-btn{flex:0 0 auto;width:64px;height:34px;border-radius:17px;background:#00C26E;color:#FFF;
+    font-size:13.5px;font-weight:600;display:flex;align-items:center;justify-content:center}
+  .hero-bn{margin-top:11px;height:84px;position:relative}
+  .hero-bn-in{position:absolute;left:14px;top:11px;z-index:2}
+  .hero-bn-k{font-size:10.5px;color:#FFE0B8;letter-spacing:.06em}
+  .hero-bn-t{font-size:18.5px;font-weight:800;letter-spacing:.01em;margin-top:2px;
+    text-shadow:0 1px 6px rgba(0,0,0,.25)}
+  .hero-bn-g{display:inline-block;margin-top:7px;background:rgba(255,255,255,.94);color:#B8240C;
+    font-size:10.5px;font-weight:700;border-radius:999px;padding:3px 10px}
+  .hero-bn-art{position:absolute;right:-26px;bottom:-46px;width:176px;height:176px;border-radius:50%;
+    background:radial-gradient(circle at 40% 36%,rgba(255,216,146,.90),
+      rgba(255,152,62,.52) 46%,rgba(196,58,18,0) 76%);
+    filter:blur(1.5px)}
+
+  /* ---------- 白色上浮卡片 ---------- */
+  .sheet{background:#FFF;border-radius:18px;margin:-28px 12px 0;position:relative;z-index:3;
+    padding-bottom:14px;box-shadow:0 -6px 14px rgba(110,20,8,.15),0 8px 18px rgba(17,24,39,.08)}
+  .sheet-sm{margin-top:-12px;padding:4px 0 12px}
+  .trust{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 8px 1px;
+    font-size:10.5px;color:#5A6068}
+  .trust>span{display:flex;align-items:center;gap:3px;white-space:nowrap}
+  .trust .sep{width:1px;height:9px;background:#E3E6EA;display:block}
+  .trust .ck{width:11px;height:11px;border-radius:50%;border:1px solid #C4CBD4;color:#9AA0A6;
+    font-size:7px;line-height:1;display:flex;align-items:center;justify-content:center;
+    font-style:normal;flex:0 0 auto}
+
+  /* ---------- 金刚区（实物图风格） ---------- */
+  /* 前 2 行 × 5 列 = 10 格固定不滚动；第 3 行 10 格合并成一条横滑行 */
+  .katz{padding:9px 4px 2px}
+  .kgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:13px 0}
+  .krow-wrap{position:relative;margin-top:13px}
+  .krow{display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;
+    scrollbar-width:none;-ms-overflow-style:none}
+  .krow::-webkit-scrollbar{display:none;width:0;height:0}
+  .krow .kat{flex:0 0 20%;scroll-snap-align:start}
+  /* 右缘渐隐：提示横向还有内容 */
+  .krow-wrap::after{content:'';position:absolute;top:0;bottom:0;right:0;width:12px;
+    background:linear-gradient(90deg,rgba(255,255,255,0),#FFF 90%);pointer-events:none}
+  .kat{display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;
+    font-size:11px;color:var(--t1);line-height:1.2}
+  .kat .ic{width:44px;height:44px;display:flex;align-items:center;justify-content:center}
+  .kat .ic svg{width:42px;height:42px;display:block}
+  .kat .kb{position:absolute;top:-2px;right:0;background:#F5333F;color:#FFF;font-size:8px;
+    line-height:13px;padding:0 4px;border-radius:7px 7px 7px 0;font-weight:500;font-style:normal;
+    white-space:nowrap;z-index:2}
+  .kdots{display:flex;justify-content:center;gap:4px;padding:8px 0 2px}
+  .kdots i{width:4px;height:4px;border-radius:2px;background:#D8DCE1;display:block}
+  .kdots i.on{width:12px;background:#FF7A18}
+
+  /* ---------- 通知条 ---------- */
+  .notice{display:flex;align-items:center;gap:7px;margin:12px 12px 16px;background:#FFF;
+    position:relative;z-index:3;border-radius:10px;padding:8px 10px;
+    box-shadow:0 1px 3px rgba(17,24,39,.07)}
+  .notice .nt-ic{font-size:12px;flex:0 0 auto}
+  .notice .nt-tx{flex:1 1 auto;font-size:11px;color:#4A5158;white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis}
+  .notice .nt-go{color:#9AA0A6;font-size:13px;flex:0 0 auto}
+
+  /* ---------- 中秋大 banner ---------- */
+  .hb{margin:2px 12px 0;border-radius:12px;padding:12px 14px;display:flex;align-items:center;
+    justify-content:space-between;color:#FFF;position:relative;overflow:hidden;
+    background:linear-gradient(126deg,#9A1410,#C9241A 52%,#E8571F)}
+  .hb-k{font-size:10px;color:#FFD9A8}
+  .hb-t{font-size:16.5px;font-weight:800;line-height:1.25;margin-top:1px}
+  .hb-r{text-align:right}
+  .hb-g1{font-size:11px;font-weight:700}
+  .hb-g2{display:flex;align-items:center;justify-content:flex-end;gap:5px;margin-top:3px}
+  .hb-g2 span{font-size:16px;font-weight:800;color:#FFD54A}
+  .hb-g2 em{font-style:normal;background:#FFD54A;color:#9A1410;font-size:9.5px;font-weight:700;
+    border-radius:3px;padding:1px 5px}
+
+  /* ---------- 三商品横排 ---------- */
+  .row3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 12px 0}
+  .r3{background:#FFF;border-radius:8px;overflow:hidden;text-align:center}
+  .r3-th{height:52px;border-radius:0}
+  .r3-nm{font-size:10px;color:var(--t1);padding:4px 3px 0;line-height:1.3;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .r3-pr{font-size:13px;font-weight:800;color:var(--price);padding:1px 0 6px}
+  .r3-pr em{font-style:normal;font-size:9.5px;font-weight:500}
+  .r3-x{color:var(--primary-strong);font-size:11px;padding-bottom:7px;font-weight:600}
+
+  /* ---------- 限时抢购 ---------- */
+  .flash{margin:10px 12px 0;border-radius:12px;padding:10px 10px 12px;
+    background:linear-gradient(180deg,#FFEFF0,#FFF 62%)}
+  .flash-hd{display:flex;align-items:center;gap:6px;margin-bottom:9px}
+  .flash-hd>b{font-size:15.5px;font-weight:800;color:#D8291F;letter-spacing:.01em}
+  .flash-hd .pill{background:#F5333F;color:#FFF;font-size:9.5px;border-radius:4px;padding:2px 5px;
+    font-weight:500}
+  .flash-hd .more{margin-left:auto;font-size:11px;color:#9AA0A6;font-weight:400}
+  .flash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+  .fg{background:#FFF;border-radius:8px;overflow:hidden;text-align:center;padding-bottom:5px}
+  .fg-th{height:52px}
+  .fg-nm{font-size:9.5px;color:var(--t2);padding:3px 2px 1px;white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis}
+  .fg-pr{font-size:13px;font-weight:800;color:var(--price)}
+  .fg-pr em{font-style:normal;font-size:9.5px;font-weight:500}
+  .fg-pr s{color:var(--t3);font-size:9.5px;font-weight:400;margin-left:2px}
+
+  /* ---------- 双栏模块 ---------- */
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 12px 0}
+  .tcol{background:#FFF;border-radius:12px;padding:10px 9px 9px}
+  .tcol-hd{display:flex;align-items:baseline;gap:5px;margin-bottom:8px}
+  .tcol-hd>b{font-size:14px;font-weight:800}
+  .tcol-hd small{font-size:9.5px;color:#FF7A18;font-weight:500}
+  .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+  .tg{text-align:center}
+  .tg-th{height:50px;border-radius:7px}
+  .tg-nm{font-size:9.5px;color:var(--t2);margin-top:3px;white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis}
+  .tg-pr{font-size:12.5px;font-weight:800;color:var(--price);margin-top:1px}
+  .rank{display:flex;flex-direction:column;gap:7px}
+  .rk{display:flex;align-items:center;gap:7px}
+  .rk-th{width:42px;height:35px;border-radius:6px;flex:0 0 auto}
+  .rk-nm{font-size:10px;color:var(--t2);line-height:1.3}
+  .rk-bd{display:inline-block;font-size:8.5px;color:#FFF;background:#FF7A18;border-radius:3px;
+    padding:0 4px;margin-top:2px}
+
+  /* ---------- 推荐流筛选条 ---------- */
+  .ftabs{display:flex;gap:15px;padding:10px 12px 8px;background:#FFF;font-size:13.5px;color:#61666D;
+    overflow:hidden}
+  .ftabs>span{white-space:nowrap;position:relative;font-weight:500}
+  .ftabs>span.on{color:#1F2329;font-weight:700;font-size:15px}
+  .ftabs>span.on::after{content:"";position:absolute;left:50%;transform:translateX(-50%);
+    bottom:-5px;width:18px;height:3px;border-radius:2px;background:#00C26E}
+
+  /* ---------- 悬浮领券球 ---------- */
+  .fball{position:absolute;right:10px;bottom:78px;width:46px;height:50px;z-index:25;
+    background:linear-gradient(160deg,#F5483C,#CF1F16);border-radius:9px 9px 23px 23px;
+    color:#FFF;font-size:9.5px;font-weight:600;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:1px;box-shadow:0 5px 14px rgba(207,31,22,.38)}
+  .fball b{font-size:12px;line-height:1}
+
+  /* ---------- 瀑布流补充 ---------- */
+  .pcard .bdg{position:absolute;left:6px;top:6px;background:#F5333F;color:#FFF;font-size:9px;
+    border-radius:3px;padding:1px 5px;font-weight:600;z-index:2}
+  .pcard .sold{display:flex;align-items:center;padding:5px 7px 0}
+  .pcard .sold .bar{flex:1 1 auto;height:12px;border-radius:6px;background:#FFE1E2;overflow:hidden;
+    position:relative}
+  .pcard .sold .bar i{display:block;height:100%;background:linear-gradient(90deg,#FF6B4A,#F5333F)}
+  .pcard .sold .bar em{position:absolute;inset:0;font-style:normal;font-size:8.5px;color:#FFF;
+    text-align:center;line-height:12px;font-weight:600}
+
+  /* 旧金刚区渐变底（保留给其它页面引用） */
+  .ic1{background:linear-gradient(140deg,#5FD79B,#00B865)}
+  .ic2{background:linear-gradient(140deg,#FFB36B,#FF8A3D)}
+  .ic3{background:linear-gradient(140deg,#6FC7E8,#2B9FD8)}
+  .ic4{background:linear-gradient(140deg,#B79BF0,#8B6FE0)}
+  .ic5{background:linear-gradient(140deg,#FFD46B,#F5B01E)}
+  .ic6{background:linear-gradient(140deg,#FF9AA5,#F2505F)}
+  .ic7{background:linear-gradient(140deg,#7FD1C4,#35B0A0)}
+  .ic8{background:linear-gradient(140deg,#A8B6C9,#7C8DA3)}
+  .ic9{background:linear-gradient(140deg,#E3C87B,#C8A24A)}
+  .ic10{background:linear-gradient(140deg,#C4CBD4,#98A2AE)}
+  .kat{cursor:pointer;user-select:none}
+  .kat:active{opacity:.72}
+  .trust .ck2{width:11px;height:11px;border-radius:50%;border:1px solid #C4CBD4;
+    color:#9AA0A6;font-size:7px;line-height:1;display:flex;align-items:center;
+    justify-content:center;font-style:normal;flex:0 0 auto}
+  .feed{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 12px}
+  .pcard{background:#FFF;border-radius:8px;overflow:hidden;padding-bottom:8px;cursor:pointer;transition:.15s}
+  .pcard:active{transform:scale(.985)}
+  .pcard .thumb{height:106px;border-radius:0;width:100%}
+  .pcard .nm{font-size:12.5px;line-height:1.35;height:34px;overflow:hidden;font-weight:500}
+  .pcard .sp{font-size:10.5px;color:var(--t3);margin:2px 0 4px}
+  .tabs{display:flex;align-items:center;height:44px;padding:0 14px;font-size:14px;gap:20px;background:#FFF;
+    border-bottom:1px solid var(--line)}
+  .tabs span{cursor:pointer;color:var(--t2);position:relative;padding:11px 0}
+  .tabs span.on{font-weight:600;color:var(--primary-strong)}
+  .tabs span.on::after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom:0;width:20px;
+    height:3px;background:var(--primary);border-radius:2px}
+
+  .toast{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.94);background:rgba(24,26,30,.86);
+    color:#FFF;font-size:13px;border-radius:10px;padding:11px 18px;z-index:200;opacity:0;pointer-events:none;
+    transition:.2s;max-width:250px;text-align:center;line-height:1.45}
+  .toast.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  .loading{position:absolute;inset:0;background:rgba(255,255,255,.9);z-index:180;display:flex;
+    flex-direction:column;align-items:center;justify-content:center;gap:14px}
+  .spinner{width:30px;height:30px;border:3px solid #E3E6EA;border-top-color:var(--primary);border-radius:50%;
+    animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .empty{text-align:center;padding:70px 30px;color:var(--t3);font-size:13px}
+  .hit{outline:2px dashed rgba(0,194,110,.55);outline-offset:3px}
+
+  /* ---------- 两段式滚动吸顶 ----------
+     第 1 层 = 搜索框（56px = 上内边距 8 + 搜索框 40 + 下内边距 8）：
+       就是首页顶上原本那个搜索框。默认向上收起、不占布局高度，
+       只有它整体滚出可视区后才滑下来钉在 top:0。
+     第 2 层 = 「为你推荐」Tab 行（44px）：
+       它长在推荐流头部（不在顶部），所以只有当它自己滚到「搜索框下沿」时才吸住
+       —— 于是不会「一滚动 Tab 就吸顶」，而是先搜索框、后 Tab 逐层吸。 */
+  .stick{background:#C3170B;position:sticky;top:0;z-index:20;
+    height:56px;margin-bottom:-56px;transform:translateY(-56px);
+    transition:transform .2s ease}
+  .stick.on{transform:translateY(0);box-shadow:0 3px 10px rgba(110,20,8,.22)}
+  .stick-in{padding:8px 14px 8px}
+  .stick .hero-search{margin-top:0}
+
+  .feedslot{position:sticky;top:56px;z-index:19;background:#FFF;
+    transition:box-shadow .2s ease}
+  .feedslot.on{box-shadow:0 3px 10px rgba(17,24,39,.08)}
+  .feedslot .ftabs{padding:11px 12px 9px}
+
+  /* ---------- 分类页（对齐真实产品：顶部绿底类目区 + 左一级 / 右商品流） ---------- */
+  .catwrap{height:100%;display:flex;flex-direction:column;overflow:hidden}
+  .cat-hd{flex:0 0 auto;background:linear-gradient(104deg,#EEF9F3,#DCF0E5);padding:14px 0 8px}
+  .cat-top{display:flex;align-items:center;padding:0 18px}
+  .cat-search{flex:1 1 auto;min-width:0;height:28px;box-sizing:border-box;background:#FFF;border:1.5px solid #22B660;
+    border-radius:14px;display:flex;align-items:center;gap:4px;padding:0 9px;overflow:hidden;
+    white-space:nowrap}
+  .cat-search .cs-ic{flex:0 0 auto;width:13px;height:13px;stroke:#22B660;stroke-width:2.3;fill:none;
+    stroke-linecap:round}
+  .cat-search .cs-hot{flex:0 0 auto;font-size:11.5px;font-weight:700;color:#E5332B}
+  .cat-search .cs-tx{font-size:11.5px;color:#1F2329;overflow:hidden;text-overflow:ellipsis}
+  .cat-tools{flex:0 0 auto;display:flex;align-items:center;gap:16px;margin-left:21px;color:#1F2329;
+    cursor:pointer}
+  .cat-tools .ct-dots{display:flex;gap:2.5px}
+  .cat-tools .ct-dots i{width:3.5px;height:3.5px;border-radius:50%;background:#1F2329;display:block}
+  .cat-tools .ct-ring{width:19px;height:19px;border-radius:50%;border:1.6px solid #1F2329;
+    position:relative;display:block}
+  .cat-tools .ct-ring::after{content:"";position:absolute;left:4.5px;right:4.5px;top:50%;height:1.6px;
+    background:#1F2329;transform:translateY(-50%);border-radius:2px}
+  .cat-icons{position:relative;margin-top:8px;display:flex;overflow-x:auto;overflow-y:hidden;
+    scrollbar-width:none}
+  .cat-icons::-webkit-scrollbar{display:none;width:0;height:0}
+  .cat-icol{flex:0 0 62.8px;display:flex;flex-direction:column;align-items:center;gap:3px}
+  .cat-icol .cic{width:46px;height:46px;border-radius:50%;position:relative;overflow:hidden;
+    box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7)}
+  .cat-icol .cic::after{content:"";position:absolute;width:62%;height:62%;right:-16%;bottom:-20%;
+    border-radius:50%;background:rgba(255,255,255,.26)}
+  .cat-icol .clb{font-size:10px;line-height:20px;height:20px;padding:0 5px;border-radius:10px;
+    white-space:nowrap;color:#2A6B4A;background:rgba(255,255,255,.66)}
+  .cat-icol .clb.on{background:#14C67D;color:#FFF;font-weight:600}
+  .cic1{background:linear-gradient(140deg,#9FE0B4,#39BC72)}
+  .cic2{background:linear-gradient(140deg,#C8E990,#6CB63C)}
+  .cic3{background:linear-gradient(140deg,#FFCBA8,#EC7A4E)}
+  .cic4{background:linear-gradient(140deg,#AEDDF3,#3E9FD4)}
+  .cic5{background:linear-gradient(140deg,#F7D492,#D08C2A)}
+  .cic6{background:linear-gradient(140deg,#F8C78E,#C4702A)}
+  .cic7{background:linear-gradient(140deg,#EBD7B4,#C0A272)}
+  .cic8{background:linear-gradient(140deg,#FFB3B0,#E25C55)}
+  .cat-expand{position:absolute;right:0;top:0;bottom:0;width:60px;
+    background:linear-gradient(90deg,rgba(232,244,238,0) 0%,rgba(238,249,243,.9) 52%,#EDF8F2 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    color:#3D4A43;cursor:pointer}
+  .cat-expand .ce-t{writing-mode:vertical-rl;font-size:10.5px;line-height:1.1;letter-spacing:1.5px}
+  .cat-expand .ce-c{width:0;height:0;border-left:4.5px solid transparent;border-right:4.5px solid transparent;
+    border-top:5px solid #3D4A43}
+
+  .cat-split{flex:1 1 auto;min-height:0;display:flex}
+  .cat-side{flex:0 0 90px;background:#F5F6F8;overflow-y:auto;scrollbar-width:none}
+  .cat-side::-webkit-scrollbar{display:none;width:0}
+  .csi{height:50px;display:flex;align-items:center;justify-content:center;font-size:12.5px;color:#61666D;
+    position:relative;cursor:pointer;white-space:nowrap}
+  .csi.on{background:#FFF;color:#00A85E;font-weight:600}
+  .csi.on::before{content:"";position:absolute;left:0;top:15px;width:3px;height:20px;background:#00C26E;
+    border-radius:0 3px 3px 0}
+  .csi .csb{position:absolute;left:5px;top:50%;transform:translateY(-50%);background:#F5333F;color:#FFF;
+    font-size:8.5px;line-height:11px;border-radius:2px;padding:0 2px;font-weight:600}
+
+  .cat-main{flex:1 1 auto;min-width:0;background:#FFF;overflow-y:auto;padding:0 8px;
+    scrollbar-width:none}
+  .cat-main::-webkit-scrollbar{display:none;width:0}
+  .cat-bn{position:relative;height:69px;margin-top:8px;border-radius:9px;overflow:hidden;display:flex;
+    background:#E7EDE4}
+  .cat-bn .cb-ph{flex:1 1 auto;position:relative;
+    background:linear-gradient(120deg,#8FA86A,#4F6B38)}
+  .cat-bn .cb-ph::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(40% 62% at 32% 46%,rgba(255,255,255,.34),transparent 72%)}
+  .cat-bn .cb-or{flex:0 0 122px;background:linear-gradient(120deg,#FF9C1A,#F2620B);padding:8px 11px;
+    display:flex;flex-direction:column;justify-content:center}
+  .cat-bn .cb-k{font-size:10px;color:#FFF3D8;font-weight:600;letter-spacing:.5px}
+  .cat-bn .cb-t{font-size:14.5px;color:#FFF;font-weight:800;line-height:1.14}
+  .cat-bn .cb-g{margin-top:3px;font-size:9.5px;color:#B23A00;background:#FFE7B8;border-radius:8px;
+    padding:1px 7px;align-self:flex-start;font-weight:600}
+
+  .cat-tabs{display:flex;align-items:center;gap:8px;margin-top:11px}
+  .ctab{font-size:12px;line-height:25px;height:25px;padding:0 12px;border-radius:13px;background:#F4F5F6;
+    color:#4A5158;white-space:nowrap;cursor:pointer}
+  .ctab.on{background:#FFF;color:#1F2329;font-weight:700;border:1px solid #22B660;line-height:23px}
+  .cat-tabs .ca-more{margin-left:auto;width:0;height:0;border-left:4.5px solid transparent;
+    border-right:4.5px solid transparent;border-top:5.5px solid #8C9299}
+  .cat-sort{display:flex;align-items:center;justify-content:flex-end;gap:11px;margin-top:7px;
+    font-size:11px;color:#61666D}
+  .cat-sort .cst-ic{width:12px;height:9px;position:relative}
+  .cat-sort .cst-ic::before{content:"";position:absolute;left:0;top:0;width:12px;height:1.4px;
+    background:#61666D;box-shadow:0 3.8px 0 #61666D,0 7.6px 0 #61666D}
+
+  .cat-list{margin-top:12px}
+  .ccard{display:flex;align-items:flex-start;gap:8px;padding-bottom:6px;border-bottom:1px solid #F1F3F5;
+    cursor:pointer}
+  .ccard+.ccard{padding-top:7px}
+  .ccard:last-child{border-bottom:none}
+  .cth{flex:0 0 86px;height:86px;border-radius:9px;position:relative;overflow:hidden}
+  .cth .cth-art{position:absolute;inset:0}
+  .cth .cbg{position:absolute;left:3px;bottom:7px;background:#E23A2E;color:#FFF;font-size:8px;
+    line-height:1.12;padding:2px 3px;border-radius:2px;writing-mode:vertical-rl;letter-spacing:.6px}
+  .cth .cbg2{position:absolute;right:3px;bottom:7px;background:#FFC24B;color:#8A3B00;font-size:8px;
+    line-height:11px;padding:0 3px;border-radius:2px;font-weight:700}
+  .cc1{background:linear-gradient(140deg,#FFE7A8,#E0AC41)}
+  .cc2{background:linear-gradient(140deg,#FF9A86,#C93A24)}
+  .cc3{background:linear-gradient(140deg,#CBAEE8,#7F4FBE)}
+  .cc4{background:linear-gradient(140deg,#DCEFC0,#8CBB58)}
+  .cc5{background:linear-gradient(140deg,#FFCFC6,#E0644C)}
+  .cinfo{flex:1 1 auto;min-width:0}
+  .crow1{display:flex;align-items:center;gap:4px;height:16px;overflow:hidden}
+  .ckill{flex:0 0 auto;background:linear-gradient(100deg,#FF6A3D,#F5333F);color:#FFF;font-size:9.5px;
+    line-height:14px;height:14px;padding:0 4px;border-radius:3px;font-weight:600}
+  .cseason{flex:0 0 auto;background:#EAF7EF;color:#00A85E;font-size:9.5px;line-height:14px;height:14px;
+    padding:0 4px;border-radius:3px;font-weight:600}
+  .cttl{font-size:13px;line-height:16px;height:32px;font-weight:600;color:#1F2329;margin-top:2px;
+    overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+  .cdesc{font-size:10.5px;color:#9AA0A6;line-height:14px;height:14px;margin-top:3px;overflow:hidden;
+    white-space:nowrap;text-overflow:ellipsis}
+  .cbuy{display:flex;align-items:center;gap:3px;font-size:10.5px;color:#9AA0A6;line-height:14px;
+    height:14px;margin-top:2px}
+  .cbuy svg{width:11px;height:11px;stroke:#9AA0A6;fill:none;stroke-width:1.6;stroke-linecap:round;
+    stroke-linejoin:round;flex:0 0 auto}
+  .cprice{display:flex;align-items:flex-end;gap:5px;margin-top:4px;height:26px}
+  .cprice .ck{font-size:10px;color:#E5332B;font-weight:600;line-height:16px;flex:0 0 auto}
+  .cprice .pnum{color:#E5332B;font-weight:800;line-height:1;display:flex;align-items:baseline;
+    flex:0 0 auto}
+  .cprice .pnum .sy{font-size:11px}
+  .cprice .pnum .in{font-size:19px}
+  .cprice .pold{font-size:11px;color:#B4B9BF;text-decoration:line-through;line-height:16px}
+  .cprice .cmb{background:linear-gradient(100deg,#4A4A4A,#2A2A2A);color:#F5D98B;font-size:9px;
+    line-height:14px;height:14px;padding:0 5px;border-radius:3px;font-weight:600;flex:0 0 auto}
+  .cprice .cgr{flex:0 0 auto;margin-left:auto;width:33px;height:26px;border-radius:8px;
+    background:linear-gradient(180deg,#FF6A3D,#E8331F);color:#FFF;font-size:12.5px;font-weight:700;
+    display:flex;align-items:center;justify-content:center}
+  .cpm2{font-size:11px;color:#B4B9BF;text-decoration:line-through;line-height:14px;margin-top:-2px}
+  .csold{position:relative;height:15px;border-radius:8px;background:#FFF;border:1px solid #F5CBC6;
+    overflow:hidden;margin-top:5px}
+  .csold i{position:absolute;left:0;top:0;bottom:0;background:#FBDDD9}
+  .csold span{position:relative;display:block;text-align:center;font-size:10px;line-height:13px;
+    color:#E5332B;font-weight:600}
+  .crank{display:inline-flex;align-items:center;gap:4px;margin-top:5px;background:#F6F7F8;
+    border-radius:4px;padding:2px 6px;font-size:10px;color:#7A8087;height:18px;box-sizing:border-box}
+  .crank b{background:#FF7A18;color:#FFF;border-radius:2px;font-size:9px;line-height:12px;
+    padding:0 3px;font-weight:600}
+
+/* ===== 购物车页 · 按真实界面 1:1 复刻（基准 375） ===== */
+  .ct-head{flex:0 0 auto;background:#F5F6FA;position:relative;z-index:20}
+  .ct-loc{height:44px;display:flex;align-items:center;padding-left:14.1px;position:relative}
+  .ct-pin{width:14px;height:14px;border-radius:50%;background:#00C26E;position:relative;flex:0 0 auto}
+  .ct-pin::after{content:"";position:absolute;left:4.6px;top:4.6px;width:4.8px;height:4.8px;border-radius:50%;background:#FFF}
+  .ct-name{font-size:16.5px;font-weight:600;color:#1F2329;margin-left:4.6px;line-height:1}
+  .ct-caret{width:5.4px;height:5.4px;border-right:1.5px solid #AFB4BB;border-bottom:1.5px solid #AFB4BB;
+    transform:rotate(-45deg);margin-left:4.8px;margin-top:-1.4px}
+  .ct-tools{position:absolute;right:12px;top:8.8px;height:26.4px;border-radius:13.2px;background:#FFF;
+    display:flex;align-items:center;box-shadow:0 1px 4px rgba(23,26,31,.05)}
+  .ct-more{width:34px;display:flex;align-items:center;justify-content:center;gap:2.6px}
+  .ct-more i{width:3.6px;height:3.6px;border-radius:50%;background:#1F2329;display:block}
+  .ct-vsep{width:1px;height:13px;background:#EDEEF0}
+  .ct-scan{width:32px;display:flex;align-items:center;justify-content:center}
+  .ct-scan i{width:11.4px;height:11.4px;border:1.6px solid #1F2329;border-radius:50%;position:relative;display:block}
+  .ct-scan i::after{content:"";position:absolute;left:2.4px;top:2.4px;width:3.2px;height:3.2px;border-radius:50%;background:#1F2329}
+  .ct-title{height:22px;margin-bottom:11px;display:flex;align-items:center;padding-left:12.6px;position:relative}
+  .ct-t1{font-size:20px;font-weight:700;color:#1F2329;letter-spacing:-.3px;line-height:1}
+  .ct-t2{font-size:15px;color:#55585E;margin-left:20.4px;line-height:1}
+  .ct-t3{position:absolute;right:79.4px;font-size:11.5px;color:#1F2329}
+  .ct-t4{position:absolute;right:12.9px;font-size:13px;color:#1F2329}
+  .ct-body{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;background:#F5F6FA;padding-top:2.8px}
+  .ct-body::-webkit-scrollbar{width:0}
+  .ct-body::-webkit-scrollbar{height:0}
+
+  /* 卡① 满9.9元换购（粉→白竖渐变，高 154） */
+  .ct-ex{height:154px;margin:0 12px 10px;border-radius:10px;position:relative;overflow:hidden;
+    background:linear-gradient(180deg,#FFF1F3 0%,#FFF6F8 40%,#FFFBFD 68%,#FFFFFF 100%)}
+  .ct-ex-pill{position:absolute;left:73.5px;top:0;height:13.8px;line-height:13.8px;padding:0 7px;
+    border-radius:0 0 8px 8px;background:linear-gradient(100deg,#FF8F3C,#FF3B30);color:#FFF;
+    font-size:8px;font-weight:600;white-space:nowrap}
+  .ct-ex-hd{position:absolute;left:0;right:0;top:16px;height:14px;padding:0 18.8px 0 17.3px;
+    display:flex;align-items:center}
+  .ct-ex-t{font-size:13px;font-weight:700;color:#F5333F;line-height:1}
+  .ct-ex-go{font-size:13px;color:#FF4D4F;margin-left:auto;line-height:1}
+  .ct-ex-row{position:absolute;left:0;right:0;top:43.1px;height:110.4px;display:flex;overflow-x:auto}
+  .ct-tile{flex:0 0 80.9px;position:relative;height:110.4px}
+  .ct-timg{width:62px;height:53.4px;margin:0;border-radius:6px;position:relative;overflow:hidden}
+  .ct-tbadge{position:absolute;left:15.2px;top:52.1px;width:36.6px;height:14.6px;line-height:14.6px;
+    padding:0;text-align:center;border-radius:4px;background:#F5333F;color:#FFF;font-size:9.5px;font-weight:600}
+  .ct-tprice{position:absolute;left:0;width:62px;text-align:center;top:70.6px;
+    font-family:ui-monospace,Menlo,monospace;font-size:13px;font-weight:700;color:#F5333F;line-height:14px}
+  .ct-told{position:absolute;left:0;width:62px;text-align:center;top:91.3px;font-size:10.5px;color:#B4B9C0;
+    text-decoration:line-through;line-height:12px}
+  .ct-tadd{position:absolute;right:1.2px;top:86px;width:18.5px;height:18.5px;border-radius:50%;background:#00C26E;
+    color:#FFF;font-size:14px;line-height:18.5px;text-align:center}
+
+  /* 卡② 限时抢（白，头部 34.2 + 1px 分隔 + 商品行） */
+  .ct-fl{background:#FFF;border-radius:10px;margin:0 12px;overflow:hidden}
+  .ct-fl-hd{height:34.2px;display:flex;align-items:center;padding:0 11px 0 12px;border-bottom:1px solid #F1F2F4}
+  .ct-fl-tag{height:15.5px;line-height:15.5px;padding:0 8px;border-radius:3px;
+    background:linear-gradient(100deg,#FF5A3C,#F5333F);color:#FFF;font-size:11px;font-weight:600}
+  .ct-fl-t{font-size:11px;font-weight:700;color:#1F2329;margin-left:2.4px}
+  .ct-fl-go{font-size:11px;color:#61666D;margin-left:auto}
+  .ct-prow{display:flex;align-items:flex-start;padding:13px 12px 16px;position:relative}
+  .ct-prow:last-child{padding-bottom:8px}
+  .ct-pchk{width:20px;height:20px;border-radius:50%;background:#00C26E;color:#FFF;font-size:12px;
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin-top:30px}
+  .ct-pimg{width:84px;height:84px;border-radius:8px;flex:0 0 auto;margin-left:16px;margin-top:12px;position:relative;overflow:hidden}
+  .ct-pinfo{flex:1 1 auto;min-width:0;margin-left:6.8px;padding-top:1px}
+  .ct-ptitle{font-size:15px;line-height:20px;font-weight:600;color:#1F2329}
+  .ct-brand{display:inline-block;font-size:11px;font-weight:500;color:#9A5B1E;background:#F7E7CE;
+    border-radius:3px;padding:0 4px;line-height:15px;margin-right:3px;vertical-align:1px}
+  .ct-spec{display:flex;width:fit-content;align-items:center;gap:4px;height:20px;padding:0 8px;margin-top:2px;
+    background:#F1F2F4;border-radius:10px;font-size:11px;color:#61666D}
+  .ct-spec i{width:7px;height:7px;border-right:1.4px solid #8A9099;border-bottom:1.4px solid #8A9099;
+    transform:rotate(45deg) translateY(-1.5px);font-style:normal}
+  .ct-pline{display:flex;align-items:center;margin-top:10px}
+  .ct-now{font-family:ui-monospace,Menlo,monospace;font-size:20px;font-weight:700;color:#F5333F;line-height:1}
+  .ct-now i{font-size:12px;font-style:normal}
+  .ct-old{font-size:12px;color:#9AA0A6;text-decoration:line-through;margin-left:7px}
+  .ct-step{display:flex;align-items:center;width:98px;height:30px;border:1px solid #E8EAED;border-radius:15px;
+    overflow:hidden;margin-left:auto;flex:0 0 auto}
+  .ct-step span{flex:1 1 0;text-align:center;font-size:13px;color:#1F2329;line-height:28px}
+  .ct-step .s1{border-right:1px solid #EFF1F3;font-size:16px;color:#3C4148}
+  .ct-step .s2{border-left:1px solid #EFF1F3;font-size:16px;color:#3C4148}
+  .ct-tip{font-size:11px;line-height:13px;color:#9AA0A6;margin-top:8.5px;display:flex;align-items:center;gap:3px}
+  .ct-tip i{width:11px;height:11px;border:1px solid #BCC1C8;border-radius:50%;font-size:8px;line-height:9px;
+    text-align:center;font-style:normal;color:#BCC1C8;flex:0 0 auto}
+  .ct-mbadge{position:absolute;right:-2.9px;top:40.8px;width:46px;height:46.6px;border-radius:6px;
+    background:linear-gradient(180deg,#FDF0E4,#FBE0CB);color:#C4562A;font-size:11px;font-weight:700;
+    line-height:15px;text-align:center;padding-top:10px;z-index:3}
+  .ct-mbadge::before{content:"";position:absolute;left:50%;top:-6px;transform:translateX(-50%);
+    width:20px;height:7px;background:#FDF0E4;
+    clip-path:polygon(0 100%,14% 0,50% 62%,86% 0,100% 100%)}
+
+  /* 猜你喜欢 + 双列瀑布 */
+  .ct-guess{margin-top:34.2px;text-align:center;font-size:26px;font-weight:700;letter-spacing:.6px;
+    line-height:1.35;background:linear-gradient(96deg,#FFA36B,#FF5470);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .ct-grid{display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px 14px}
+  .ct-gcard{width:171.4px;background:#FFF;border-radius:8px;overflow:hidden;padding-bottom:8px}
+  .ct-gimg{width:100%;height:158px;position:relative;overflow:hidden}
+  .ct-gname{font-size:13px;line-height:18px;color:#1F2329;padding:8px 9px 0;height:36px;overflow:hidden}
+  .ct-grow{display:flex;align-items:center;padding:6px 9px 0}
+  .ct-gprice{font-family:ui-monospace,Menlo,monospace;font-size:16px;font-weight:700;color:#F5333F}
+  .ct-gprice i{font-size:10px;font-style:normal}
+  .ct-gadd{margin-left:auto;width:20px;height:20px;border-radius:50%;background:#00C26E;color:#FFF;
+    font-size:15px;line-height:20px;text-align:center}
+
+  /* 凑单助手胶囊 + 底栏 */
+  .ct-jd{flex:0 0 auto;height:34.3px;background:#FFEDEF;border-radius:17px;display:flex;align-items:center;
+    padding:0 15px 0 11px;position:relative;z-index:28}
+  .ct-jd-a{font-size:13px;font-weight:700;color:#F5333F;line-height:1}
+  .ct-jd-v{width:1px;height:12px;background:#EFC9CD;margin:0 7.6px}
+  .ct-jd-b{font-size:12px;color:#1F2329;line-height:1}
+  .ct-jd-b b{color:#F5333F;font-weight:600}
+  .ct-jd-go{margin-left:auto;height:31px;padding:0 15px;border-radius:15.5px;background:#FFF;
+    border:1px solid #F5333F;color:#F5333F;font-size:13px;font-weight:600;line-height:29px;
+    display:flex;align-items:center}
+  .ct-bar{flex:0 0 auto;height:53.6px;background:#FFF;display:flex;align-items:center;padding:0 12px;
+    position:relative;z-index:30}
+  .ct-chk{width:19.1px;height:19.1px;border-radius:50%;background:#00C26E;color:#FFF;font-size:11px;
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .ct-all{font-size:12px;color:#1F2329;margin-left:4.9px}
+  .ct-sum{margin-left:auto;margin-right:10.8px;text-align:right}
+  .ct-sum1{display:flex;align-items:baseline;justify-content:flex-end;gap:2px}
+  .ct-sum1 em{font-size:13px;font-style:normal;color:#1F2329}
+  .ct-sum-p{font-family:ui-monospace,Menlo,monospace;font-size:24px;font-weight:700;color:#F5333F;line-height:1}
+  .ct-sum-p i{font-size:14px;font-style:normal}
+  .ct-sum-p s{font-size:14px;text-decoration:none}
+  .ct-sum-caret{width:0;height:0;border-left:4.5px solid transparent;border-right:4.5px solid transparent;
+    border-bottom:5px solid #1F2329;margin-left:5px;align-self:center}
+  .ct-freeship{font-size:11px;color:#9AA0A6;margin-top:2px}
+  .ct-submit{height:38px;padding:0 20px;border-radius:19px;background:linear-gradient(120deg,#00C26E,#2ED184);
+    color:#FFF;display:flex;align-items:center;font-size:16px;font-weight:600;flex:0 0 auto}
+
+  .tabbar .tab .tl-red{color:#F5333F;font-weight:700;font-size:13px}
+
+  /* ---- 购物车页在原型里的落位：头部两行放导航槽、底部三层固定 ---- */
+  .nav-bar.ct-nav{height:77px;flex-direction:column;align-items:stretch;justify-content:flex-start;
+    padding:0;background:#F5F6FA}
+  .nav-bar.ct-nav.bordered{border-bottom:none}
+  .ct-wrap{background:#F5F6FA;min-height:100%;padding-top:2.8px;padding-bottom:6px}
+  .ct-pchk{cursor:pointer}
+  .ct-pchk.off{background:#FFF;border:1.5px solid #D3D7DD;color:transparent}
+  .ct-step span{cursor:pointer}
+  .ct-tadd,.ct-gadd{cursor:pointer}
+  .ct-bar{padding-bottom:0}
+  .ct-jdfoot{flex:0 0 auto;display:block}
+
+  /* ============ 我的 · 个人中心（1:1 对齐真机 1280x2781 / SCALE 3.4133） ============ */
+  .my-wrap{background:#F5F6FA;min-height:100%}
+  .my-head{height:235px;background:#FBDED0;position:relative;flex:0 0 auto}
+  .my-prof{position:absolute;left:0;right:0;top:0;height:110px}
+  .my-ava{position:absolute;left:12.5px;top:26px;width:48px;height:48px;cursor:pointer}
+  .my-ava svg{width:48px;height:48px;display:block}
+  .my-nick{position:absolute;left:70.6px;top:31.2px;height:20px;font-size:18px;line-height:20px;font-weight:700;
+    color:#2E2E2E;letter-spacing:.1px;white-space:nowrap;display:flex;align-items:center;cursor:pointer}
+  .my-nick i{display:flex;align-items:center;margin-left:5.6px}
+  .my-nick i svg{width:5.6px;height:10.6px;display:block}
+  .my-vip{position:absolute;left:68px;top:54px;height:18.5px;display:flex;align-items:center;cursor:pointer}
+  .my-vip em{width:18.5px;height:18.5px;border-radius:6px;flex:0 0 auto;
+    background:linear-gradient(140deg,#7A5330,#452C14);display:flex;align-items:center;justify-content:center}
+  .my-vip em svg{width:12.5px;height:12.5px;display:block}
+  .my-vip span{margin-left:1.8px;font-size:11px;font-weight:600;color:#74543B;line-height:1}
+  .my-cap{position:absolute;left:295.6px;top:32px;width:73.5px;height:27.5px;border-radius:13.75px;
+    background:rgba(255,255,255,.86);border:1px solid rgba(150,105,70,.16);display:flex;align-items:center;
+    cursor:pointer}
+  .my-cap .d{flex:1;display:flex;align-items:center;justify-content:center;gap:2.4px}
+  .my-cap .d i{width:3.8px;height:3.8px;border-radius:50%;background:#2E2E2E;display:block}
+  .my-cap .s{width:1px;height:12.5px;background:rgba(150,105,70,.2)}
+  .my-cap .g{flex:1;display:flex;align-items:center;justify-content:center}
+  .my-cap .g em{width:12.6px;height:12.6px;border-radius:50%;border:1.5px solid #2E2E2E;position:relative;display:block}
+  .my-cap .g em::after{content:"";position:absolute;left:50%;top:50%;width:4.6px;height:4.6px;
+    margin:-2.3px 0 0 -2.3px;border-radius:50%;background:#2E2E2E}
+  /* 深色会员卡 356.8x157.9 @(9.1,83) —— 卡底 266.9 越过米色块 261 边界，压在灰底之上 */
+  .my-card{position:absolute;left:9.1px;top:83px;width:356.8px;height:157.9px;border-radius:14px;
+    overflow:hidden;z-index:3;box-shadow:0 6px 16px rgba(60,32,12,.16);
+    background:linear-gradient(135deg,#4E4840 0%,#333230 24%,#1E2026 50%,#0C121A 74%,#111820 100%)}
+  .my-crow{position:absolute;left:11.4px;top:14.5px;height:20px;display:flex;align-items:center}
+  .my-crow .cr{width:20px;height:20px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;margin-right:4.5px}
+  .my-crow .cr svg{width:20px;height:20px;display:block}
+  .my-ct1{font-size:17px;font-weight:800;color:#F2C98F;letter-spacing:.2px}
+  .my-ct2{font-size:12.5px;color:#DDB489;margin-left:9px}
+  .my-ct3{font-size:17px;font-weight:800;color:#FFF7EA;margin-left:3px}
+  .my-ct4{font-size:12.5px;color:#DDB489;margin-left:1px}
+  .my-more{position:absolute;right:9.9px;top:7.5px;width:98px;height:36px;border-radius:18px;
+    background:linear-gradient(115deg,#FBDCBE,#F0B892);display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:700;color:#8A4A22;box-shadow:0 2px 6px rgba(0,0,0,.22);cursor:pointer}
+  .my-more i{font-style:normal;margin-left:3px;font-weight:500}
+  .my-sub{position:absolute;left:0;top:51.3px;width:100%;height:96.3px}
+  .my-s{position:absolute;top:0;height:96.3px;border-radius:10px;background:#FFEFE7;overflow:hidden;cursor:pointer}
+  .my-s1{left:9.9px;width:165.5px} .my-s2{left:181.6px;width:79.7px} .my-s3{left:267.2px;width:79.7px}
+  .my-hd{height:24px;display:flex;align-items:center}
+  .my-chip{height:24px;flex:0 0 auto;padding:0 5px;border-radius:10px 0 8px 0;color:#FFF;
+    font-size:11.5px;font-weight:600;display:flex;align-items:center;justify-content:center;letter-spacing:-1px;
+    background:linear-gradient(104deg,#F6BE96,#C98058)}
+  .my-gift{margin-left:6.7px;font-size:11px;color:#6B6B6B;white-space:nowrap}
+  .my-pb{position:absolute;top:25.4px;width:80px;height:54.4px;border-radius:8px;background:#F8DCCD;
+    display:flex;align-items:center;justify-content:center;border-bottom:1px dashed #E0B191}
+  .my-pb.p1{left:0} .my-pb.p2{left:85.5px}
+  .my-pb b{color:#8A4A22;font-weight:800;font-size:22px;letter-spacing:-.6px;line-height:1}
+  .my-pb b i{font-size:13px;font-style:normal;font-weight:700;margin-right:1px}
+  .my-plab{position:absolute;top:81.5px;width:80px;text-align:center;font-size:12px;color:#8C5A32;
+    line-height:16px;font-weight:500}
+  .my-pimg{position:absolute;left:50%;margin-left:-24px;top:25px;width:48px;height:48px;border-radius:7px;overflow:hidden}
+  .my-pimg svg{width:48px;height:48px;display:block}
+  .my-prow{position:absolute;left:0;right:0;top:76px;height:20px;display:flex;align-items:center;
+    justify-content:center;gap:2px}
+  .my-prow b{font-size:16px;font-weight:800;color:#8A4A22;letter-spacing:-.4px;line-height:1}
+  .my-prow b i{font-size:11px;font-style:normal;font-weight:700;margin-right:.5px}
+  .my-prow s{font-size:11px;color:#B69C8A;text-decoration:line-through}
+  /* 下方白卡组 */
+  .my-flow{background:#F5F6FA;padding:13.2px 8.1px 16px}
+  .my-w{background:#FFF;border-radius:12px;display:flex}
+  .my-b1{height:63px;margin-bottom:8.2px}
+  .my-b1 .c{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;cursor:pointer}
+  .my-b1 .n{font-size:18px;font-weight:800;color:#141414;line-height:22px;margin-top:12.5px;letter-spacing:-.3px}
+  .my-b1 .l{font-size:12px;color:#595959;line-height:16px}
+  .my-tag{position:absolute;left:calc(50% + 5.4px);top:8.8px;height:13.2px;line-height:13.2px;padding:0 .5px;
+    border-radius:6.6px;background:linear-gradient(96deg,#FF9A2E,#F5333F);color:#FFF;font-size:11px;
+    font-weight:600;white-space:nowrap;z-index:2}
+  .my-b2{height:71.8px;margin-bottom:8.5px}
+  .my-b2 .c{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;cursor:pointer}
+  .my-b2 .c>svg{width:26px;height:26px;margin-top:11.9px;stroke:#2A2A2A;fill:none;stroke-width:1.7;
+    stroke-linecap:round;stroke-linejoin:round;transform:scale(1.1)}
+  .my-b2 .c>span.my-t{font-size:12px;color:#2A2A2A;line-height:16px;margin-top:9.9px}
+  .my-b2 .c.s5::before{content:"";position:absolute;left:0;top:14px;width:1px;height:34px;background:#EEF0F2}
+  .my-dot{position:absolute;left:calc(50% + 5.6px);top:4.1px;min-width:15.5px;height:15.5px;border-radius:999px;
+    background:#F5333F;color:#FFF;font-size:10px;line-height:15.5px;text-align:center;font-weight:600;
+    box-shadow:0 0 0 1.6px #FFF}
+  .my-b3{height:79.4px;margin-bottom:8.2px}
+  .my-b3 .c{flex:1;display:flex;flex-direction:column;align-items:center;cursor:pointer}
+  .my-tile{width:27px;height:30.5px;border-radius:9px;margin-top:11.4px;flex:0 0 auto;position:relative;
+    overflow:hidden;display:block}
+  .my-tile svg{width:27px;height:30.5px;display:block}
+  .my-b3 .c>span.my-t{font-size:12px;color:#2B2B2B;line-height:16px;margin-top:9.1px}
+  .my-b4{height:165.8px;margin-bottom:7.6px;flex-direction:column}
+  .my-b4 .r{flex:0 0 82.9px;display:flex}
+  .my-b4 .c{flex:0 0 70.05px;position:relative;display:flex;flex-direction:column;align-items:center;cursor:pointer}
+  .my-b4 .c>svg{width:26px;height:26px;margin-top:15px;stroke:#2F2F2F;fill:none;stroke-width:1.75;
+    stroke-linecap:round;stroke-linejoin:round;transform:scale(1.1)}
+  .my-b4 .c>span.my-t{font-size:12px;color:#2F2F2F;line-height:16px;margin-top:13.7px}
+  .my-b4 .r:last-child .c>svg{margin-top:19.1px}
+  .my-b4 .r:last-child .c>span.my-t{margin-top:10.2px}
+  .my-bdg{position:absolute;left:calc(50% - 1px);top:12.3px;height:12.9px;line-height:12.9px;padding:0 1.4px;
+    border-radius:6.45px;background:linear-gradient(96deg,#FF9A2E,#F5333F);color:#FFF;font-size:8.5px;
+    font-weight:600;white-space:nowrap;z-index:2}
+  /* 评价抽奖 Banner */
+  .my-bn{height:104px;border-radius:12px;position:relative;overflow:hidden;display:flex;cursor:pointer;
+    background:linear-gradient(112deg,#E3C6FE 0%,#B44BE4 26%,#9B1BD6 58%,#C220EB 82%,#D69BFA 100%)}
+  .my-bn .blk{flex:0 0 44px;position:relative;background:linear-gradient(150deg,#9BE86E,#5FC93F);z-index:2}
+  .my-bn .blk .who{position:absolute;left:4px;top:34px;width:36px;height:36px;border-radius:50%;
+    background:linear-gradient(150deg,#FFF8E6,#FBE6B8);display:flex;align-items:center;justify-content:center;
+    color:#E5671C;font-size:17px;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+  .my-bn .ribbon{position:absolute;left:30px;top:-24px;width:54px;height:150px;background:rgba(255,255,255,.28);
+    transform:rotate(14deg);z-index:1}
+  .my-bn .coin{position:absolute;left:30px;top:48px;width:22px;height:22px;border-radius:50%;z-index:3;
+    background:radial-gradient(circle at 34% 28%,#FFEFAE,#E5A414);display:flex;align-items:center;
+    justify-content:center;color:#7A4D06;font-size:11px;font-weight:800;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+  .my-bn .tt{position:absolute;left:0;right:0;top:9px;text-align:center;font-size:29px;font-weight:800;
+    color:#FFF;letter-spacing:1.5px;-webkit-text-stroke:1.8px #8A1EC4;paint-order:stroke fill;
+    text-shadow:0 3px 0 rgba(104,14,150,.45);z-index:2}
+  .my-bn .go{position:absolute;right:-20px;top:20px;width:68px;height:68px;border-radius:50%;z-index:2;
+    background:linear-gradient(150deg,#C88CF0,#9A35DC);color:#FFF;font-size:11.5px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;text-align:center;line-height:14px;padding-right:12px}
+  .my-bn .sp{position:absolute;background:#FFF;border-radius:50%;opacity:.85;z-index:2}
+  /* tabbar 激活位：绿底笑脸圆 */
+  .tabbar .tab .mine-ic{width:20.5px;height:20.5px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .tabbar .tab .mine-ic svg{flex:0 0 auto;width:23px;height:23px;display:block;stroke:currentColor;fill:none;stroke-width:1.9}
+  .tabbar .tab.on .mine-ic circle{fill:var(--primary);stroke:var(--primary)}
+  .tabbar .tab.on .mine-ic path{stroke:#FFF}
+
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <aside class="side">
+    <h1>可点击交互原型</h1>
+    <p class="sub">即时零售小程序 · 单机可运行 · 主链路已打通，无需后端</p>
+
+    <div class="panel">
+      <h2>页面跳转</h2>
+      <div class="jump" id="jump"></div>
+    </div>
+
+    <div class="panel">
+      <h2>建议按这个顺序体验</h2>
+      <ol class="steps">
+        <li>首页点<b>任一商品卡</b> → 进商品详情</li>
+        <li>点<b>加入购物车</b> → 看底部角标 +1 并弹提示</li>
+        <li>切到底部 <b>购物车</b> → 调数量、勾选，看<b>免运费进度条</b>与金额实时变化</li>
+        <li>点<b>去结算</b> → 确认订单页改配送时段、开关朴分</li>
+        <li>点<b>提交订单</b> → 支付中动画 → 支付成功 → <b>订单追踪</b>时间轴</li>
+        <li>首页 <b>金刚区 20 格</b>（前两行 10 格固定 / 后 10 格横滑）点任一品类 → 直达分类页对应类目</li>
+        <li>首页<b>一直向上滑动</b>：<b>先是搜索框吸顶</b>（第 1 层，滚出头图才滑下来）；继续滑到<b>推荐流头部的「为你推荐」Tab 行</b>时，<b>它才吸住</b>（第 2 层，贴在搜索框下方）——<b>不是一滚动 Tab 就吸顶</b>；再往下是<b>瀑布流</b>（同一页，非二级页）</li>
+        <li>底部 <b>我的</b> → 进订单列表，点订单卡回到追踪页</li>
+        <li>底部 <b>分类</b> Tab → 切左侧一级类目，右侧商品联动</li>
+      </ol>
+    </div>
+
+    <div class="panel">
+      <h2>实时状态</h2>
+      <div class="kv"><span>当前页面</span><span id="st-screen">-</span></div>
+      <div class="kv"><span>购物车件数</span><span id="st-count">0</span></div>
+      <div class="kv"><span>商品小计</span><span id="st-sub">0.00</span></div>
+      <div class="kv"><span>免配送费差</span><span id="st-gap">0.00</span></div>
+      <div class="kv"><span>最近订单号</span><span id="st-order">-</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>规则常量（可改）</h2>
+      <div class="kv"><span>免配送费门槛</span><span>¥28.00</span></div>
+      <div class="kv"><span>配送费</span><span>¥5.00</span></div>
+      <div class="kv"><span>满减券门槛</span><span>¥59 − ¥10</span></div>
+      <div class="kv"><span>朴分抵扣上限</span><span>5% / ¥10</span></div>
+    </div>
+
+    <button class="btn-reset" id="btn-reset">重置原型状态</button>
+  </aside>
+
+  <div class="stage">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="status-bar" id="statusbar"><span>9:41</span><span class="right"><span>5G</span><span class="batt"></span></span></div>
+      <div class="nav-bar bordered" id="navbar"></div>
+      <div class="body" id="body"></div>
+      <div id="bottombar"></div>
+      <div class="home-ind"><i></i></div>
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ===================== 数据 ===================== */
+const CATS = ['中秋推荐','秋果上新','鲜花绿植','好果源疆','礼盒/箱装','葡提/石榴','柑橘橙柚柠','蓝莓/猕猴桃','西梅/桃李枣','果切/小番茄','西瓜/蜜瓜'];
+const PRODUCTS = [
+  {id:'p1', cat:'水果', name:'阳光玫瑰青提 1kg 精选大果', spec:'1kg 装（精选大果）', price:29.9, origin:45.0, th:'th-a', tag:['限时秒杀','tag-solid'], stock:8,  hot:1},
+  {id:'p2', cat:'水果', name:'泰国金枕头榴莲 冷冻果肉',   spec:'300g / 盒',        price:52.0, origin:68.0, th:'th-b', tag:['会员价 ¥46','tag-member'], stock:12, hot:2},
+  {id:'p3', cat:'水果', name:'有机小番茄 500g 无农残',     spec:'500g / 份',        price:12.8, origin:16.8, th:'th-c', tag:['朴朴自营','tag-green'], stock:36},
+  {id:'p4', cat:'水果', name:'海南树上熟贵妃芒 2.5kg',     spec:'约 2.5kg / 箱',    price:39.9, origin:0,    th:'th-e', tag:['2 件 9 折','tag-orange'], stock:20},
+  {id:'p5', cat:'蔬菜', name:'本地小青菜 400g',            spec:'400g / 份',        price:3.6,  origin:0,    th:'th-g', tag:['朴朴自营','tag-green'], stock:88},
+  {id:'p6', cat:'蔬菜', name:'云南水果番茄 500g',          spec:'500g / 袋',        price:8.9,  origin:11.9, th:'th-c', tag:['限时秒杀','tag-solid'], stock:40},
+  {id:'p7', cat:'肉禽蛋', name:'黑猪肉馅 500g',            spec:'500g / 盒',        price:36.8, origin:0,    th:'th-h', tag:['冷鲜配送','tag-blue'], stock:18},
+  {id:'p8', cat:'肉禽蛋', name:'谷物鲜鸡蛋 20 枚装',       spec:'20 枚 / 盒',       price:22.9, origin:28.0, th:'th-b', tag:['朴朴自营','tag-green'], stock:60},
+  {id:'p9', cat:'海鲜水产', name:'冰鲜三文鱼刺身 200g',    spec:'200g / 盒',        price:59.9, origin:79.0, th:'th-g', tag:['会员价 ¥54','tag-member'], stock:6},
+  {id:'p10',cat:'乳品烘焙', name:'伊利纯牛奶 250ml×12',    spec:'250ml × 12 盒',   price:49.9, origin:69.0, th:'th-d', tag:['2 件 9 折','tag-orange'], stock:44},
+  {id:'p11',cat:'乳品烘焙', name:'现烤北海道吐司 400g',    spec:'400g / 袋',        price:16.9, origin:0,    th:'th-e', tag:['当日现烤','tag-green'], stock:25},
+  {id:'p12',cat:'粮油调味', name:'金龙鱼稻米油 1.8L',      spec:'1.8L / 桶',        price:68.0, origin:0,    th:'th-h', tag:['满 59 减 10','tag-red'], stock:30},
+  {id:'g1', cat:'水果', name:'新疆蓝莓葡萄产地原装箱 1.5kg/筐', spec:'1.5kg/箱',   price:26.9, origin:31.9, th:'th-d', tag:['尚选','tag-member'], stock:9,  brand:'尚选'},
+  {id:'g2', cat:'水果', name:'优赐平和老树红肉蜜柚箱装 2.5-3kg（2粒）', spec:'',    price:22.9, origin:29.9, th:'th-c', tag:['尚选','tag-member'], stock:14, brand:'尚选'}
+];
+const SOLD_OUT = {id:'p13', cat:'水果', name:'新西兰奇异果 12 粒装', spec:'12 粒 / 箱',
+  price:39.9, origin:0, th:'th-h', tag:['本仓售罄','tag-red'], stock:0, dead:true};
+
+const RULES = { freeShip:28, shipFee:5, couponMin:59, couponVal:10, pointsRate:0.05, pointsMax:10 };
+
+/* ===================== 状态 ===================== */
+const initState = () => ({
+  screen:'home', stack:[], param:{},
+  cat:'中秋推荐', cTab:'今日推荐', subCat:'全部', search:'',
+  cart:[ {id:'g1', qty:1, ok:true}, {id:'g2', qty:1, ok:true} ],
+  checked:{ g1:true, g2:true },
+  pointsOn:true, slot:0, orderTab:'全部',
+  order:null, pkg:null
+});
+let S = initState();
+
+const findP = id => (id==='p13' ? SOLD_OUT : PRODUCTS.find(p=>p.id===id));
+
+/* ===================== 计算 ===================== */
+function cartStats(){
+  let count=0, sub=0;
+  S.cart.forEach(it=>{ if(it.ok){ count+=it.qty; if(S.checked[it.id]) sub += findP(it.id).price*it.qty; } });
+  const total = S.cart.filter(i=>i.ok).reduce((a,i)=>a+i.qty,0);
+  const coupon = sub >= RULES.couponMin ? RULES.couponVal : 0;
+  const points = (S.pointsOn && sub>0) ? Math.min(RULES.pointsMax, Math.round(sub*RULES.pointsRate*100)/100) : 0;
+  const ship = (sub>0 && sub < RULES.freeShip) ? RULES.shipFee : 0;
+  const pay = Math.max(0, sub - coupon - points + ship);
+  return {count, total, sub:+sub.toFixed(2), coupon, points, ship, pay:+pay.toFixed(2),
+          gap:+Math.max(0, RULES.freeShip-sub).toFixed(2),
+          checkedCount:S.cart.filter(i=>i.ok&&S.checked[i.id]).length};
+}
+const money = n => n.toFixed(2);
+
+/* ===================== 路由 ===================== */
+function go(screen, param){
+  if(param!==undefined) S.param = param;
+  if(screen!==S.screen){ S.stack.push(S.screen); }
+  S.screen = screen; render(); document.getElementById('body').scrollTop=0;
+}
+function back(){ S.screen = S.stack.pop()||'home'; render(); }
+function tabTo(screen){ S.stack=[]; S.screen=screen; render(); }
+
+/* ===================== 图标 ===================== */
+const IC = {
+  home:'<svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M9.5 21v-6h5v6"/></svg>',
+  cat:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.8"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.8"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.8"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.8"/></svg>',
+  cart:'<svg viewBox="0 0 24 24"><path d="M3 4h2.2l2.3 11h9.3L19 7.5H6.2"/><circle cx="9" cy="19.2" r="1.5"/><circle cx="16.6" cy="19.2" r="1.5"/></svg>',
+  order:'<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9.2 8.5h5.6M9.2 12.2h5.6"/></svg>',
+  me:'<span class="mine-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.4"/><path d="M8.4 12.4c.9 1.5 2.2 2.2 3.6 2.2s2.7-.7 3.6-2.2"/></svg></span>',
+  pin:'<svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
+  search:'<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>'
+};
+const IP_REC = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5.4" style="fill:none;stroke:#FFF;stroke-width:1.9"/><circle cx="9.9" cy="11" r=".85" style="fill:#FFF;stroke:none"/><circle cx="14.1" cy="11" r=".85" style="fill:#FFF;stroke:none"/><path d="M9.8 13.9c1.3.95 3.1.95 4.4 0" style="fill:none;stroke:#FFF;stroke-width:1.5;stroke-linecap:round"/></svg>';
+const IP_LIVE = '<svg viewBox="0 0 24 24"><path d="M9.4 8.2v7.6l6.2-3.8z" style="fill:#FFF;stroke:none"/></svg>';
+const priceHTML = (p, big) => '<span class="price'+(big?' price-lg':'')+'"><span class="sym">¥</span><span class="int">'+Math.floor(p)+'</span><span class="dec">.'+String(Math.round(p*100)%100).padStart(2,'0')+'</span></span>';
+
+/* ===================== 页面定义 ===================== */
+/* ---------- 图标库：内联 SVG，描边样式由 .kat .ic svg 统一控制 ---------- */
+const ICONS = {
+  fruit:'<svg viewBox="0 0 24 24"><defs><radialGradient id="k01a" cx="0.34" cy="0.28" r="0.86"><stop offset=".0" stop-color="#FF8A76"/><stop offset=".48" stop-color="#E5382A"/><stop offset="1" stop-color="#8E180E"/></radialGradient><linearGradient id="k01b" x1="0" y1="0" x2="1" y2="1"><stop offset=".0" stop-color="#82DE72"/><stop offset="1" stop-color="#2B8A33"/></linearGradient><linearGradient id="k01c" x1="0" y1="0" x2="1" y2="1"><stop offset=".0" stop-color="#7A4A22"/><stop offset="1" stop-color="#54300F"/></linearGradient></defs><ellipse cx="11" cy="21.2" rx="6.4" ry="1.1" fill="#3A0E08" opacity=".16"/><path d="M11.2 7.1c1.5-1.5 3.9-2 5.7-.7 2.1 1.5 2.6 5 1.1 8.1-1.4 2.9-3.7 4.9-6.2 4.9s-4.8-2-6.2-4.9C4.1 11.4 4.6 7.9 6.7 6.4c1.8-1.3 4.2-.8 5.7.7z" fill="url(#k01a)"/><path d="M6.4 16.6c1.5 1.6 3.2 2.4 4.8 2.4s3.3-.8 4.8-2.4c-.9 2.3-2.8 3.6-4.8 3.6s-3.9-1.3-4.8-3.6z" fill="#FFB9A6" opacity=".5"/><ellipse cx="8.5" cy="11.6" rx="1.75" ry="2.55" fill="#FFFFFF" opacity=".42" transform="rotate(-24 8.5 11.6)"/><path d="M11.4 7.3c-.2-1.4-.1-2.5.4-3.4" stroke="url(#k01c)" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M11.9 7.2c1.1-2.2 3.6-3 5.5-2.1-.6 2.4-3 3.7-5.5 2.1z" fill="url(#k01b)"/><path d="M12.3 7c1.5-.9 3.1-1.3 4.7-1.4" stroke="#22732B" stroke-width=".55" fill="none" opacity=".65"/><g transform="translate(18.6 6.4)"><circle cx="0" cy="-1.8" r="1.45" fill="#FFA3C0"/><circle cx="1.7" cy="-.55" r="1.45" fill="#FFA3C0"/><circle cx="1.05" cy="1.45" r="1.45" fill="#FFA3C0"/><circle cx="-1.05" cy="1.45" r="1.45" fill="#FFA3C0"/><circle cx="-1.7" cy="-.55" r="1.45" fill="#FFA3C0"/><circle cx="0" cy="0" r="1.05" fill="#FFD75E"/><circle cx="-.3" cy="-.35" r=".35" fill="#FFF" opacity=".8"/></g></svg>',
+  veg:'<svg viewBox="0 0 24 24"><defs><linearGradient id="k02a" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset=".0" stop-color="#8CE07C"/><stop offset=".5" stop-color="#47B54A"/><stop offset="1" stop-color="#1F7229"/></linearGradient><linearGradient id="k02b" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset=".0" stop-color="#FFFEF7"/><stop offset="1" stop-color="#D6E2BE"/></linearGradient><linearGradient id="k02c" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset=".0" stop-color="#FFFDF2"/><stop offset="1" stop-color="#E4D9BC"/></linearGradient></defs><ellipse cx="11.6" cy="21" rx="7.6" ry="1.15" fill="#12300F" opacity=".15"/><path d="M11.5 16.1C7.5 14.8 5.3 10.9 6.4 7.3c.3-1 .9-1.9 1.7-2.6 1.7 3.1 3.4 7.2 3.4 11.4z" fill="url(#k02a)"/><path d="M12.5 16.1c4-1.3 6.2-5.2 5.1-8.8-.3-1-.9-1.9-1.7-2.6-1.7 3.1-3.4 7.2-3.4 11.4z" fill="url(#k02a)"/><path d="M12 16.4c-2.3-1.7-3.2-4.9-2.2-7.7.4-1.4 1.2-2.7 2.2-3.7 1 1 1.8 2.3 2.2 3.7 1 2.8.1 6-2.2 7.7z" fill="#93E47E"/><path d="M11.5 15.5 8.2 8.5M11.9 15.6 9.5 8M12.5 15.5l3.3-7M12.1 15.6 14.5 8" stroke="#2A8532" stroke-width=".55" fill="none" opacity=".5"/><ellipse cx="9.9" cy="9.4" rx="1.05" ry="1.7" fill="#FFFFFF" opacity=".32" transform="rotate(-22 9.9 9.4)"/><path d="M9.4 15.7h5.2l-.68 4.5a1.1 1.1 0 0 1-1.1.95h-1.64a1.1 1.1 0 0 1-1.1-.95z" fill="url(#k02b)" stroke="#C6D3A8" stroke-width=".5"/><path d="M12 16.1v4.9M10.2 16.7l-.5 3.4M13.8 16.7l.5 3.4" stroke="#D3DEB9" stroke-width=".6" fill="none"/><path d="M14.3 16.3h5.3v3.6c0 .9-.75 1.6-1.65 1.6h-2c-.9 0-1.65-.7-1.65-1.6z" fill="url(#k02c)" stroke="#D8CAA4" stroke-width=".5"/><path d="M14.3 16.3h5.3l-1-1.2h-3.3z" fill="#FFFEF8" stroke="#D8CAA4" stroke-width=".5"/><ellipse cx="15.3" cy="18.1" rx="1" ry="0.6" fill="#FFFFFF" opacity=".55"/></svg>',
+  meat:'<svg viewBox="0 0 24 24"><defs><linearGradient id="k03a" x1="0.12" y1="0" x2="0.88" y2="1"><stop offset=".0" stop-color="#F4806A"/><stop offset=".42" stop-color="#D3452E"/><stop offset="1" stop-color="#8A2114"/></linearGradient><linearGradient id="k03b" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset=".0" stop-color="#FFFEF6"/><stop offset="1" stop-color="#E5D3B0"/></linearGradient><radialGradient id="k03c" cx="0.34" cy="0.28" r="0.86"><stop offset=".0" stop-color="#FFDC63"/><stop offset=".72" stop-color="#E8A21A"/><stop offset="1" stop-color="#C07A08"/></radialGradient></defs><ellipse cx="11" cy="20.8" rx="8.4" ry="1.2" fill="#3A0D06" opacity=".16"/><path d="M4.5 13.6c-.5-2.7 1.4-5.6 4.4-6.8 3.2-1.3 7-.5 8.9 2 1.3 1.7 1.4 4 .3 5.8-1.5 2.4-4.5 3.7-7.6 3.3-3-.4-5.4-2-6-4.3z" fill="url(#k03a)"/><path d="M4.5 13.6c-.5-2.7 1.4-5.6 4.4-6.8 3.2-1.3 7-.5 8.9 2" stroke="#F9B7A2" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M7.3 11.6c1.5-1.2 3.3-1.7 5.2-1.4M6.8 14.1c2.3-1.6 5.2-2 7.9-1.2" stroke="#FFCFC4" stroke-width="1" fill="none" stroke-linecap="round" opacity=".92"/><path d="M13.9 9.2c1 .3 1.8.9 2.4 1.7" stroke="#FFCFC4" stroke-width=".9" fill="none" stroke-linecap="round" opacity=".7"/><ellipse cx="8.3" cy="10.3" rx="2.35" ry="1.15" fill="#FFFFFF" opacity=".3" transform="rotate(-20 8.3 10.3)"/><ellipse cx="17.6" cy="16.6" rx="3.5" ry="4.4" fill="url(#k03b)" stroke="#D6C29A" stroke-width=".5"/><ellipse cx="17.6" cy="16.9" rx="2.05" ry="2.05" fill="url(#k03c)"/><ellipse cx="16.85" cy="16.15" rx="0.78" ry="0.5" fill="#FFFFFF" opacity=".72"/></svg>',
+  sea:'<svg viewBox="0 0 24 24"><defs><linearGradient id="k04a" x1="0.08" y1="0" x2="0.9" y2="1"><stop offset=".0" stop-color="#B0E7FA"/><stop offset=".42" stop-color="#52B8E2"/><stop offset="1" stop-color="#15608F"/></linearGradient><linearGradient id="k04b" x1="0" y1="0" x2="0" y2="1"><stop offset=".0" stop-color="#6BBCDD"/><stop offset="1" stop-color="#17608F"/></linearGradient></defs><ellipse cx="12.6" cy="20.6" rx="8.4" ry="1.15" fill="#04202F" opacity=".16"/><path d="M2.8 12.2 8.3 8.3c.5-.3 1.1 0 1.1.6v6.6c0 .6-.6.9-1.1.6z" fill="url(#k04b)"/><path d="M10.6 7.5c1.3-2.3 4-3.1 6.3-2-.8 2-2.9 3.2-5.3 2.7z" fill="#2A87B5"/><path d="M11.6 16.7c.5 1.9 2.3 3 4.2 2.5-.4-1.7-1.9-2.8-3.7-2.6z" fill="#2A87B5"/><path d="M8.5 12c0-3.5 3.1-6.2 7-6.2 3.2 0 6 2.1 6.6 4.9.2 1 .2 1.8 0 2.6-.6 2.8-3.4 4.9-6.6 4.9-3.9 0-7-2.7-7-6.2z" fill="url(#k04a)"/><path d="M10.7 8.6c2.4-1.7 6.1-1.7 8.7-.3-1.4 1.3-3.7 2-5.9 1.8-1.2-.1-2.2-.6-2.8-1.5z" fill="#FFFFFF" opacity=".34"/><path d="M10.2 14.6c2.4 1.6 5.6 2 8.4 1.1-.8 1.5-2.9 2.6-5.1 2.6-1.6 0-3-.5-4-1.4z" fill="#D6F0FC" opacity=".4"/><path d="M11.5 7.3c-1.3 2.7-1.3 6.7 0 9.4" stroke="#175C87" stroke-width=".85" fill="none" opacity=".5"/><path d="M14.5 11.3c.8 0 1.4.5 1.6 1.2M17.5 11.5c.8 0 1.4.5 1.6 1.2M15.5 14.1c.8 0 1.4.5 1.6 1.2" stroke="#D6F0FC" stroke-width=".7" fill="none" opacity=".6"/><circle cx="17.1" cy="10.4" r="1.15" fill="#0C3350"/><circle cx="17.48" cy="9.98" r=".42" fill="#FFFFFF"/></svg>',
+  oil:'<svg viewBox="0 0 24 24"><defs><linearGradient id="k05a" x1="0" y1="0" x2="1" y2="0"><stop offset=".0" stop-color="#FFD65C"/><stop offset=".3" stop-color="#F5B727"/><stop offset=".75" stop-color="#D8960F"/><stop offset="1" stop-color="#AC6F05"/></linearGradient><linearGradient id="k05b" x1="0" y1="0" x2="1" y2="0"><stop offset=".0" stop-color="#EFAB22"/><stop offset=".5" stop-color="#C57F09"/><stop offset="1" stop-color="#94590A"/></linearGradient><linearGradient id="k05c" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset=".0" stop-color="#FFF9E6"/><stop offset="1" stop-color="#EEE0BC"/></linearGradient><radialGradient id="k05d" cx="0.34" cy="0.28" r="0.86"><stop offset=".0" stop-color="#F7DDAE"/><stop offset=".5" stop-color="#E9C48A"/><stop offset="1" stop-color="#B8914F"/></radialGradient></defs><ellipse cx="11.6" cy="21.4" rx="8.6" ry="1.15" fill="#3A2606" opacity=".15"/><path d="M7.6 9.4c0-.9.7-1.5 1.5-1.5h3.4c.9 0 1.5.6 1.5 1.5v9.8c0 1.2-.9 2-2 2H9.6c-1.1 0-2-.8-2-2z" fill="url(#k05a)"/><rect x="8.9" y="5.4" width="3.8" height="4" rx=".5" fill="url(#k05b)"/><rect x="8.4" y="3.3" width="4.8" height="2.3" rx=".85" fill="#E23B2E"/><rect x="8.9" y="3.9" width="3.8" height=".7" rx=".35" fill="#FF8B7C" opacity=".65"/><rect x="6.9" y="11.6" width="7.8" height="5.2" rx=".7" fill="url(#k05c)"/><path d="M9.4 13.1h3.6M9.4 14.4h4.6M9.4 15.7h2.8" stroke="#D9A63A" stroke-width=".8" stroke-linecap="round"/><rect x="8.5" y="9.9" width="1.25" height="9.2" rx=".62" fill="#FFFFFF" opacity=".45"/><g transform="rotate(15 18.5 17.5)"><ellipse cx="18.5" cy="17.5" rx="2.5" ry="3.5" fill="url(#k05d)" stroke="#C29A58" stroke-width=".45"/><path d="M18.5 14.4c-.8.9-1.2 1.9-1.2 3.1M18.5 14.4c.8.9 1.2 1.9 1.2 3.1" stroke="#C29A58" stroke-width=".5" fill="none"/></g></svg>',
+  deli:'<svg viewBox="0 0 24 24"><defs><linearGradient id="k06a" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset=".0" stop-color="#CE8542"/><stop offset=".45" stop-color="#A05C22"/><stop offset="1" stop-color="#6B360E"/></linearGradient><radialGradient id="k06b" cx="0.34" cy="0.28" r="0.86"><stop offset=".0" stop-color="#FFEDB4"/><stop offset=".68" stop-color="#E8A93C"/><stop offset="1" stop-color="#C07E12"/></radialGradient><linearGradient id="k06c" x1="0" y1="0" x2="0" y2="1"><stop offset=".0" stop-color="#FDFAF3"/><stop offset="1" stop-color="#DBD0BC"/></linearGradient></defs><ellipse cx="12" cy="20.4" rx="9.2" ry="1.2" fill="#33200A" opacity=".15"/><ellipse cx="12" cy="18.4" rx="9.4" ry="3" fill="url(#k06c)"/><ellipse cx="12" cy="17.9" rx="9.4" ry="3" fill="#FDFAF3"/><ellipse cx="12" cy="17.7" rx="7.5" ry="2.1" fill="#EFE7D8"/><g transform="rotate(-8 9.2 13.4)"><rect x="4.8" y="11.1" width="9.6" height="4.5" rx="1.9" fill="url(#k06a)"/><path d="M6.8 12.5h5.6M6.8 14.1h4.1" stroke="#DC9E62" stroke-width=".8" stroke-linecap="round" opacity=".85"/><rect x="4.8" y="11.1" width="9.6" height="1.5" rx=".75" fill="#FFFFFF" opacity=".22"/></g><g transform="rotate(7 13.6 12.1)"><rect x="9" y="9.9" width="9.6" height="4.5" rx="1.9" fill="#B06A2E"/><path d="M11 11.3h5.6M11 12.9h4.1" stroke="#DC9E62" stroke-width=".8" stroke-linecap="round" opacity=".7"/><rect x="9" y="9.9" width="9.6" height="1.5" rx=".75" fill="#FFFFFF" opacity=".18"/></g><ellipse cx="16.7" cy="16.5" rx="3" ry="3.2" fill="url(#k06b)" stroke="#C08A22" stroke-width=".45"/><ellipse cx="15.75" cy="15.5" rx="1.05" ry="0.62" fill="#FFFFFF" opacity=".6"/><path d="M6.4 18.1c1.2-.5 2.9-.8 4.6-.8" stroke="#FFFFFF" stroke-width=".7" fill="none" opacity=".7"/></svg>',
+  frozen:'<svg viewBox="0 0 24 24"><defs><radialGradient id="k07a" cx="0.34" cy="0.28" r="0.86"><stop offset=".0" stop-color="#FFFFFF"/><stop offset=".55" stop-color="#F8F0DD"/><stop offset=".85" stop-color="#E4D5B6"/><stop offset="1" stop-color="#CBB894"/></radialGradient><linearGradient id="k07b" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset=".0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EDE2CB"/></linearGradient></defs><ellipse cx="12" cy="20.6" rx="7.6" ry="1.2" fill="#3A2E16" opacity=".15"/><path d="M12 5.4c4 0 7.2 3 7.2 6.7 0 1.7-.6 3.2-1.7 4.3H6.5c-1.1-1.1-1.7-2.6-1.7-4.3C4.8 8.4 8 5.4 12 5.4z" fill="url(#k07a)" stroke="#CDBB97" stroke-width=".5"/><path d="M12 5.4c-1.2 2.2-1.75 5.5-1.75 11M12 5.4c1.2 2.2 1.75 5.5 1.75 11M12 5.4c-2.2 1.5-3.9 4.6-4.4 11M12 5.4c2.2 1.5 3.9 4.6 4.4 11" stroke="#E2D4B6" stroke-width=".85" fill="none"/><path d="M10.3 7.3c.5-.9 1.1-1.4 1.7-1.4s1.2.5 1.7 1.4" stroke="#D6C5A0" stroke-width=".9" fill="none"/><ellipse cx="9.3" cy="9.5" rx="2.2" ry="1.35" fill="#FFFFFF" opacity=".72" transform="rotate(-24 9.3 9.5)"/><path d="M12 2.7V1.4M7.1 3.9 6.3 2.9M16.9 3.9l.8-1" stroke="#8FD0F0" stroke-width="1.35" stroke-linecap="round"/><path d="M9.1 16.4h5.8" stroke="#CDBB97" stroke-width=".7" opacity=".7"/></svg>',
+  dairy:'<svg viewBox="0 0 24 24"><defs><linearGradient id="k08a" x1="0" y1="0" x2="1" y2="0"><stop offset=".0" stop-color="#FFFFFF"/><stop offset=".5" stop-color="#EDF6FE"/><stop offset="1" stop-color="#BED9F0"/></linearGradient><linearGradient id="k08b" x1="0" y1="0" x2="1" y2="0"><stop offset=".0" stop-color="#DCEBFA"/><stop offset="1" stop-color="#9CC2E2"/></linearGradient><linearGradient id="k08c" x1="0" y1="0" x2="1" y2="0"><stop offset=".0" stop-color="#6FC4F5"/><stop offset="1" stop-color="#2A80C4"/></linearGradient></defs><ellipse cx="12" cy="21.3" rx="6.8" ry="1.1" fill="#1B3A52" opacity=".15"/><path d="M14.6 9.7l2.3 2.2v9.4l-2.3-.1z" fill="url(#k08b)"/><rect x="8.2" y="9.7" width="6.4" height="11.6" fill="url(#k08a)" stroke="#9CC2E2" stroke-width=".5"/><path d="M8.2 9.7 12 5.3l2.6 2.5-2.2 1.9z" fill="#F8FCFF" stroke="#9CC2E2" stroke-width=".5"/><path d="M14.6 7.8l2.3 2.2-2.3 1.9-2.6-2.4z" fill="#D2E6F8" stroke="#9CC2E2" stroke-width=".5"/><path d="M12 5.3l2.6 2.5-2.6 2.4-2.6-2.4z" fill="#FFFFFF" opacity=".8"/><rect x="9.5" y="12.5" width="3.8" height="4.6" rx=".4" fill="url(#k08c)"/><ellipse cx="11.4" cy="14.8" rx="1.15" ry="1.4" fill="#FFFFFF" opacity=".92"/><path d="M9.5 14.8h3.8" stroke="#FFFFFF" stroke-width=".6" opacity=".7"/><rect x="8.8" y="10.5" width=".95" height="9.9" fill="#FFFFFF" opacity=".85"/><path d="M14.9 10.3l1.6 1.5v8.6l-1.6-.1z" fill="#FFFFFF" opacity=".35"/></svg>',
+  drink:'<svg viewBox="0 0 24 24"><defs><linearGradient id="k09a" x1="0" y1="0" x2="1" y2="0"><stop offset=".0" stop-color="#5FCF90"/><stop offset=".32" stop-color="#2E9C63"/><stop offset=".78" stop-color="#15826B"/><stop offset="1" stop-color="#0A5334"/></linearGradient><linearGradient id="k09b" x1="0" y1="0" x2="1" y2="0"><stop offset=".0" stop-color="#FFE9A8"/><stop offset=".5" stop-color="#E0AE2A"/><stop offset="1" stop-color="#B37F0C"/></linearGradient><linearGradient id="k09c" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset=".0" stop-color="#FFFEF8"/><stop offset="1" stop-color="#E6D9BC"/></linearGradient></defs><ellipse cx="11.4" cy="21.3" rx="8.6" ry="1.15" fill="#042416" opacity=".16"/><path d="M9.4 3.6h4.6v3.1l1.2 2v10.8c0 .9-.7 1.6-1.6 1.6h-3.8c-.9 0-1.6-.7-1.6-1.6V8.7l1.2-2z" fill="url(#k09a)"/><path d="M9.4 3.6h4.6v1.1H9.4z" fill="#1B7A55"/><path d="M7.9 8.7h7.6" stroke="#0A5334" stroke-width=".85" opacity=".6"/><rect x="7.9" y="11.6" width="7.6" height="4.6" fill="url(#k09c)"/><path d="M10.2 13.2h3.4M10.2 14.6h4.2" stroke="#C9A24A" stroke-width=".75" stroke-linecap="round"/><rect x="10.1" y="9.9" width="1.2" height="9.6" rx=".6" fill="#FFFFFF" opacity=".38"/><path d="M17.1 11.2h4.3l-1 6.8c-.15 1-1 1.7-2.05 1.7h-.2c-1.05 0-1.9-.7-2.05-1.7z" fill="#F0F8FE" opacity=".62" stroke="#B4D3E6" stroke-width=".5"/><path d="M17.55 13.2h3.5l-.62 4.5c-.1.8-.75 1.4-1.5 1.4h-.1c-.75 0-1.4-.6-1.5-1.4z" fill="url(#k09b)"/><path d="M18.1 11.4v6.7" stroke="#FFFFFF" stroke-width=".7" opacity=".8"/><ellipse cx="19.3" cy="13.4" rx="1.3" ry=".42" fill="#FFF4CE" opacity=".8"/></svg>',
+  snack:'<svg viewBox="0 0 24 24"><defs><linearGradient id="k10a" x1="0.08" y1="0" x2="0.9" y2="1"><stop offset=".0" stop-color="#FFD97E"/><stop offset=".38" stop-color="#F2A33A"/><stop offset="1" stop-color="#B5660F"/></linearGradient><linearGradient id="k10b" x1="0" y1="0" x2="0" y2="1"><stop offset=".0" stop-color="#FFC94F"/><stop offset="1" stop-color="#D2831A"/></linearGradient></defs><ellipse cx="11.6" cy="21.4" rx="7.5" ry="1.1" fill="#4A2A05" opacity=".15"/><path d="M6.9 7.5h8.9l1.2 12.3c.08.85-.6 1.55-1.45 1.55H7.15c-.85 0-1.53-.7-1.45-1.55z" fill="url(#k10a)"/><path d="M6.9 7.5 6.3 4.4h10.2l-.6 3.1z" fill="url(#k10b)"/><path d="M6.3 4.4h10.2" stroke="#A9660F" stroke-width=".7"/><path d="M8.1 8.9v9.9" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round" opacity=".32"/><ellipse cx="10.6" cy="12.8" rx="1.9" ry="1.55" fill="#FFF3D6" stroke="#E8C37E" stroke-width=".4" transform="rotate(-18 10.6 12.8)"/><ellipse cx="13.6" cy="16.4" rx="1.55" ry="1.25" fill="#FFF3D6" stroke="#E8C37E" stroke-width=".4" transform="rotate(14 13.6 16.4)"/><ellipse cx="10.9" cy="18.4" rx="1.15" ry=".9" fill="#FFF3D6" opacity=".9" transform="rotate(-8 10.9 18.4)"/><path d="M7.4 19.4h3.4" stroke="#8A4E08" stroke-width=".7" opacity=".3"/></svg>',
+  moon:'<svg viewBox="0 0 24 24"><defs><radialGradient id="k11a" cx="0.34" cy="0.28" r="0.86"><stop offset=".0" stop-color="#FCE3A6"/><stop offset=".42" stop-color="#E8A93C"/><stop offset=".82" stop-color="#C4801F"/><stop offset="1" stop-color="#9E6410"/></radialGradient><radialGradient id="k11b" cx="0.4" cy="0.34" r="0.72"><stop offset=".0" stop-color="#FFEDBE"/><stop offset=".65" stop-color="#F6C862"/><stop offset="1" stop-color="#DDA436"/></radialGradient></defs><ellipse cx="12" cy="21" rx="8.3" ry="1.15" fill="#3E2503" opacity=".18"/><path d="M3.6 13.2h16.8v2.1c0 2.7-3.8 4.8-8.4 4.8s-8.4-2.1-8.4-4.8z" fill="#B87A1C"/><ellipse cx="12" cy="13.1" rx="8.4" ry="7.9" fill="url(#k11a)"/><ellipse cx="12" cy="12.8" rx="6.6" ry="6.2" fill="url(#k11b)"/><g stroke="#D69A32" stroke-width=".75" fill="none" opacity=".75"><ellipse cx="12" cy="12.8" rx="6.6" ry="6.2"/><path d="M12 6.6v12.4M5.4 12.8h13.2M7.3 8.4l9.4 8.8M16.7 8.4l-9.4 8.8"/></g><ellipse cx="12" cy="12.8" rx="2.35" ry="2.25" fill="#C57F1A"/><ellipse cx="11.5" cy="12.2" rx="0.92" ry="0.62" fill="#FFE4A8" opacity=".8"/><ellipse cx="8.5" cy="9.3" rx="2.7" ry="1.45" fill="#FFFFFF" opacity=".3" transform="rotate(-28 8.5 9.3)"/><path d="M4.2 13.2c1.4-.7 4.4-1.2 7.8-1.2s6.4.5 7.8 1.2" stroke="#FFE7AE" stroke-width=".7" fill="none" opacity=".45"/></svg>',
+  dice:'<svg viewBox="0 0 24 24"><defs><linearGradient id="k12a" x1="0" y1="0" x2="0" y2="1"><stop offset=".0" stop-color="#EE5A48"/><stop offset=".45" stop-color="#C9342A"/><stop offset="1" stop-color="#84190F"/></linearGradient><linearGradient id="k12b" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset=".0" stop-color="#FFFFFF"/><stop offset=".55" stop-color="#FDF3DE"/><stop offset="1" stop-color="#E4D0A6"/></linearGradient></defs><ellipse cx="11.6" cy="20.6" rx="9.2" ry="1.2" fill="#3A0A06" opacity=".18"/><path d="M2.6 15.6h18c0 2.7-4 4.7-9 4.7s-9-2-9-4.7z" fill="url(#k12a)"/><ellipse cx="11.6" cy="15.6" rx="9" ry="2.35" fill="#E8544A"/><ellipse cx="11.6" cy="15.6" rx="7.4" ry="1.8" fill="#A8241C"/><ellipse cx="11.6" cy="15.8" rx="7.2" ry="1.65" fill="#7E1810"/><path d="M4.7 14.7c1.7-1 4.4-1.6 7-1.6" stroke="#FF9E90" stroke-width=".9" fill="none" opacity=".85"/><path d="M3.6 17.9c1.6 1.3 4.6 2.2 8 2.2" stroke="#FFFFFF" stroke-width=".7" fill="none" opacity=".22"/><g transform="rotate(-14 11.6 9.6)"><rect x="6.9" y="4.9" width="9.4" height="9.4" rx="2" fill="url(#k12b)" stroke="#C4A875" stroke-width=".5"/><rect x="6.9" y="4.9" width="9.4" height="2.7" rx="1.6" fill="#FFFFFF" opacity=".62"/><circle cx="9.4" cy="7.4" r="1.03" fill="#C9342A"/><circle cx="13.8" cy="7.4" r="1.03" fill="#C9342A"/><circle cx="11.6" cy="9.6" r="1.03" fill="#C9342A"/><circle cx="9.4" cy="11.8" r="1.03" fill="#C9342A"/><circle cx="13.8" cy="11.8" r="1.03" fill="#C9342A"/><circle cx="9.05" cy="7.05" r=".32" fill="#FFFFFF" opacity=".55"/><circle cx="13.45" cy="7.05" r=".32" fill="#FFFFFF" opacity=".55"/></g></svg>',
+  brand:'<svg viewBox="0 0 24 24"><defs><radialGradient id="k13a" cx="0.34" cy="0.28" r="0.86"><stop offset=".0" stop-color="#7BEFA9"/><stop offset=".38" stop-color="#00C26E"/><stop offset=".82" stop-color="#00954F"/><stop offset="1" stop-color="#00612F"/></radialGradient></defs><ellipse cx="12" cy="21" rx="8.3" ry="1.15" fill="#002E17" opacity=".18"/><circle cx="12" cy="12" r="8.7" fill="url(#k13a)"/><circle cx="12" cy="12" r="8.7" fill="none" stroke="#006B38" stroke-width=".5" opacity=".55"/><circle cx="12" cy="12" r="7.9" fill="none" stroke="#FFFFFF" stroke-width=".5" opacity=".18"/><ellipse cx="9.1" cy="8.1" rx="3.2" ry="1.85" fill="#FFFFFF" opacity=".32" transform="rotate(-32 9.1 8.1)"/><path d="M12.4 16.9c-2.6 0-4.7-2-4.7-4.5 0-3.3 2.7-6 6-6h2.4c1.3 0 2.2.9 2.2 2 0 2.1-2 3.9-4.5 3.9h-.9" stroke="#FFFFFF" stroke-width="1.95" fill="none" stroke-linecap="round"/><circle cx="15.1" cy="7.9" r="1.1" fill="#FFFFFF"/></svg>',
+  clean:'<svg viewBox="0 0 24 24"><defs><linearGradient id="k14a" x1="0" y1="0" x2="1" y2="0"><stop offset=".0" stop-color="#B4EAF8"/><stop offset=".35" stop-color="#5FC8E8"/><stop offset="1" stop-color="#15789E"/></linearGradient><linearGradient id="k14b" x1="0" y1="0" x2="1" y2="0"><stop offset=".0" stop-color="#FFDD70"/><stop offset=".5" stop-color="#F5C93E"/><stop offset="1" stop-color="#D2A014"/></linearGradient></defs><ellipse cx="11.4" cy="21.4" rx="8.4" ry="1.1" fill="#08303F" opacity=".16"/><path d="M5.7 9.6c0-1 .8-1.8 1.8-1.8h4.6c1 0 1.8.8 1.8 1.8v10c0 1.2-1 2.2-2.2 2.2H7.9c-1.2 0-2.2-1-2.2-2.2z" fill="url(#k14a)"/><rect x="7.8" y="5.2" width="3.8" height="2.7" rx=".4" fill="#3FA8CC"/><path d="M11.6 5.2V4.1c0-.4.3-.7.7-.7h2.3c.4 0 .7.3.7.7v.9z" fill="#2E8FB3"/><rect x="6.6" y="12.2" width="6.4" height="4.4" rx=".6" fill="#F4FCFF"/><path d="M8 13.7h3.6M8 15.1h4.2" stroke="#5FC8E8" stroke-width=".75" stroke-linecap="round"/><rect x="7" y="10.3" width="1.25" height="8.4" rx=".62" fill="#FFFFFF" opacity=".45"/><rect x="15.3" y="12.7" width="5.6" height="4.1" rx="1.1" fill="url(#k14b)"/><rect x="15.3" y="17.5" width="5.6" height="3.5" rx="1.1" fill="#9BD9EE"/><rect x="15.3" y="12.7" width="5.6" height="1.2" rx=".6" fill="#FFFFFF" opacity=".38"/><circle cx="18.6" cy="14.9" r=".55" fill="#FFF3C4" opacity=".8"/><circle cx="16.9" cy="15.6" r=".4" fill="#FFF3C4" opacity=".65"/></svg>',
+  beauty:'<svg viewBox="0 0 24 24"><defs><linearGradient id="k15a" x1="0" y1="0" x2="1" y2="0"><stop offset=".0" stop-color="#FF9BBC"/><stop offset=".4" stop-color="#E85B8B"/><stop offset="1" stop-color="#AC2A58"/></linearGradient><linearGradient id="k15b" x1="0" y1="0" x2="1" y2="0"><stop offset=".0" stop-color="#E6ECF2"/><stop offset=".42" stop-color="#BAC5D1"/><stop offset="1" stop-color="#8591A0"/></linearGradient><radialGradient id="k15c" cx="0.34" cy="0.28" r="0.86"><stop offset=".0" stop-color="#FFF8FB"/><stop offset=".55" stop-color="#F7D3E0"/><stop offset="1" stop-color="#D79FB6"/></radialGradient></defs><ellipse cx="11.6" cy="21.2" rx="8.6" ry="1.15" fill="#3E1024" opacity=".14"/><rect x="6.6" y="12.5" width="3.9" height="8.1" fill="url(#k15b)"/><rect x="6.6" y="12.5" width="3.9" height="1.5" fill="#E85B8B"/><rect x="6.6" y="14" width="3.9" height=".6" fill="#FFFFFF" opacity=".5"/><path d="M7.1 12.5V9c0-.55.35-1.05.9-1.2l1.25-.35c.4-.1.75.2.75.6v4.45z" fill="url(#k15a)"/><ellipse cx="8.35" cy="7.78" rx="1.75" ry=".72" fill="#FF9EC1"/><path d="M7.45 12.3V9.2" stroke="#FFFFFF" stroke-width=".7" opacity=".5"/><ellipse cx="16.4" cy="19.5" rx="4.7" ry="1.1" fill="#D9B6C6" opacity=".55"/><path d="M12.4 15.5h8v3.4c0 1.3-1.8 2.3-4 2.3s-4-1-4-2.3z" fill="url(#k15c)"/><ellipse cx="16.4" cy="15.5" rx="4" ry="1.7" fill="#FFF9FC" stroke="#E5BCCE" stroke-width=".5"/><ellipse cx="16.4" cy="15.4" rx="2.7" ry="1.05" fill="#F2DAE5"/><ellipse cx="15.2" cy="15.1" rx="1.1" ry="0.42" fill="#FFFFFF" opacity=".85"/><path d="M12.9 16.9c.6 1 1.9 1.6 3.5 1.6" stroke="#FFFFFF" stroke-width=".6" fill="none" opacity=".5"/></svg>',
+  bakery:'<svg viewBox="0 0 24 24"><defs><linearGradient id="k16a" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset=".0" stop-color="#D9A257"/><stop offset=".45" stop-color="#B87C36"/><stop offset="1" stop-color="#8A5718"/></linearGradient><linearGradient id="k16b" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset=".0" stop-color="#FDF0D4"/><stop offset=".6" stop-color="#F7E3BC"/><stop offset="1" stop-color="#E4CB9A"/></linearGradient><linearGradient id="k16c" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset=".0" stop-color="#E6B36C"/><stop offset=".45" stop-color="#C9893C"/><stop offset="1" stop-color="#96601C"/></linearGradient><linearGradient id="k16d" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset=".0" stop-color="#FFF8E4"/><stop offset=".6" stop-color="#FAEAC8"/><stop offset="1" stop-color="#E8D2A6"/></linearGradient></defs><ellipse cx="12" cy="20.2" rx="9.2" ry="1.2" fill="#3E2506" opacity=".16"/><g transform="rotate(-12 9.2 12.6)"><path d="M4.5 16.4V11c0-2.6 2.1-4.7 4.7-4.7S13.9 8.4 13.9 11v5.4z" fill="url(#k16a)"/><path d="M5.9 15.7V11c0-1.9 1.4-3.4 3.3-3.4S12.5 9.1 12.5 11v4.7z" fill="url(#k16b)"/><ellipse cx="8.1" cy="9.6" rx="2.2" ry="1.1" fill="#FFFFFF" opacity=".42" transform="rotate(-20 8.1 9.6)"/></g><g transform="rotate(7 14.6 13.2)"><path d="M9.7 16.6v-5.4c0-2.7 2.2-4.9 4.9-4.9s4.9 2.2 4.9 4.9v5.4z" fill="url(#k16c)"/><path d="M11.1 15.9v-4.7c0-2 1.5-3.5 3.5-3.5s3.5 1.5 3.5 3.5v4.7z" fill="url(#k16d)"/><ellipse cx="13.6" cy="9.1" rx="2.4" ry="1.2" fill="#FFFFFF" opacity=".5" transform="rotate(-22 13.6 9.1)"/></g><path d="M6.1 18.7h12.4" stroke="#B98A44" stroke-width=".7" opacity=".35"/></svg>',
+  baby:'<svg viewBox="0 0 24 24"><defs><linearGradient id="k17a" x1="0" y1="0" x2="1" y2="0"><stop offset=".0" stop-color="#FFFFFF"/><stop offset=".5" stop-color="#F8F4EC"/><stop offset="1" stop-color="#D8CBB6"/></linearGradient><linearGradient id="k17b" x1="0" y1="0" x2="1" y2="0"><stop offset=".0" stop-color="#FFC9D6"/><stop offset=".5" stop-color="#F5A9B8"/><stop offset="1" stop-color="#D1788F"/></linearGradient><linearGradient id="k17c" x1="0" y1="0" x2="0" y2="1"><stop offset=".0" stop-color="#FFEDD6"/><stop offset="1" stop-color="#EFCB9C"/></linearGradient></defs><ellipse cx="12" cy="21.4" rx="6.2" ry="1.1" fill="#3A2A18" opacity=".15"/><path d="M8.6 8.6h6.8v10.2c0 1.4-1.1 2.5-2.5 2.5h-1.8c-1.4 0-2.5-1.1-2.5-2.5z" fill="url(#k17a)" stroke="#D2C4AE" stroke-width=".5"/><path d="M9.1 12.6h5.8v6.2c0 1.1-.9 1.9-1.9 1.9h-2c-1 0-1.9-.8-1.9-1.9z" fill="url(#k17c)"/><ellipse cx="12" cy="12.65" rx="2.9" ry=".5" fill="#FFF6E4"/><path d="M14.9 14h1.1M14.9 15.7h1.1M14.9 17.4h1.1" stroke="#C6B79E" stroke-width=".6"/><rect x="8.5" y="5.1" width="7" height="3.6" rx="1.4" fill="url(#k17b)"/><path d="M10.9 5.1V3.9c0-.9.5-1.55 1.1-1.55s1.1.65 1.1 1.55v1.2z" fill="#F5A9B8"/><ellipse cx="12" cy="2.7" rx="1.1" ry=".8" fill="#FFD3DC"/><rect x="9.4" y="9.7" width="1.05" height="9" rx=".52" fill="#FFFFFF" opacity=".85"/><rect x="9.7" y="6" width="1.6" height=".6" rx=".3" fill="#FFFFFF" opacity=".55"/></svg>',
+  pet:'<svg viewBox="0 0 24 24"><defs><radialGradient id="k18a" cx="0.34" cy="0.28" r="0.86"><stop offset=".0" stop-color="#FDD9A8"/><stop offset=".42" stop-color="#F0A860"/><stop offset=".82" stop-color="#D08A3E"/><stop offset="1" stop-color="#A86524"/></radialGradient></defs><ellipse cx="12" cy="20" rx="5.8" ry="1.1" fill="#3A2008" opacity=".15"/><path d="M12 12.9c2.8 0 5.1 1.9 5.1 4.15 0 1.9-1.75 3.15-4.2 3.15h-1.8c-2.45 0-4.2-1.25-4.2-3.15 0-2.25 2.3-4.15 5.1-4.15z" fill="url(#k18a)"/><ellipse cx="6.8" cy="11.4" rx="1.9" ry="2.3" fill="url(#k18a)" transform="rotate(-14 6.8 11.4)"/><ellipse cx="10.1" cy="8.9" rx="1.95" ry="2.45" fill="url(#k18a)"/><ellipse cx="13.9" cy="8.9" rx="1.95" ry="2.45" fill="url(#k18a)"/><ellipse cx="17.2" cy="11.4" rx="1.9" ry="2.3" fill="url(#k18a)" transform="rotate(14 17.2 11.4)"/><ellipse cx="9.85" cy="16.4" rx="2.3" ry="1.25" fill="#FFFFFF" opacity=".3"/><ellipse cx="9.35" cy="7.9" rx="0.72" ry="1.05" fill="#FFFFFF" opacity=".4"/><ellipse cx="13.15" cy="7.9" rx="0.72" ry="1.05" fill="#FFFFFF" opacity=".4"/><ellipse cx="6.35" cy="10.5" rx="0.55" ry="0.85" fill="#FFFFFF" opacity=".3" transform="rotate(-14 6.35 10.5)"/><ellipse cx="17.65" cy="10.5" rx="0.55" ry="0.85" fill="#FFFFFF" opacity=".3" transform="rotate(14 17.65 10.5)"/></svg>',
+  kitchen:'<svg viewBox="0 0 24 24"><defs><linearGradient id="k19a" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset=".0" stop-color="#CBD6E2"/><stop offset=".32" stop-color="#8E9CAC"/><stop offset=".68" stop-color="#5A6472"/><stop offset="1" stop-color="#2F363E"/></linearGradient><linearGradient id="k19b" x1="0" y1="0" x2="0" y2="1"><stop offset=".0" stop-color="#5A6472"/><stop offset=".5" stop-color="#333A43"/><stop offset="1" stop-color="#181D22"/></linearGradient></defs><ellipse cx="10.3" cy="18.8" rx="7.8" ry="1.2" fill="#0F1418" opacity=".2"/><path d="M16.8 14.3h4.7c.7 0 1.25.55 1.25 1.25S22.2 16.8 21.5 16.8h-4.7z" fill="#262C33"/><path d="M16.8 14.9h4.7c.4 0 .75.25.9.6h-5.6z" fill="#8B96A4" opacity=".55"/><path d="M3.2 12.4h14.2v2.9c0 2.05-2.65 3.7-7.1 3.7s-7.1-1.65-7.1-3.7z" fill="url(#k19b)"/><ellipse cx="10.3" cy="12.4" rx="7.1" ry="3.1" fill="#9AA6B4"/><ellipse cx="10.3" cy="12.4" rx="6.2" ry="2.55" fill="url(#k19a)"/><ellipse cx="10.3" cy="12.5" rx="5.35" ry="1.95" fill="#2B323A"/><ellipse cx="9" cy="12.2" rx="2.7" ry=".9" fill="#46505C" opacity=".7"/><path d="M5.5 11.9c1-1.25 2.9-2.05 4.8-2.05 1.6 0 3.1.45 4.2 1.25" stroke="#E7EEF5" stroke-width=".9" fill="none" opacity=".5"/><path d="M4.4 13.3c.1 1.65 2.5 2.95 5.9 2.95" stroke="#FFFFFF" stroke-width=".75" fill="none" opacity=".26"/></svg>',
+  all:'<svg viewBox="0 0 24 24"><defs><linearGradient id="k20a" x1="0" y1="0" x2="1" y2="1"><stop offset=".0" stop-color="#FFD87A"/><stop offset="1" stop-color="#EE9410"/></linearGradient><linearGradient id="k20b" x1="0" y1="0" x2="1" y2="1"><stop offset=".0" stop-color="#86ECAE"/><stop offset="1" stop-color="#1F9E58"/></linearGradient><linearGradient id="k20c" x1="0" y1="0" x2="1" y2="1"><stop offset=".0" stop-color="#95D9FC"/><stop offset="1" stop-color="#2A8ACF"/></linearGradient><linearGradient id="k20d" x1="0" y1="0" x2="1" y2="1"><stop offset=".0" stop-color="#FFB0C8"/><stop offset="1" stop-color="#E04A76"/></linearGradient></defs><rect x="3.2" y="3.2" width="7.7" height="7.7" rx="2.45" fill="url(#k20a)"/><rect x="13.1" y="3.2" width="7.7" height="7.7" rx="2.45" fill="url(#k20b)"/><rect x="3.2" y="13.1" width="7.7" height="7.7" rx="2.45" fill="url(#k20c)"/><rect x="13.1" y="13.1" width="7.7" height="7.7" rx="2.45" fill="url(#k20d)"/><rect x="4.5" y="4.4" width="5.1" height="1.45" rx=".72" fill="#FFFFFF" opacity=".38"/><rect x="14.4" y="4.4" width="5.1" height="1.45" rx=".72" fill="#FFFFFF" opacity=".38"/><rect x="4.5" y="14.3" width="5.1" height="1.45" rx=".72" fill="#FFFFFF" opacity=".38"/><rect x="14.4" y="14.3" width="5.1" height="1.45" rx=".72" fill="#FFFFFF" opacity=".38"/></svg>',
+  coupon:'<svg viewBox="0 0 24 24"><defs><linearGradient id="m01a" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset=".0" stop-color="#FF7566"/><stop offset=".42" stop-color="#F0443C"/><stop offset="1" stop-color="#A81C17"/></linearGradient></defs><path d="M3.2 7.4h17.6v3.15a1.55 1.55 0 0 0 0 2.9v3.15H3.2v-3.15a1.55 1.55 0 0 0 0-2.9z" fill="url(#m01a)"/><path d="M3.2 7.4h17.6v1.5H3.2z" fill="#FFFFFF" opacity=".22"/><path d="M12.3 9.4v5.6" stroke="#FFFFFF" stroke-width="1.3" stroke-dasharray="1.6 1.5"/><circle cx="7.4" cy="12" r="1.5" fill="#FFFFFF" opacity=".9"/><path d="M8.2 11.4h3.6M8.2 12.6h2.9" stroke="#F0443C" stroke-width=".7" stroke-linecap="round"/></svg>',
+  vip:'<svg viewBox="0 0 24 24"><defs><linearGradient id="m02a" x1="0.05" y1="0" x2="0.95" y2="1"><stop offset=".0" stop-color="#F6DA86"/><stop offset=".35" stop-color="#E0B84A"/><stop offset=".8" stop-color="#BE9226"/><stop offset="1" stop-color="#9A7314"/></linearGradient></defs><rect x="2.8" y="5.2" width="18.4" height="13.6" rx="2.8" fill="url(#m02a)"/><path d="M2.8 9.9h18.4v2.9H2.8z" fill="#C79E33" opacity=".85"/><rect x="2.8" y="5.2" width="18.4" height="4.7" rx="2.8" fill="#FFFFFF" opacity=".18"/><path d="M4.6 5.6 12 19.2M9.4 5.2 16.8 18.8" stroke="#FFFFFF" stroke-width="1.6" opacity=".14"/><rect x="5.4" y="13.1" width="4.4" height="3.3" rx=".7" fill="#F3DA9A" stroke="#A57F1E" stroke-width=".45"/><path d="M7.6 13.1v3.3M5.4 14.75h4.4" stroke="#A57F1E" stroke-width=".45"/><circle cx="17.4" cy="15.4" r="1.75" fill="#FFF6D6"/><circle cx="17.4" cy="15.4" r="1.05" fill="#E0B84A"/></svg>',
+  points:'<svg viewBox="0 0 24 24"><defs><radialGradient id="m03a" cx="0.34" cy="0.28" r="0.86"><stop offset=".0" stop-color="#FFE07A"/><stop offset=".45" stop-color="#F5A623"/><stop offset=".85" stop-color="#D4860C"/><stop offset="1" stop-color="#A96305"/></radialGradient><linearGradient id="m03b" x1="0" y1="0" x2="0" y2="1"><stop offset=".0" stop-color="#FFD45E"/><stop offset="1" stop-color="#E39A14"/></linearGradient></defs><ellipse cx="12" cy="20.6" rx="6.6" ry="1.1" fill="#3E2606" opacity=".16"/><ellipse cx="12" cy="14.6" rx="8.3" ry="5.7" fill="url(#m03b)"/><circle cx="12" cy="12" r="8.3" fill="url(#m03a)"/><circle cx="12" cy="12" r="8.3" fill="none" stroke="#A96305" stroke-width=".5" opacity=".5"/><circle cx="12" cy="12" r="6.3" fill="none" stroke="#FFFFFF" stroke-width=".5" opacity=".35"/><ellipse cx="9.2" cy="8.4" rx="3" ry="1.7" fill="#FFFFFF" opacity=".36" transform="rotate(-32 9.2 8.4)"/><path d="M12 7.3c1.05 3.35 1.5 3.8 4.85 4.85-3.35 1.05-3.8 1.5-4.85 4.85-1.05-3.35-1.5-3.8-4.85-4.85 3.35-1.05 3.8-1.5 4.85-4.85z" fill="#FFF8E4"/></svg>',
+  addr:'<svg viewBox="0 0 24 24"><defs><linearGradient id="m04a" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset=".0" stop-color="#7FBEF8"/><stop offset=".4" stop-color="#3B8BEA"/><stop offset="1" stop-color="#155BAD"/></linearGradient></defs><ellipse cx="12" cy="21.6" rx="4.6" ry=".95" fill="#08213A" opacity=".16"/><path d="M12 21.2s7.4-5.7 7.4-11.4A7.4 7.4 0 0 0 4.6 9.8c0 5.7 7.4 11.4 7.4 11.4z" fill="url(#m04a)"/><path d="M12 21.2s7.4-5.7 7.4-11.4A7.4 7.4 0 0 0 12 2.4" fill="#FFFFFF" opacity=".18"/><circle cx="12" cy="9.7" r="2.75" fill="#FFFFFF"/><circle cx="12" cy="9.7" r="1.5" fill="#2E7BD4"/><ellipse cx="9.3" cy="5.9" rx="1.7" ry="1" fill="#FFFFFF" opacity=".35" transform="rotate(-34 9.3 5.9)"/></svg>',
+  invoice:'<svg viewBox="0 0 24 24"><defs><linearGradient id="m05a" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset=".0" stop-color="#A38AEC"/><stop offset=".5" stop-color="#8B6FE0"/><stop offset="1" stop-color="#5D42B0"/></linearGradient><linearGradient id="m05b" x1="0" y1="0" x2="1" y2="1"><stop offset=".0" stop-color="#CBB6FA"/><stop offset="1" stop-color="#A98CF0"/></linearGradient></defs><ellipse cx="12" cy="21.4" rx="6.4" ry="1.05" fill="#1E1348" opacity=".15"/><path d="M5.9 3.2h8.7L18.7 7.1v13.7H5.9z" fill="url(#m05a)"/><path d="M14.6 3.2 18.7 7.1h-4.1z" fill="url(#m05b)"/><path d="M5.9 3.2h8.7L18.7 7.1v13.7H5.9z" fill="none" stroke="#4A3193" stroke-width=".45" opacity=".5"/><path d="M5.9 3.2h3.4v17.6H5.9z" fill="#FFFFFF" opacity=".14"/><path d="M8.9 11.6h6M8.9 14.9h4.4" stroke="#FFFFFF" stroke-width="1.3" stroke-linecap="round"/><path d="M8.9 9h3.2" stroke="#FFFFFF" stroke-width="1.1" stroke-linecap="round" opacity=".7"/></svg>',
+  service:'<svg viewBox="0 0 24 24"><defs><linearGradient id="m06a" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset=".0" stop-color="#5BD3C2"/><stop offset=".42" stop-color="#35B0A0"/><stop offset="1" stop-color="#127A6C"/></linearGradient></defs><ellipse cx="12" cy="21.2" rx="7" ry="1.05" fill="#04302B" opacity=".15"/><path d="M3.4 11.6a8.6 8.6 0 1 1 3.7 7L3.4 20.2z" fill="url(#m06a)"/><path d="M3.4 11.6a8.6 8.6 0 0 1 4.1-7.3c-2.2 2-3.4 4.6-3.4 7.3 0 1.7.4 3.2 1.1 4.6l-1.8 4z" fill="#FFFFFF" opacity=".2"/><ellipse cx="8.1" cy="7.2" rx="3" ry="1.6" fill="#FFFFFF" opacity=".28" transform="rotate(-28 8.1 7.2)"/><circle cx="9.2" cy="11.6" r="1.05" fill="#FFFFFF"/><circle cx="12.2" cy="11.6" r="1.05" fill="#FFFFFF"/><circle cx="15.2" cy="11.6" r="1.05" fill="#FFFFFF"/></svg>',
+  invite:'<svg viewBox="0 0 24 24"><defs><linearGradient id="m07a" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset=".0" stop-color="#FF96B4"/><stop offset=".42" stop-color="#F0749A"/><stop offset="1" stop-color="#C33F6B"/></linearGradient><linearGradient id="m07b" x1="0" y1="0" x2="0" y2="1"><stop offset=".0" stop-color="#E8608A"/><stop offset="1" stop-color="#B83862"/></linearGradient><linearGradient id="m07c" x1="0" y1="0" x2="0" y2="1"><stop offset=".0" stop-color="#FFE4EE"/><stop offset="1" stop-color="#F7C6D8"/></linearGradient></defs><ellipse cx="12" cy="21.6" rx="8.4" ry="1.05" fill="#3A0B1E" opacity=".15"/><rect x="3.4" y="9.4" width="17.2" height="11.2" rx="1.7" fill="url(#m07a)"/><rect x="2.4" y="9.4" width="19.2" height="3.8" rx="1.2" fill="url(#m07b)"/><rect x="2.4" y="9.4" width="19.2" height="1.5" rx=".75" fill="#FFFFFF" opacity=".28"/><rect x="10.7" y="9.4" width="2.6" height="11.2" fill="url(#m07c)"/><rect x="10.7" y="9.4" width="2.6" height="11.2" fill="none" stroke="#E29BB6" stroke-width=".4"/><path d="M12 9.4H8.2a2.05 2.05 0 1 1 0-4.1c1.5 0 2.8 1.35 3.8 4.1z" fill="url(#m07c)" stroke="#E29BB6" stroke-width=".4"/><path d="M12 9.4h3.8a2.05 2.05 0 1 0 0-4.1c-1.5 0-2.8 1.35-3.8 4.1z" fill="url(#m07c)" stroke="#E29BB6" stroke-width=".4"/><ellipse cx="8.2" cy="4.9" rx="0.85" ry="0.55" fill="#FFFFFF" opacity=".6"/><rect x="3.4" y="15.2" width="17.2" height="1.2" fill="#FFFFFF" opacity=".14"/></svg>',
+  setting:'<svg viewBox="0 0 24 24"><defs><radialGradient id="m08a" cx="0.34" cy="0.28" r="0.86"><stop offset=".0" stop-color="#C8D2DE"/><stop offset=".5" stop-color="#98A2AE"/><stop offset=".85" stop-color="#6E7885"/><stop offset="1" stop-color="#4E5763"/></radialGradient></defs><g fill="url(#m08a)"><rect x="10.8" y="2.6" width="2.4" height="4.2" rx=".8"/><rect x="10.8" y="17.2" width="2.4" height="4.2" rx=".8"/><rect x="2.6" y="10.8" width="4.2" height="2.4" rx=".8"/><rect x="17.2" y="10.8" width="4.2" height="2.4" rx=".8"/><rect x="5" y="5" width="2.4" height="4.2" rx=".8" transform="rotate(-45 6.2 7.1)"/><rect x="16.6" y="5" width="2.4" height="4.2" rx=".8" transform="rotate(45 17.8 7.1)"/><rect x="5" y="14.8" width="2.4" height="4.2" rx=".8" transform="rotate(45 6.2 16.9)"/><rect x="16.6" y="14.8" width="2.4" height="4.2" rx=".8" transform="rotate(-45 17.8 16.9)"/></g><circle cx="12" cy="12" r="7.3" fill="url(#m08a)"/><circle cx="12" cy="12" r="7.3" fill="none" stroke="#4E5763" stroke-width=".5" opacity=".5"/><circle cx="12" cy="12" r="3.1" fill="#FFFFFF"/><circle cx="12" cy="12" r="3.1" fill="none" stroke="#8E98A4" stroke-width=".5"/><circle cx="12" cy="12" r="1.55" fill="#C8D2DE"/><ellipse cx="9" cy="8.4" rx="2.7" ry="1.5" fill="#FFFFFF" opacity=".34" transform="rotate(-32 9 8.4)"/></svg>'
+};
+const KATCAT = [
+  ['fruit','水果鲜花','水果','中秋好果'],['veg','蔬菜豆制品','蔬菜',''],
+  ['meat','肉禽蛋','肉禽蛋','膏盈月满'],['sea','海鲜水产','海鲜水产',''],
+  ['oil','粮油调味','粮油调味','花生油'],
+  ['deli','熟食卤味','肉禽蛋',''],['frozen','冻品面点','冷冻速食',''],
+  ['dairy','乳品烘焙','乳品烘焙',''],['drink','酒水冲饮','酒水饮料',''],
+  ['snack','休闲零食','休闲零食','月饼礼'],
+  ['moon','中秋佳节','乳品烘焙',''],['dice','闽南博饼','休闲零食',''],
+  ['brand','自有品牌','乳品烘焙',''],['clean','日用清洁','日用百货',''],
+  ['beauty','个护美妆','日用百货',''],
+  ['bakery','烘焙糕点','乳品烘焙',''],['baby','母婴用品','日用百货',''],
+  ['pet','宠物用品','日用百货',''],['kitchen','厨房用品','日用百货',''],
+  ['all','全部分类','水果','']
+];
+const MINEMENU = [['coupon','ic6','优惠券'],['vip','ic9','会员中心'],['points','ic5','我的朴分'],['addr','ic8','收货地址'],
+  ['invoice','ic4','发票报销'],['service','ic3','联系客服'],['invite','ic7','邀请有礼'],['setting','ic10','设置']];
+
+const SCREENS = {};
+
+/* ---------- 首页 ---------- */
+SCREENS.home = () => ({
+  nav:{ type:'none', dark:'#C3170B', tint:'#FFF' }, tab:0, bg:'#F4F5F6',
+  body:`
+
+  <!-- 吸顶第 1 层：搜索框（内容就是首页顶部那个搜索框，滚出可视区后滑下钉在顶部） -->
+  <div class="stick">
+    <div class="stick-in">
+      <div class="hero-search" onclick="go('search')">
+        <span class="hero-ph">以果香寄祝愿 喜乐常伴</span>
+        <span class="hero-btn">搜索</span>
+      </div>
+    </div>
+  </div>
+  <div class="hero">
+        <span class="hero-photo"></span><span class="hero-veil"></span>
+    <div class="hero-top">
+      <span class="hero-loc" onclick="toast('地址簿：安泰世界城 / 康桥花园三期')">
+        <span style="color:#FFF;display:flex">${IC.pin}</span>安泰世界城<i class="caret"></i></span>
+      <span class="hero-acts">
+        <span class="hero-pill">🍊 时令好物</span><span class="hero-dots">···</span>
+        <span class="hero-ring"></span>
+      </span>
+    </div>
+    <div class="hero-search" onclick="go('search')">
+      <span class="hero-ph">以果香寄祝愿 喜乐常伴</span>
+      <span class="hero-btn">搜索</span>
+    </div>
+    <div class="hero-bn" onclick="toast('火锅季专题（模拟）')">
+      <div class="hero-bn-in">
+        <span class="hero-bn-k">火 锅 季</span>
+        <div class="hero-bn-t">秋天的第一口火锅</div>
+        <span class="hero-bn-g">点击查看 ›</span>
+      </div>
+      <span class="hero-bn-art"></span>
+    </div>
+  </div>
+
+  <div class="sheet">
+    <div class="trust">
+      <span><i class="ck2">✓</i>自营品质超市</span><span class="sep"></span>
+      <span><i class="ck2">✓</i>30 分钟快送</span><span class="sep"></span>
+      <span><i class="ck2">✓</i>营业至 23:00</span>
+    </div>
+    <div class="katz">
+      <div class="kgrid">${KATCAT.slice(0,10).map(([k,label,to,bdg])=>`
+        <div class="kat" onclick="S.cat='${to}';tabTo('category')">${bdg?`<em class="kb">${bdg}</em>`:''}<span class="ic">${ICONS[k]}</span>${label}</div>`).join('')}</div>
+      <div class="krow-wrap"><div class="krow">${KATCAT.slice(10).map(([k,label,to,bdg])=>`
+        <div class="kat" onclick="S.cat='${to}';tabTo('category')">${bdg?`<em class="kb">${bdg}</em>`:''}<span class="ic">${ICONS[k]}</span>${label}</div>`).join('')}</div></div>
+    </div>
+    <div class="kdots"><i class="on"></i><i></i></div>
+  </div>
+
+    <div class="notice" onclick="toast('【山野120】公益行动（模拟）')">
+      <span class="nt-ic">📢</span>
+      <span class="nt-tx">朴朴邀你参加【山野120】公益行动，瓜分 1000 万红包</span>
+      <span class="nt-go">›</span>
+    </div>
+
+  <div class="hb" onclick="toast('中秋节专题（模拟）')">
+    <div><span class="hb-k">中 秋 节</span><div class="hb-t">团圆不止今夜</div></div>
+    <div class="hb-r"><div class="hb-g1">三红柚礼盒</div>
+      <div class="hb-g2"><span>19.9</span><em>领券</em></div></div>
+  </div>
+
+  <div class="row3">
+    <div class="r3" onclick="go('detail','p1')"><div class="r3-th th-a"></div>
+      <div class="r3-nm">山竹礼盒</div><div class="r3-pr">69.9<em>元</em></div></div>
+    <div class="r3" onclick="toast('中秋博饼活动（模拟）')"><div class="r3-th th-b"></div>
+      <div class="r3-nm">中秋博饼抽小米平板</div><div class="r3-x">去参与 ›</div></div>
+    <div class="r3" onclick="go('detail','p9')"><div class="r3-th th-c"></div>
+      <div class="r3-nm">大闸蟹</div><div class="r3-pr">69.9<em>/3只</em></div></div>
+  </div>
+
+  <div class="flash">
+    <div class="flash-hd"><b>限时抢购</b><span class="pill">爆款好货低价抢</span>
+      <span class="more" onclick="toast('更多抢购商品（模拟）')">更多 ›</span></div>
+    <div class="flash-grid">${FLASH.map(p=>`
+      <div class="fg" onclick="go('detail','${p.id}')">
+        <div class="fg-th ${p.th}"></div><div class="fg-nm">${p.name}</div>
+        <div class="fg-pr"><em>¥</em>${p.price}${p.origin?`<s>¥${p.origin}</s>`:''}</div>
+      </div>`).join('')}
+    </div>
+  </div>
+
+  <div class="twocol">
+    <div class="tcol">
+      <div class="tcol-hd"><b>尚选</b><small>尊享品质生活</small></div>
+      <div class="tgrid">
+        <div class="tg" onclick="go('detail','p9')"><div class="tg-th th-c"></div>
+          <div class="tg-nm">冰鲜三文鱼刺身</div><div class="tg-pr">¥59.9</div></div>
+        <div class="tg" onclick="go('detail','p7')"><div class="tg-th th-h"></div>
+          <div class="tg-nm">黑猪肉馅</div><div class="tg-pr">¥36.8</div></div>
+      </div>
+    </div>
+    <div class="tcol">
+      <div class="tcol-hd"><b>哇 超值</b><small>朴朴官方补贴</small></div>
+      <div class="tgrid">
+        <div class="tg" onclick="go('detail','p10')"><div class="tg-th th-d"></div>
+          <div class="tg-nm">伊利纯牛奶</div><div class="tg-pr">¥49.9</div></div>
+        <div class="tg" onclick="go('detail','p5')"><div class="tg-th th-g"></div>
+          <div class="tg-nm">本地小青菜</div><div class="tg-pr">¥3.6</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="twocol">
+    <div class="tcol">
+      <div class="tcol-hd"><b>朴朴榜单</b><small>人气热销榜</small></div>
+      <div class="rank">
+        <div class="rk" onclick="go('detail','p1')"><div class="rk-th th-a"></div>
+          <div><div class="rk-nm">水果热销榜</div><span class="rk-bd">TOP 10</span></div></div>
+        <div class="rk" onclick="go('detail','p2')"><div class="rk-th th-b"></div>
+          <div><div class="rk-nm">榴莲人气榜</div><span class="rk-bd">TOP 10</span></div></div>
+      </div>
+    </div>
+    <div class="tcol">
+      <div class="tcol-hd"><b>应季上新</b><small>0.01 元试新品</small></div>
+      <div class="tgrid">
+        <div class="tg" onclick="go('detail','p4')"><div class="tg-th th-e"></div>
+          <div class="tg-nm">树上熟贵妃芒</div><div class="tg-pr">¥39.9</div></div>
+        <div class="tg" onclick="go('detail','p6')"><div class="tg-th th-c"></div>
+          <div class="tg-nm">云南水果番茄</div><div class="tg-pr">¥8.9</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 吸顶第 2 层：为你推荐 Tab 行 —— 就长在推荐流头部，滚到搜索框下沿才吸住 -->
+  <div class="feedslot">
+    <div class="ftabs">${FTABS.map((t,i)=>`
+      <span class="${(S.fTab||0)===i?'on':''}" onclick="pickTab(this,${i})">${t}</span>`).join('')}</div>
+  </div>
+
+<div class="feed">
+    <div class="pcard" onclick="toast('中秋专题（模拟）')">
+      <div class="thumb th-b" style="height:132px;position:relative"><span class="bdg">中秋省到家</span>
+        <div style="position:absolute;left:8px;bottom:8px;color:#FFF;font-size:12px;
+          font-weight:800;text-shadow:0 1px 5px rgba(0,0,0,.4)">秋日豆豆节<br>把山野小丰收捡回家</div></div>
+      <div style="padding:6px 7px 0"><div class="nm" style="height:auto">秋日豆豆节 · 点击查看</div>
+        <div class="sp">中秋专题 · 限量</div></div>
+      <div style="padding:4px 7px 0"><span class="tag tag-solid-red">爆价</span></div>
+    </div>
+    ${FEEDLIST.map(p=>`
+    <div class="pcard" onclick="go('detail','${p.id}')">
+      <div class="thumb ${p.th}" style="height:${p.stock<=10?'112':'126'}px;position:relative">
+        ${p.stock<=10?'<span class="bdg">仅剩 '+p.stock+' 件</span>':''}</div>
+      <div style="padding:6px 7px 0"><div class="nm" style="height:auto">${p.name}</div>
+        <div class="sp">${p.spec}</div></div>
+      <div style="padding:4px 7px 0"><span class="tag ${p.tag[1]}">${p.tag[0]}</span>
+        ${p.hot?'<span class="tag tag-solid-red" style="margin-left:3px">热销</span>':''}</div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:5px 7px 0">
+        ${priceHTML(p.price)}
+        <span class="addbtn" onclick="event.stopPropagation();quickAdd('${p.id}')">+</span></div>
+      ${p.stock<=12?`<div class="sold"><span class="bar"><i style="width:${100-p.stock*6}%"></i>
+        <em>已抢 ${100-p.stock*6}%</em></span></div>`:''}
+    </div>`).join('')}
+  </div>
+  <div style="height:14px"></div>
+  <span class="fball" onclick="toast('领券中心（模拟）')"><b>领</b>券</span>`
+});
+
+
+/* ---------- 推荐流 ---------- */
+const FTABS = ['为你推荐','疯狂折扣','哇!超值','中秋节','闽南'];
+const FLASH = PRODUCTS.filter(p=>['p1','p6','p5','p9'].includes(p.id));
+const FEEDLIST = PRODUCTS;
+
+/* 推荐流已并入首页（见 SCREENS.home 末尾的 .stick + .feed） */
+
+const pcard = p => `
+  <div class="pcard" onclick="go('detail','${p.id}')">
+    <div class="thumb ${p.th}"></div>
+    <div style="padding:6px 7px 0"><div class="nm">${p.name}</div><div class="sp">${p.spec}</div></div>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:0 7px">
+      ${priceHTML(p.price)}
+      <span class="addbtn" onclick="event.stopPropagation();quickAdd('${p.id}')">+</span>
+    </div>
+    <div style="padding:5px 7px 0"><span class="tag ${p.tag[1]}">${p.tag[0]}</span></div>
+  </div>`;
+
+/* ---------- 分类页 ---------- */
+const CTABS = ['今日推荐','当季果切','天天平价'];
+const CSIDE = ['中秋推荐', '秋果上新', '鲜花绿植', '好果源疆', '礼盒/箱装', '葡提/石榴', '柑橘橙柚柠', '蓝莓/猕猴桃', '西梅/桃李枣', '果切/小番茄', '西瓜/蜜瓜'];
+
+SCREENS.category = () => ({
+  nav:{ type:'none', dark:'linear-gradient(104deg,#EEF9F3,#DCF0E5)', tint:'#1F2329' }, tab:1,
+  bg:'#FFF',
+  body:`
+  <div class="catwrap">
+    <div class="cat-hd">
+      <div class="cat-top">
+        <div class="cat-search" onclick="go('search')">
+          <svg class="cs-ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/>
+            <path d="m20 20-3.5-3.5"/></svg>
+          <span class="cs-hot">家宴卷王！</span><span class="cs-tx">鲜活帝王蟹3斤699</span>
+        </div>
+        <div class="cat-tools" onclick="toast('更多（模拟）')">
+          <span class="ct-dots"><i></i><i></i><i></i></span><span class="ct-ring"></span>
+        </div>
+      </div>
+      <div class="cat-icons"><div class="cat-icol" onclick="toast('切到「水果鲜花」类目（模拟）')"><span class="cic cic1"></span><span class="clb on">水果鲜花</span></div><div class="cat-icol" onclick="toast('切到「蔬菜豆制品」类目（模拟）')"><span class="cic cic2"></span><span class="clb">蔬菜豆制品</span></div><div class="cat-icol" onclick="toast('切到「肉禽蛋」类目（模拟）')"><span class="cic cic3"></span><span class="clb">肉禽蛋</span></div><div class="cat-icol" onclick="toast('切到「海鲜水产」类目（模拟）')"><span class="cic cic4"></span><span class="clb">海鲜水产</span></div><div class="cat-icol" onclick="toast('切到「粮油调味」类目（模拟）')"><span class="cic cic5"></span><span class="clb">粮油调味</span></div><div class="cat-icol" onclick="toast('切到「熟食卤味」类目（模拟）')"><span class="cic cic6"></span><span class="clb">熟食卤味</span></div><div class="cat-icol" onclick="toast('切到「乳品烘焙」类目（模拟）')"><span class="cic cic7"></span><span class="clb">乳品烘焙</span></div><div class="cat-icol" onclick="toast('切到「休闲零食」类目（模拟）')"><span class="cic cic8"></span><span class="clb">休闲零食</span></div>
+        <div class="cat-expand" onclick="toast('展开全部分类（模拟）')"><span class="ce-t">展开</span><span class="ce-c"></span></div>
+      </div>
+    </div>
+    <div class="cat-split">
+      <div class="cat-side"><div class="csi${S.cat==='中秋推荐'?' on':''}" onclick="switchCat('中秋推荐')">中秋推荐</div><div class="csi${S.cat==='秋果上新'?' on':''}" onclick="switchCat('秋果上新')"><b class="csb">新</b>秋果上新</div><div class="csi${S.cat==='鲜花绿植'?' on':''}" onclick="switchCat('鲜花绿植')">鲜花绿植</div><div class="csi${S.cat==='好果源疆'?' on':''}" onclick="switchCat('好果源疆')"><b class="csb">荐</b>好果源疆</div><div class="csi${S.cat==='礼盒/箱装'?' on':''}" onclick="switchCat('礼盒/箱装')"><b class="csb">礼</b>礼盒/箱装</div><div class="csi${S.cat==='葡提/石榴'?' on':''}" onclick="switchCat('葡提/石榴')">葡提/石榴</div><div class="csi${S.cat==='柑橘橙柚柠'?' on':''}" onclick="switchCat('柑橘橙柚柠')">柑橘橙柚柠</div><div class="csi${S.cat==='蓝莓/猕猴桃'?' on':''}" onclick="switchCat('蓝莓/猕猴桃')">蓝莓/猕猴桃</div><div class="csi${S.cat==='西梅/桃李枣'?' on':''}" onclick="switchCat('西梅/桃李枣')">西梅/桃李枣</div><div class="csi${S.cat==='果切/小番茄'?' on':''}" onclick="switchCat('果切/小番茄')">果切/小番茄</div><div class="csi${S.cat==='西瓜/蜜瓜'?' on':''}" onclick="switchCat('西瓜/蜜瓜')">西瓜/蜜瓜</div>
+      </div>
+      <div class="cat-main">
+        <div class="cat-bn" onclick="toast('中秋节专题（模拟）')">
+          <span class="cb-ph"></span>
+          <span class="cb-or"><span class="cb-k">中 秋 节</span>
+            <span class="cb-t">送健康水果礼盒</span><span class="cb-g">点击查看 ›</span></span>
+        </div>
+        <div class="cat-tabs"><span class="ctab on" onclick="switchCTab('今日推荐')">今日推荐</span><span class="ctab${S.cTab==='当季果切'?' on':''}" onclick="switchCTab('当季果切')">当季果切</span><span class="ctab${S.cTab==='天天平价'?' on':''}" onclick="switchCTab('天天平价')">天天平价</span><span class="ca-more"></span></div>
+        <div class="cat-sort"><span class="cst-ic"></span><span onclick="toast('按销量排序（模拟）')">销量</span><span onclick="toast('按折扣排序（模拟）')">折扣</span><span onclick="toast('按价格排序（模拟）')">价格</span></div>
+        <div class="cat-list">
+      <div class="ccard" onclick="toast('商品详情（模拟）：泰国进口山竹原箱2.5kg/箱')">
+        <div class="cth cc1"><span class="cth-art"></span><span class="cbg">中秋节到家</span><span class="cbg2">团圆价</span></div>
+        <div class="cinfo">
+          <div class="crow1"><span class="ckill">限时抢</span><span class="cseason">时令</span></div>
+          <div class="cttl">泰国进口山竹<br>原箱2.5kg/箱</div>
+          <div class="cdesc">清甜爽口 · 老树麻竹 · 原箱保鲜</div>
+          <div class="cbuy"><svg viewBox="0 0 24 24"><path d="M3 4h2.2l2.3 11h9.3L19 7.5H6.2"/><circle cx="9" cy="19.2" r="1.5"/><circle cx="16.6" cy="19.2" r="1.5"/></svg>1.1万人回购</div>
+          <div class="cprice"><span class="ck">抢购价</span><span class="pnum"><span class="sy">¥</span><span class="in">69.9</span></span><span class="pold">¥79.9</span><span class="cgr" onclick="event.stopPropagation();toast('抢购：泰国进口山竹原箱2.5kg/箱（模拟）')">抢</span></div>
+          
+          <div class="csold"><i style="width:99%"></i><span>已抢 99%</span></div>
+          <div class="crank"><b>榜</b>水果送礼回购榜第3名</div>
+        </div>
+      </div>
+      <div class="ccard" onclick="toast('商品详情（模拟）：优赐平和老树三红柚箱装2-2.5kg（2 个装）')">
+        <div class="cth cc2"><span class="cth-art"></span><span class="cbg">中秋节</span><span class="cbg2">团圆价</span></div>
+        <div class="cinfo">
+          <div class="crow1"><span class="ckill">限时抢</span><span class="cseason">时令</span></div>
+          <div class="cttl">优赐平和老树三红柚箱装2-2.5kg（2 个装）</div>
+          <div class="cdesc">核心产区 · 甘脆 · 酸甜可口</div>
+          <div class="cbuy"><svg viewBox="0 0 24 24"><path d="M3 4h2.2l2.3 11h9.3L19 7.5H6.2"/><circle cx="9" cy="19.2" r="1.5"/><circle cx="16.6" cy="19.2" r="1.5"/></svg>5473人回购</div>
+          <div class="cprice"><span class="ck">抢购价</span><span class="pnum"><span class="sy">¥</span><span class="in">19</span></span><span class="cmb">会员专享</span><span class="cgr" onclick="event.stopPropagation();toast('抢购：优赐平和老树三红柚箱装2-2.5kg（2 个装）（模拟）')">抢</span></div>
+          <div class="cpm2">¥19.9</div>
+          <div class="csold"><i style="width:98%"></i><span>已抢 98%</span></div>
+          <div class="crank"><b>榜</b>水果礼盒热销榜第3名</div>
+        </div>
+      </div>
+      <div class="ccard" onclick="toast('商品详情（模拟）：大大大新疆西梅礼盒2kg/箱（单果40g起）')">
+        <div class="cth cc3"><span class="cth-art"></span><span class="cbg">中秋节</span></div>
+        <div class="cinfo">
+          <div class="crow1"><span class="ckill">限时抢</span><span class="cseason">时令</span></div>
+          <div class="cttl">大大大新疆西梅礼盒<br>2kg/箱（单果40g起）</div>
+          <div class="cdesc">单果40g起 · 甜蜜多汁</div>
+          <div class="cbuy"><svg viewBox="0 0 24 24"><path d="M3 4h2.2l2.3 11h9.3L19 7.5H6.2"/><circle cx="9" cy="19.2" r="1.5"/><circle cx="16.6" cy="19.2" r="1.5"/></svg>3268人回购</div>
+          <div class="cprice"><span class="ck">抢购价</span><span class="pnum"><span class="sy">¥</span><span class="in">59.9</span></span><span class="pold">¥79.9</span><span class="cgr" onclick="event.stopPropagation();toast('抢购：大大大新疆西梅礼盒2kg/箱（单果40g起）（模拟）')">抢</span></div>
+          
+          <div class="csold"><i style="width:96%"></i><span>已抢 96%</span></div>
+          <div class="crank"><b>榜</b>西梅热销榜第1名</div>
+        </div>
+      </div>
+      <div class="ccard" onclick="toast('商品详情（模拟）：泰国椰青 6 个装1.2kg / 箱')">
+        <div class="cth cc4"><span class="cth-art"></span><span class="cbg">中秋节</span></div>
+        <div class="cinfo">
+          <div class="crow1"><span class="ckill">限时抢</span><span class="cseason">时令</span></div>
+          <div class="cttl">泰国椰青 6 个装<br>1.2kg / 箱</div>
+          <div class="cdesc">清甜椰水 · 开盖即饮</div>
+          <div class="cbuy"><svg viewBox="0 0 24 24"><path d="M3 4h2.2l2.3 11h9.3L19 7.5H6.2"/><circle cx="9" cy="19.2" r="1.5"/><circle cx="16.6" cy="19.2" r="1.5"/></svg>8642人回购</div>
+          <div class="cprice"><span class="ck">抢购价</span><span class="pnum"><span class="sy">¥</span>
+            <span class="in">29.9</span></span><span class="pold">¥39.9</span><span class="cgr" onclick="event.stopPropagation();toast('抢购：泰国椰青 6 个装1.2kg / 箱（模拟）')">抢</span></div>
+          <div class="csold"><i style="width:95%"></i><span>已抢 95%</span></div>
+          <div class="crank"><b>榜</b>椰青热销榜第2名</div>
+        </div>
+      </div>
+      <div class="ccard" onclick="toast('商品详情（模拟）：福建平和红心蜜柚2 个装 4kg')">
+        <div class="cth cc5"><span class="cth-art"></span></div>
+        <div class="cinfo">
+          <div class="crow1"><span class="ckill">限时抢</span><span class="cseason">时令</span></div>
+          <div class="cttl">福建平和红心蜜柚<br>2 个装 4kg</div>
+          <div class="cdesc">红心蜜柚 · 皮薄多汁</div>
+          <div class="cbuy"><svg viewBox="0 0 24 24"><path d="M3 4h2.2l2.3 11h9.3L19 7.5H6.2"/><circle cx="9" cy="19.2" r="1.5"/><circle cx="16.6" cy="19.2" r="1.5"/></svg>6215人回购</div>
+          <div class="cprice"><span class="ck">抢购价</span><span class="pnum"><span class="sy">¥</span>
+            <span class="in">25.8</span></span><span class="pold">¥32.8</span><span class="cgr" onclick="event.stopPropagation();toast('抢购：福建平和红心蜜柚2 个装 4kg（模拟）')">抢</span></div>
+          <div class="csold"><i style="width:93%"></i><span>已抢 93%</span></div>
+          <div class="crank"><b>榜</b>蜜柚热销榜第1名</div>
+        </div>
+      </div>
+        </div>
+      </div>
+    </div>
+  </div>`
+});
+
+/* ---------- 搜索页 ---------- */
+SCREENS.search = () => ({
+  nav:{ type:'searchInput' }, bg:'#FFF',
+  body:`<div style="padding:0 14px 20px">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin:16px 0 11px">
+      <span style="font-size:13.5px;font-weight:600">搜索历史</span>
+      <span style="font-size:11px;color:#9AA0A6;cursor:pointer" onclick="toast('已清空搜索历史（模拟）')">清空</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      ${['阳光玫瑰','鸡蛋','纯牛奶','五花肉','油桃'].map(t=>`<span onclick="doSearch('${t}')" style="font-size:12px;padding:6px 12px;
+        border-radius:999px;background:#F4F5F6;color:#61666D;cursor:pointer">${t}</span>`).join('')}
+    </div>
+    <div style="font-size:13.5px;font-weight:600;margin:22px 0 8px">热搜榜 <span style="font-size:10.5px;color:#9AA0A6;font-weight:400">10 分钟更新</span></div>
+    <div style="background:#FFF;border-radius:12px;padding:4px 14px;border:1px solid #F4F5F6">
+      ${[['阳光玫瑰青提','#F5333F','爆'],['泰国金枕头榴莲','#FF7A18','热'],['冰鲜三文鱼刺身','#FFB020',''],
+         ['伊利纯牛奶 250ml','#9AA0A6',''],['黑猪肉馅 500g','#9AA0A6','新']].map((r,i)=>`
+        <div onclick="doSearch('${r[0]}')" style="display:flex;align-items:center;gap:11px;padding:9px 0;cursor:pointer;
+          ${i<4?'border-bottom:1px solid #F6F7F8':''}">
+          <span style="font-size:13px;font-weight:${i<3?'700':'600'};color:${r[1]};width:14px">${i+1}</span>
+          <span style="flex:1 1 auto;font-size:12.5px">${r[0]}</span>
+          ${r[2]?`<span class="tag ${i===0?'tag-solid':'tag-solid'}" style="font-size:9.5px">${r[2]}</span>`:''}
+        </div>`).join('')}
+    </div>
+    <div style="font-size:13.5px;font-weight:600;margin:22px 0 10px">我常买</div>
+    <div style="display:flex;gap:10px">
+      ${['p3','p10','p1'].map(id=>{const p=findP(id);return `<div onclick="go('detail','${id}')" style="width:86px;cursor:pointer">
+        <div class="thumb ${p.th}" style="height:86px;width:100%"></div>
+        <div style="font-size:11.5px;line-height:1.3;margin-top:6px;height:30px;overflow:hidden">${p.name}</div>
+        ${priceHTML(p.price)}</div>`}).join('')}
+    </div>
+  </div>`
+});
+
+/* ---------- 搜索结果 ---------- */
+SCREENS.result = () => {
+  const kw = S.search || '阳光玫瑰';
+  const list = PRODUCTS.filter(p=>p.name.includes(kw) || kw.includes(p.cat) || p.cat.includes(kw));
+  const res = list.length ? list : PRODUCTS.slice(0,4);
+  return {
+    nav:{ type:'searchInput' }, bg:'#F4F5F6',
+    body:`<div style="padding:12px 14px 8px;font-size:12px;color:#61666D">
+      搜索「<b style="color:#1F2329">${kw}</b>」 · 本仓在售 ${res.length} 件</div>
+      <div class="feed">${res.map(pcard).join('')}</div>`
+  };
+};
+
+/* ---------- 商品详情 ---------- */
+SCREENS.detail = () => {
+  const p = findP(S.param) || PRODUCTS[0];
+  const inCart = S.cart.find(i=>i.id===p.id && i.ok);
+  return {
+    nav:{ type:'plain', back:true, title:'', bg:'#F2FBF6' }, bg:'#F4F5F6',
+    bottom:`<div style="display:flex;flex-direction:column;align-items:center;gap:2px;width:40px;color:#61666D;font-size:9.5px;cursor:pointer" onclick="toast('客服会话（模拟）')">
+        <svg viewBox="0 0 24 24" style="width:19px;height:19px;fill:none;stroke:#61666D;stroke-width:1.7;stroke-linecap:round"><path d="M4 12a8 8 0 1 1 3.2 6.4L4 20z"/></svg>客服</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;width:40px;color:#61666D;font-size:9.5px;position:relative;cursor:pointer" onclick="tabTo('cart')">
+        <svg viewBox="0 0 24 24" style="width:19px;height:19px;fill:none;stroke:#61666D;stroke-width:1.7;stroke-linecap:round"><path d="M3 4h2.2l2.3 11h9.3L19 7.5H6.2"/><circle cx="9" cy="19.2" r="1.5"/><circle cx="16.6" cy="19.2" r="1.5"/></svg>购物车
+        ${cartStats().count?`<span style="position:absolute;top:-2px;right:2px;min-width:15px;height:15px;background:#F5333F;color:#FFF;border-radius:999px;font-size:9.5px;line-height:15px;text-align:center;padding:0 4px;font-weight:600">${cartStats().count}</span>`:''}
+      </div>
+      <div class="btn-ghost" style="flex:1 1 auto" onclick="quickAdd('${p.id}')">加入购物车</div>
+      <div class="btn-primary" style="flex:1 1 auto" onclick="buyNow('${p.id}')">立即购买</div>`,
+    body:`
+    <div style="height:250px;background:linear-gradient(150deg,#DFF6E8,#A5E3C4);position:relative">
+      <div style="position:absolute;right:14px;bottom:12px;background:rgba(255,255,255,.9);border-radius:999px;font-size:11px;padding:3px 10px;color:#61666D">1 / 5</div>
+      <div style="position:absolute;left:14px;top:14px;display:flex;gap:5px">
+        <span class="tag tag-solid" style="font-size:10.5px;padding:1px 6px">${p.tag[0]}</span>
+        <span class="tag tag-green" style="font-size:10.5px;padding:1px 6px;background:#FFF">朴朴自营</span>
+      </div>
+    </div>
+    <div style="background:#FFF;padding:12px 12px 10px;border-radius:12px 12px 0 0;margin-top:-12px;position:relative">
+      <div style="display:flex;align-items:flex-end;gap:8px">
+        ${priceHTML(p.price,true)}
+        ${p.origin?`<span class="strike" style="margin-bottom:3px">¥${money(p.origin)}</span>`:''}
+        <span style="font-size:10.5px;color:#00A85E;background:#E8F9F1;border-radius:4px;padding:1px 5px;margin-bottom:3px;font-weight:600">到手价</span>
+      </div>
+      <div style="font-size:15px;font-weight:600;line-height:1.4;margin-top:7px">${p.name}</div>
+      <div style="font-size:11.5px;color:#9AA0A6;margin-top:4px">${p.spec} · 云南红河直发 · 当日达</div>
+      <div style="margin-top:9px;background:#FFF7EC;border-radius:8px;padding:8px 10px;font-size:11.5px;color:#B4581A;display:flex;gap:6px;align-items:center">
+        <span style="background:#FF7A18;color:#FFF;border-radius:3px;padding:0 4px;font-size:10px;font-weight:600">券</span>
+        满 59 减 10 元券，再买 <b>¥${money(Math.max(0,RULES.couponMin - cartStats().sub))}</b> 可用
+      </div>
+    </div>
+    <div class="card" style="padding:12px 14px;margin-top:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:9px"><span style="color:#9AA0A6;width:66px">配送</span><span style="flex:1 1 auto">康桥花园三期 · 预计 18:42 送达</span><span style="color:#2B7FFF">修改 ›</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:9px"><span style="color:#9AA0A6;width:66px">规格</span><span style="flex:1 1 auto">${p.spec}</span><span style="color:#9AA0A6">›</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:#9AA0A6;width:66px">库存</span><span style="flex:1 1 auto;color:${p.stock<10?'#FF7A18':'#1F2329'}">本仓${p.stock<10?'仅剩 '+p.stock+' 件':'有货'}</span><span style="color:#9AA0A6">›</span></div>
+    </div>
+    <div class="card" style="padding:12px 14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+        <span style="font-size:13.5px;font-weight:600">评价 <span style="font-weight:400;color:#9AA0A6;font-size:11.5px">1,286 条 · 好评率 98%</span></span>
+        <span style="font-size:11.5px;color:#9AA0A6">全部 ›</span></div>
+      <div style="display:flex;gap:6px;margin-bottom:9px;flex-wrap:wrap">
+        <span class="tag tag-green">很新鲜 320</span><span class="tag tag-green">个头大 188</span><span class="tag tag-green">甜度够 96</span></div>
+      <div style="font-size:12px;color:#61666D;line-height:1.5">「冷链送到的，颗粒饱满没有掉粒，第二天早上吃还很脆。」</div>
+    </div>
+    <div class="card" style="padding:12px 14px">
+      <div style="font-size:13.5px;font-weight:600;margin-bottom:10px">搭配买更划算</div>
+      <div style="display:flex;gap:10px">
+        ${['p2','p10','p5'].map(id=>{const q=findP(id);return `<div style="width:72px;cursor:pointer" onclick="go('detail','${id}')">
+          <div class="thumb ${q.th}" style="height:72px;width:100%"></div>
+          <div style="font-size:11px;line-height:1.3;margin-top:5px;height:29px;overflow:hidden">${q.name}</div>
+          ${priceHTML(q.price)}</div>`}).join('')}
+      </div>
+    </div>
+    <div style="height:14px"></div>`
+  };
+};
+
+/* ---------- 购物车（按真实界面 1:1 复刻） ---------- */
+const CT_EX = [
+  ['th-e','8.9折','¥7.99','¥8.99'], ['th-c','6.2折','¥7.9','¥12.8'], ['th-e','6.2折','¥2.99','¥4.8'],
+  ['th-d','8.5折','¥4.99','¥5.9'], ['th-g','8折','¥9.9','¥12.4'], ['th-h','7.5折','¥3.99','¥5.3']
+];
+const CT_GUESS = ['p3','p4','p5','p8'];
+const IC_LIVE = '<span class="live"><svg viewBox="0 0 24 24" style="fill:#FFF;stroke:none"><path d="M8.7 6.6 17.3 12 8.7 17.4Z"/></svg></span>';
+const IC_HOUSE = '<svg viewBox="0 0 24 24"><path d="M3.6 10.4 12 3.8l8.4 6.6V20a1 1 0 0 1-1 1H4.6a1 1 0 0 1-1-1z"/><path d="M9.4 21v-6.2h5.2V21"/></svg>';
+
+SCREENS.cart = () => {
+  const st = cartStats();
+  const rows = S.cart.filter(i=>i.ok);
+  const body = `
+  <div class="ct-wrap">
+    <div class="ct-ex">
+      <span class="ct-ex-pill">超多新品5折起换购</span>
+      <div class="ct-ex-hd"><span class="ct-ex-t">满9.9元换购</span>
+        <span class="ct-ex-go" onclick="toast('换购专区（模拟）：满 9.9 元可选 6 款')">去换购 ›</span></div>
+      <div class="ct-ex-row">
+        ${CT_EX.map(t=>`<div class="ct-tile">
+          <div class="ct-timg thumb ${t[0]}"><span class="ct-tbadge">${t[1]}</span></div>
+          <div class="ct-tprice">${t[2]}</div><div class="ct-told">${t[3]}</div>
+          <span class="ct-tadd" onclick="quickAdd('p3');toast('已加入换购商品')">+</span>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="ct-fl">
+      <div class="ct-fl-hd"><span class="ct-fl-tag">限时抢</span><span class="ct-fl-t">爆款好货低价抢</span>
+        <span class="ct-fl-go" onclick="tabTo('category')">去看看 ›</span></div>
+      ${rows.map((it,idx)=>{ const p=findP(it.id); const [int,dec] = p.price.toFixed(2).split('.');
+        const whole = dec==='00' ? int : int+'.'+dec.replace(/0$/,'');
+        return `
+      <div class="ct-prow">
+        <span class="ct-pchk ${S.checked[it.id]?'':'off'}" onclick="toggleItem('${it.id}')">✓</span>
+        <div class="ct-pimg thumb ${p.th}" onclick="go('detail','${it.id}')"></div>
+        <div class="ct-pinfo">
+          <div class="ct-ptitle">${p.brand?`<span class="ct-brand">${p.brand}</span>`:''}${p.name}</div>
+          ${p.spec?`<div class="ct-spec">${p.spec}<i></i></div>`:''}
+          <div class="ct-pline"><span class="ct-now"><i>¥</i>${whole}</span>
+            ${p.origin?`<span class="ct-old">¥${p.origin.toFixed(1).replace(/\\.0$/,'')}</span>`:''}
+            <div class="ct-step"><span class="s1" onclick="setQty('${it.id}',-1)">−</span><span>${it.qty}</span><span class="s2" onclick="setQty('${it.id}',1)">＋</span></div></div>
+          <div class="ct-tip"><i>i</i>该商品不可用券</div>
+        </div>
+        ${idx===1?`<div class="ct-mbadge">会员领<br>免费菜</div>`:''}
+      </div>`}).join('')}
+    </div>
+
+    <div class="ct-guess">猜你喜欢</div>
+    <div class="ct-grid">
+      ${CT_GUESS.map(id=>{ const p=findP(id); return `
+      <div class="ct-gcard" onclick="go('detail','${id}')"><div class="ct-gimg thumb ${p.th}"></div>
+        <div class="ct-gname">${p.name}</div>
+        <div class="ct-grow"><span class="ct-gprice"><i>¥</i>${p.price.toFixed(1)}</span>
+        <span class="ct-gadd" onclick="event.stopPropagation();addToCart('${id}')">+</span></div></div>`}).join('')}
+    </div>
+  </div>`;
+
+  const footer = `
+    <div class="ct-jd">
+      <span class="ct-jd-a">凑单助手</span><span class="ct-jd-v"></span>
+      <span class="ct-jd-b">再买<b>20</b>元，可享券满20减8</span>
+      <span class="ct-jd-go" onclick="tabTo('category')">去凑单</span>
+    </div>
+    <div class="ct-bar">
+      <span class="ct-chk" onclick="toggleAll()">✓</span><span class="ct-all" onclick="toggleAll()">全选</span>
+      <div class="ct-sum">
+        <div class="ct-sum1"><em>合计</em><span class="ct-sum-p"><i>¥</i>${money(st.sub).split('.')[0]}<s>.${money(st.sub).split('.')[1]}</s></span><i class="ct-sum-caret"></i></div>
+        <div class="ct-freeship">${st.ship? '含配送费 ¥'+money(st.ship) : '免配送费'}</div>
+      </div>
+      <div class="ct-submit" onclick="${rows.length? "go('checkout')" : "toast('购物车是空的')"}">去结算(${st.checkedCount})</div>
+    </div>`;
+
+  return {
+    nav:{ type:'cart' }, bg:'#F5F6FA', tab:3, cartFooter:true, bottom:footer, body
+  };
+};
+
+/* ---------- 确认订单 ---------- */
+SCREENS.checkout = () => {
+  const st = cartStats();
+  const items = S.cart.filter(i=>i.ok && S.checked[i.id]);
+  if(!items.length){ setTimeout(()=>toast('没有可结算的商品'),0); }
+  const slots = [[0,'18:42','最快送达'],[1,'19:00–19:30','预约时段'],[2,'20:00–20:30','预约时段']];
+  return {
+    nav:{ type:'plain', back:true, title:'确认订单' }, bg:'#F4F5F6',
+    bottom:`<div style="flex:1 1 auto;line-height:1.3">
+        <div>应付 ${priceHTML(st.pay)}</div>
+        <div style="font-size:10px;color:#9AA0A6">已优惠 ¥${money(st.coupon+st.points)} · 配送费 ¥${money(st.ship)}</div></div>
+      <div class="btn-primary ${items.length?'':'btn-disabled'}" style="padding:0 26px"
+        onclick="${items.length?"submitOrder()":"toast('没有可结算的商品')"}">提交订单</div>`,
+    body:`
+    <div class="card" style="padding:14px;margin-top:10px;display:flex;gap:10px;align-items:flex-start;cursor:pointer" onclick="toast('打开地址簿（模拟）')">
+      <span style="color:#00C26E;flex:0 0 auto;margin-top:2px">${IC.pin}</span>
+      <div style="flex:1 1 auto;min-width:0">
+        <div style="font-size:13.5px;font-weight:600">陈先生 <span style="font-weight:400;color:#61666D;font-size:12.5px;margin-left:4px">138****6688</span></div>
+        <div style="font-size:12.5px;color:#61666D;line-height:1.45;margin-top:4px">广东省深圳市南山区科技园南路 18 号<br>康桥花园三期 6 栋 1203 <span class="tag tag-green" style="margin-left:4px">家</span></div>
+      </div><span style="color:#9AA0A6">›</span>
+    </div>
+    <div class="card" style="padding:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:13.5px;font-weight:600">配送时效</span>
+        <span style="font-size:11.5px;color:#00A85E;font-weight:600;cursor:pointer" onclick="toast('已切换为立即送出')">立即送出 ›</span></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        ${slots.map(([i,t,lb])=>`<div onclick="S.slot=${i};render()" style="flex:1;border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;
+          border:${S.slot===i?'1.5px solid #00C26E':'1px solid #EEF0F2'};background:${S.slot===i?'#F2FCF7':'#FFF'}">
+          <div style="font-size:13px;font-weight:${S.slot===i?'700':'600'};color:${S.slot===i?'#00A85E':'#1F2329'}">${t}</div>
+          <div style="font-size:10.5px;margin-top:2px;color:${S.slot===i?'#00A85E':'#9AA0A6'}">${lb}</div></div>`).join('')}
+      </div>
+      <div style="margin-top:10px;font-size:11.5px;color:#9AA0A6;display:flex;align-items:center;gap:6px;cursor:pointer" onclick="toast('已设置：放门口并拍照')">
+        <span style="width:14px;height:14px;border:1.2px solid #D8DCE1;border-radius:3px;flex:0 0 auto"></span>
+        骑手无法联系我时，放门口并拍照</div>
+    </div>
+    <div class="card" style="padding:14px">
+      <div style="font-size:13.5px;font-weight:600;margin-bottom:10px">康桥仓 · ${st.checkedCount} 件</div>
+      ${items.map(it=>{const p=findP(it.id);return `
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+          <div class="thumb ${p.th}" style="width:56px;height:56px"></div>
+          <div style="flex:1 1 auto;min-width:0"><div style="font-size:12.5px;line-height:1.35">${p.name}</div>
+          <div style="font-size:10.5px;color:#9AA0A6;margin-top:3px">${p.spec}</div></div>
+          <div style="text-align:right">${priceHTML(p.price)}<div style="font-size:10.5px;color:#9AA0A6">×${it.qty}</div></div>
+        </div>`}).join('')}
+    </div>
+    <div class="card" style="padding:6px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:10px 0;border-bottom:1px solid #F4F5F6">
+        <span>优惠券</span><span style="display:flex;align-items:center;gap:5px">
+        ${st.coupon?`<span style="color:#F5333F;font-weight:600">满 59 减 10</span><span style="color:#9AA0A6">−¥${money(st.coupon)}</span>`:'<span style="color:#9AA0A6">暂无可用</span>'}
+        <span style="color:#9AA0A6">›</span></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:10px 0;border-bottom:1px solid #F4F5F6">
+        <span>朴分抵扣 <span style="color:#9AA0A6;font-size:11px">（1,280 分）</span></span>
+        <span style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="S.pointsOn=!S.pointsOn;render()">
+          <span style="color:${st.points?'#F5333F':'#9AA0A6'}">${st.points?'−¥'+money(st.points):'不使用'}</span>
+          <span style="width:34px;height:19px;border-radius:10px;background:${S.pointsOn?'#00C26E':'#D8DCE1'};position:relative;transition:.2s">
+            <i style="position:absolute;top:1.5px;${S.pointsOn?'right:1.5px':'left:1.5px'};width:16px;height:16px;border-radius:50%;background:#FFF;transition:.2s"></i>
+          </span></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:10px 0">
+        <span>配送费 <span style="color:#9AA0A6;font-size:11px">（满 ¥${money(RULES.freeShip)} 免）</span></span>
+        ${st.ship? `<span style="color:#1F2329">¥${money(st.ship)}</span>`
+          : `<span style="color:#00A85E;font-weight:600">已免配送费</span>`}
+      </div>
+    </div>
+    <div class="card" style="padding:14px;cursor:pointer" onclick="toast('备注输入（模拟）')">
+      <div style="font-size:12.5px;color:#9AA0A6;margin-bottom:7px">订单备注</div>
+      <div style="font-size:12.5px;color:#9AA0A6">选填，如：不要敲门 / 需要开票</div>
+    </div>
+    <div style="height:12px"></div>`
+  };
+};
+
+/* ---------- 支付成功 ---------- */
+SCREENS.success = () => {
+  const o = S.order || {no:'-', pay:0, eta:'18:42'};
+  return {
+    nav:{ type:'plain', title:'支付成功', right:'<span style="cursor:pointer" onclick="doneHome()">完成</span>' },
+    bg:'#F4F5F6',
+    body:`
+    <div style="text-align:center;padding:34px 0 24px">
+      <span style="width:60px;height:60px;border-radius:50%;background:linear-gradient(140deg,#00C26E,#4EDB9B);
+        display:inline-flex;align-items:center;justify-content:center">
+        <svg viewBox="0 0 24 24" style="width:30px;height:30px;fill:none;stroke:#FFF;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+      <div style="font-size:17px;font-weight:700;margin-top:14px">支付成功，共 ${priceHTML(o.pay,true)}</div>
+      <div style="font-size:12.5px;color:#61666D;margin-top:6px">预计 <b style="color:#00A85E">${o.eta}</b> 前送达 · 骑手已接单</div>
+    </div>
+    <div style="margin:0 12px 10px;background:linear-gradient(120deg,#F2FCF7,#E8F9F1);border:1px solid #CFEFE0;border-radius:12px;padding:14px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="width:38px;height:38px;border-radius:50%;background:linear-gradient(140deg,#BFE9D3,#7FD6A9);flex:0 0 auto;position:relative">
+          <span style="position:absolute;right:-1px;bottom:-1px;width:15px;height:15px;border-radius:50%;background:#00C26E;border:2px solid #FFF"></span></span>
+        <div style="flex:1 1 auto"><div style="font-size:12.5px;font-weight:600">康桥仓 正在拣货</div>
+          <div style="font-size:11px;color:#2C7A55;margin-top:2px">通常 6 分钟内出仓，出仓后可看到骑手</div></div>
+        <span style="font-size:11.5px;color:#00A85E;font-weight:600;cursor:pointer" onclick="go('track')">看进度 ›</span>
+      </div>
+      <div class="prog" style="margin-top:12px;background:#D8F0E4"><i style="width:36%"></i></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:#2C7A55;margin-top:6px">
+        <span>已下单</span><span style="font-weight:600">拣货中</span><span>配送中</span><span>已送达</span></div>
+    </div>
+    <div class="card" style="padding:14px;margin-top:12px">
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;padding:7px 0"><span style="color:#9AA0A6">订单编号</span><span>${o.no}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;padding:7px 0;border-top:1px solid #F6F7F8"><span style="color:#9AA0A6">支付方式</span><span>微信支付</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;padding:7px 0;border-top:1px solid #F6F7F8"><span style="color:#9AA0A6">商品金额</span><span>¥${money(o.sub||0)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;padding:7px 0;border-top:1px solid #F6F7F8"><span style="color:#9AA0A6">优惠合计</span><span style="color:#F5333F">−¥${money((o.coupon||0)+(o.points||0))}</span></div>
+    </div>
+    <div style="margin:14px 12px 0;background:#FFF;border-radius:12px;padding:13px 14px;display:flex;gap:10px;align-items:center;cursor:pointer" onclick="tabTo('home')">
+      <span style="background:#FF7A18;color:#FFF;font-size:10px;font-weight:600;border-radius:4px;padding:2px 6px;flex:0 0 auto">加购</span>
+      <span style="font-size:12px;color:#61666D;flex:1 1 auto">顺手带一件？鸡蛋 / 面包 9 折，随本单一起送</span>
+      <span style="font-size:11.5px;color:#FF7A18;font-weight:600">去看看 ›</span></div>
+    <div style="display:flex;gap:10px;margin:22px 12px 20px">
+      <div class="btn-ghost" style="flex:1" onclick="go('track')">查看订单</div>
+      <div class="btn-primary" style="flex:1" onclick="tabTo('home')">返回首页</div></div>`
+  };
+};
+
+/* ---------- 订单追踪 ---------- */
+SCREENS.track = () => {
+  const o = S.order || {no:'PP2026092518340012', pay:123.5, sub:133.9, coupon:10, points:6.4, items:[{id:'p1',qty:1},{id:'p2',qty:2}]};
+  const items = (o.items||[]).map(i=>({p:findP(i.id), qty:i.qty})).filter(x=>x.p);
+  const steps = [
+    ['配送中','18:26 · 骑手已从康桥仓取货',1],
+    ['拣货完成，已出仓','18:21 · 共 '+items.reduce((a,i)=>a+i.qty,0)+' 件，实拣 '+items.reduce((a,i)=>a+i.qty,0)+' 件，无缺货',1],
+    ['支付成功，订单已下发康桥仓','18:17 · 微信支付 ¥'+money(o.pay),1],
+    ['已送达','预计 18:42',0]
+  ];
+  return {
+    nav:{ type:'plain', back:true, title:'订单详情', dark:'#00C26E', tint:'#FFF' }, bg:'#F4F5F6',
+    bottom:`<div style="flex:1 1 auto"></div>
+      <span style="font-size:12.5px;color:#61666D;cursor:pointer" onclick="toast('售后申请入口（模拟）')">申请售后</span>
+      <span style="font-size:12.5px;color:#61666D;cursor:pointer" onclick="toast('客服会话（模拟）')">联系客服</span>
+      <div style="height:34px;padding:0 18px;border-radius:17px;border:1.5px solid #00C26E;color:#00A85E;
+        display:flex;align-items:center;font-size:13px;font-weight:600;cursor:pointer" onclick="toast('已催单，骑手会优先处理')">催一下</div>`,
+    body:`
+    <div style="background:#00C26E;padding:2px 16px 26px;color:#FFF">
+      <div style="font-size:17px;font-weight:700">骑手已取货，正在配送</div>
+      <div style="font-size:12.5px;opacity:.92;margin-top:6px">预计 <b>18:42</b> 送达，还有约 <b>9 分钟</b></div>
+      <div style="display:flex;align-items:center;gap:9px;margin-top:14px">
+        <span style="width:44px;height:44px;border-radius:50%;background:linear-gradient(140deg,#BFF0D6,#6FD3A0);flex:0 0 auto;
+          position:relative;border:2px solid rgba(255,255,255,.7)">
+          <span style="position:absolute;right:-3px;bottom:-3px;width:18px;height:18px;border-radius:50%;background:#FFF;
+            color:#00A85E;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:700">骑</span></span>
+        <div style="flex:1 1 auto">
+          <div style="font-size:13.5px;font-weight:600">李师傅 <span style="font-size:11px;font-weight:400;opacity:.85;margin-left:4px">4.9 分 · 已送 3,241 单</span></div>
+          <div style="font-size:11px;opacity:.85;margin-top:2px">粤 B·D2F81 · 距您 1.2km</div></div>
+        <span onclick="toast('拨打骑手电话（模拟）')" style="background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.6);
+          border-radius:999px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer">联系骑手</span>
+      </div>
+    </div>
+    <div style="margin:-16px 12px 0;background:#FFF;border-radius:12px;padding:16px 16px 12px;position:relative">
+      ${steps.map((s,i)=>`
+      <div style="display:flex;gap:12px">
+        <div style="width:14px;display:flex;flex-direction:column;align-items:center;flex:0 0 auto;padding-top:3px">
+          <span style="width:9px;height:9px;border-radius:50%;background:${s[2]?'#00C26E':'#DDE1E5'};flex:0 0 auto"></span>
+          ${i<steps.length-1?'<span style="width:1.5px;flex:1 1 auto;background:#E5E8EB;margin:3px 0"></span>':''}</div>
+        <div style="flex:1 1 auto;min-width:0;padding-bottom:${i<steps.length-1?'14px':'0'}">
+          <div style="font-size:12.5px;font-weight:600;color:${s[2]?'#1F2329':'#9AA0A6'}">${s[0]}</div>
+          <div style="font-size:11px;color:${s[2]?'#9AA0A6':'#C4C9CF'};margin-top:3px">${s[1]}</div></div>
+      </div>`).join('')}
+    </div>
+    <div class="card" style="margin-top:10px;padding:14px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px">康桥仓 · ${items.reduce((a,i)=>a+i.qty,0)} 件商品</div>
+      ${items.map(x=>`<div style="display:flex;gap:10px;align-items:center;margin-bottom:9px">
+        <div class="thumb ${x.p.th}" style="width:52px;height:52px"></div>
+        <div style="flex:1 1 auto;min-width:0"><div style="font-size:12.5px">${x.p.name}</div>
+        <div style="font-size:10.5px;color:#9AA0A6;margin-top:3px">${x.p.spec}</div></div>
+        <div style="text-align:right">${priceHTML(x.p.price)}<div style="font-size:10.5px;color:#9AA0A6">×${x.qty}</div></div>
+      </div>`).join('')}
+    </div>
+    <div class="card" style="padding:14px">
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;padding:6px 0"><span style="color:#9AA0A6">商品金额</span><span>¥${money(o.sub||0)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;padding:6px 0"><span style="color:#9AA0A6">优惠合计</span><span style="color:#F5333F">−¥${money((o.coupon||0)+(o.points||0))}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;padding:6px 0;border-top:1px solid #F6F7F8;margin-top:4px">
+        <span style="font-weight:600">实付</span>${priceHTML(o.pay||0)}</div>
+    </div>
+    <div style="height:14px"></div>`
+  };
+};
+
+/* ---------- 订单列表 ---------- */
+SCREENS.orders = () => {
+  const tabs = ['全部','待付款','配送中','已完成','售后'];
+  const cur = S.orderTab;
+  const showLive = cur==='全部'||cur==='配送中';
+  const showUnpaid = cur==='全部'||cur==='待付款';
+  const showDone = cur==='全部'||cur==='已完成';
+  return {
+    nav:{ type:'tabs' }, tab:3, bg:'#F4F5F6',
+    body:`
+    <div class="tabs">${tabs.map(t=>`<span class="${t===cur?'on':''}" onclick="S.orderTab='${t}';render()">${t}</span>`).join('')}</div>
+    ${showLive?`
+    <div class="card" style="margin-top:10px;padding:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px">
+        <span style="font-size:12.5px;font-weight:600">康桥仓</span>
+        <span style="font-size:12.5px;color:#00A85E;font-weight:600">配送中 · 预计 18:42</span></div>
+      <div style="display:flex;gap:10px;padding:0 14px 12px">
+        <div class="thumb th-a" style="width:64px;height:64px"></div>
+        <div class="thumb th-b" style="width:64px;height:64px"></div>
+        <div style="flex:1 1 auto;text-align:right;align-self:center">${priceHTML(S.order?S.order.pay:123.5)}
+          <div style="font-size:10.5px;color:#9AA0A6;margin-top:3px">共 ${S.order?S.order.items.reduce((a,i)=>a+i.qty,0):3} 件</div></div></div>
+      <div style="display:flex;justify-content:flex-end;gap:9px;padding:0 14px 14px">
+        <span onclick="toast('客服会话（模拟）')" style="font-size:12px;padding:6px 14px;border-radius:15px;border:1px solid #E3E6EA;color:#61666D;cursor:pointer">联系客服</span>
+        <span onclick="go('track')" style="font-size:12px;padding:6px 14px;border-radius:15px;border:1.5px solid #00C26E;color:#00A85E;font-weight:600;cursor:pointer">查看进度</span></div>
+    </div>`:''}
+    ${showUnpaid?`
+    <div class="card" style="padding:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px">
+        <span style="font-size:12.5px;font-weight:600">康桥仓</span>
+        <span style="font-size:12.5px;color:#FF7A18;font-weight:600">待付款 · 剩 12:41</span></div>
+      <div style="display:flex;gap:10px;padding:0 14px 12px">
+        <div class="thumb th-e" style="width:64px;height:64px"></div>
+        <div style="flex:1 1 auto;text-align:right;align-self:center">${priceHTML(39.9)}
+          <div style="font-size:10.5px;color:#9AA0A6;margin-top:3px">共 1 件</div></div></div>
+      <div style="display:flex;justify-content:flex-end;gap:9px;padding:0 14px 14px">
+        <span onclick="toast('订单已取消（模拟）')" style="font-size:12px;padding:6px 14px;border-radius:15px;border:1px solid #E3E6EA;color:#61666D;cursor:pointer">取消订单</span>
+        <span onclick="toast('调起微信支付（模拟）')" style="font-size:12px;padding:6px 14px;border-radius:15px;background:linear-gradient(120deg,#00C26E,#2ED184);color:#FFF;font-weight:600;cursor:pointer">立即付款</span></div>
+    </div>`:''}
+    ${showDone?`
+    <div class="card" style="padding:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px">
+        <span style="font-size:12.5px;font-weight:600">康桥仓</span>
+        <span style="font-size:12.5px;color:#9AA0A6">已完成 · 09-23 19:08</span></div>
+      <div style="display:flex;gap:10px;padding:0 14px 12px">
+        <div class="thumb th-c" style="width:64px;height:64px"></div>
+        <div class="thumb th-d" style="width:64px;height:64px"></div>
+        <div class="thumb th-g" style="width:64px;height:64px"></div>
+        <div style="flex:1 1 auto;text-align:right;align-self:center">${priceHTML(88.7)}
+          <div style="font-size:10.5px;color:#9AA0A6;margin-top:3px">共 3 件</div></div></div>
+      <div style="display:flex;justify-content:flex-end;gap:9px;padding:0 14px 14px">
+        <span onclick="toast('售后申请入口（模拟）')" style="font-size:12px;padding:6px 14px;border-radius:15px;border:1px solid #E3E6EA;color:#61666D;cursor:pointer">申请售后</span>
+        <span onclick="toast('评价晒单（模拟）')" style="font-size:12px;padding:6px 14px;border-radius:15px;border:1px solid #E3E6EA;color:#61666D;cursor:pointer">评价晒单</span>
+        <span onclick="reorder()" style="font-size:12px;padding:6px 14px;border-radius:15px;border:1.5px solid #00C26E;color:#00A85E;font-weight:600;cursor:pointer">再来一单</span></div>
+    </div>`:''}
+    <div style="text-align:center;font-size:11.5px;color:#C4C9CF;padding:14px 0">仅展示近 3 个月订单</div>`
+  };
+};
+
+/* ---------- 我的（真机 1:1 重建：暖米色头 + 深色会员卡 + 5 张白卡 + 抽奖位） ---------- */
+SCREENS.mine = () => ({
+  nav:{ type:'none', dark:'#FBDED0', tint:'#1F2329' }, tab:4, bg:'#F5F6FA',
+  body:`
+  <div class="my-wrap">
+    <div class="my-head">
+      <div class="my-prof">
+        <span class="my-ava" onclick="toast('个人资料（模拟）')">
+          <svg viewBox="0 0 48 48">
+            <circle cx="24" cy="24" r="24" fill="#FDFBD2"/>
+            <circle cx="24" cy="24" r="22.9" fill="none" stroke="#AC5C41" stroke-width="2.2"/>
+            <circle cx="11.4" cy="27.4" r="5.6" fill="#F0CC3C"/>
+            <circle cx="36.6" cy="27.4" r="5.6" fill="#F0CC3C"/>
+            <path d="M16.8 13.4c3.2-2.8 7-3.6 9.8-2.5 2.6 1 3.9 3.4 3.3 5.5-3.8 1.4-8.6.5-13.1-3z" fill="#4F9E3E"/>
+            <path d="M14.9 14.3c2.8-2.4 6-3.2 8.6-2.6" fill="none" stroke="#3C7C30" stroke-width="1.1" stroke-linecap="round"/>
+            <circle cx="24" cy="26" r="12.6" fill="#F6D64D"/>
+            <ellipse cx="24" cy="28.4" rx="8.6" ry="9" fill="#FEF8EC"/>
+            <path d="M15.6 25c0-5.1 3.7-8.8 8.4-8.8s8.4 3.7 8.4 8.8c-2.2-2.7-5.1-3.5-8.4-3.5s-6.2.8-8.4 3.5z" fill="#2E2A26"/>
+            <circle cx="20.3" cy="28.2" r="1.55" fill="#2E2A26"/>
+            <path d="M25.5 28.4c.7-1 1.5-1 2.2 0" fill="none" stroke="#2E2A26" stroke-width="1.15" stroke-linecap="round"/>
+            <ellipse cx="18.4" cy="31.1" rx="2.3" ry="1.5" fill="#F5A69F" opacity=".85"/>
+            <ellipse cx="29.6" cy="31.1" rx="2.3" ry="1.5" fill="#F5A69F" opacity=".85"/>
+            <path d="M24 30l1.7 2.7h-3.4z" fill="#E9752E"/>
+          </svg>
+        </span>
+        <div class="my-nick" onclick="toast('编辑昵称（模拟）')">仁爱的水芹<i><svg viewBox="0 0 6 11.4"><path d="M1.1 1.1 4.9 5.7 1.1 10.3" fill="none" stroke="#3F3F3F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></i></div>
+        <div class="my-vip" onclick="go('member')">
+          <em><svg viewBox="0 0 24 24"><path d="M4.4 8.6 8 12.6 12 6l4 6.6 3.6-4v10.8H4.4z" fill="#F3DCB4"/><path d="M4.4 18.6h15.2v1.6H4.4z" fill="#D8B478"/></svg></em>
+          <span>黄金会员</span>
+        </div>
+        <div class="my-cap" onclick="toast('微信小程序胶囊：··· 更多 / ⊙ 关闭')">
+          <span class="d"><i></i><i></i><i></i></span>
+          <span class="s"></span>
+          <span class="g"><em></em></span>
+        </div>
+      </div>
+
+      <div class="my-card">
+        <div class="my-crow">
+          <span class="cr"><svg viewBox="0 0 24 24"><path d="M2.6 7.4 6.8 11.6 12 4.4l5.2 7.2 4.2-4.2v12.2H2.6z" fill="#F2C98F"/><path d="M2.6 19.6h18.8v2H2.6z" fill="#D8A760"/></svg></span>
+          <b class="my-ct1">会员中心</b>
+          <span class="my-ct2">累计已省</span>
+          <b class="my-ct3">254.88</b>
+          <span class="my-ct4">元</span>
+        </div>
+        <div class="my-more" onclick="go('member')">更多权益<i>&#8250;</i></div>
+
+        <div class="my-sub">
+          <div class="my-s my-s1" onclick="toast('会员券：6 张待领取（模拟）')">
+            <div class="my-hd"><div class="my-chip">会员券</div><div class="my-gift">6张待领取</div></div>
+            <div class="my-pb p1"><b><i>&#165;</i>12</b></div>
+            <div class="my-pb p2"><b><i>&#165;</i>11</b></div>
+            <div class="my-plab" style="left:0">兑换券</div>
+            <div class="my-plab" style="left:85.5px">满减券</div>
+          </div>
+          <div class="my-s my-s2" onclick="toast('会员商品：会员价专区（模拟）')">
+            <div class="my-hd"><div class="my-chip">会员商品</div></div>
+            <div class="my-pimg">
+              <svg viewBox="0 0 48 48">
+                <rect width="48" height="48" fill="#F4EADC"/>
+                <ellipse cx="24" cy="40" rx="16" ry="5.5" fill="#DFCDA8" opacity=".55"/>
+                <circle cx="17.4" cy="27" r="10.2" fill="url(#myPear)"/>
+                <circle cx="29.4" cy="30.6" r="8.9" fill="url(#myPear)"/>
+                <circle cx="34" cy="21.6" r="6.9" fill="url(#myPear)"/>
+                <path d="M31.6 14.2c1.5-2.8 3.4-3.9 4.9-3.7-.4 1.9-1.7 3.6-3.6 4.5z" fill="#7FA84A"/>
+                <defs><radialGradient id="myPear" cx="0.36" cy="0.3" r="0.85">
+                  <stop offset="0" stop-color="#FCEBAE"/><stop offset=".55" stop-color="#E9C968"/>
+                  <stop offset="1" stop-color="#C79E33"/></radialGradient></defs>
+              </svg>
+            </div>
+            <div class="my-prow"><b><i>&#165;</i>18.9</b><s>&#165;21.9</s></div>
+          </div>
+          <div class="my-s my-s3" onclick="toast('免费菜：本周还有 2 次未领取（模拟）')">
+            <div class="my-hd"><div class="my-chip">免费菜</div></div>
+            <div class="my-pimg">
+              <svg viewBox="0 0 48 48">
+                <rect width="48" height="48" fill="#F7EBE4"/>
+                <rect x="13" y="9" width="22" height="30" rx="2.6" fill="#D5271F"/>
+                <rect x="13" y="9" width="22" height="8" rx="2.6" fill="#B01A14"/>
+                <circle cx="19" cy="33" r="5" fill="#8E1610"/><circle cx="27" cy="34.4" r="5.4" fill="#8E1610"/>
+                <circle cx="33" cy="32" r="4.4" fill="#8E1610"/><circle cx="23" cy="38" r="4.6" fill="#7C120C"/>
+                <circle cx="31" cy="38.6" r="4" fill="#7C120C"/>
+                <path d="M22.4 14.6h4.6v6.8h-4.6z" fill="#F4D06A"/>
+              </svg>
+            </div>
+            <div class="my-prow"><b><i>&#165;</i>0</b><s>&#165;6.9</s></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="my-flow">
+      <div class="my-w my-b1">
+        <div class="c" onclick="toast('优惠券：2 张可用（模拟）')"><div class="n">2</div><div class="l">优惠券</div></div>
+        <div class="c" onclick="toast('红包 ¥87.00（模拟）')"><div class="n">87.00</div><div class="l">红包(元)</div></div>
+        <div class="c" onclick="toast('朴分 0（模拟）')"><div class="n">0</div><div class="l">朴分</div></div>
+        <div class="c" onclick="toast('朴朴卡（模拟）')"><div class="n">0</div><div class="l">朴朴卡</div><span class="my-tag">享优惠</span></div>
+        <div class="c" onclick="toast('余额 ¥0.00（模拟）')"><div class="n">0.00</div><div class="l">余额(元)</div></div>
+      </div>
+
+      <div class="my-w my-b2">
+        <div class="c" onclick="S.orderTab='待付款';tabTo('orders')">
+          <svg viewBox="0 0 24 24"><rect x="2.8" y="5.4" width="18.4" height="13.2" rx="2.8"/><path d="M2.8 9.8h18.4"/><circle cx="7.6" cy="14.4" r="1.2" fill="#00C26E" stroke="none"/></svg>
+          <span class="my-t">待支付</span>
+        </div>
+        <div class="c" onclick="S.orderTab='配送中';tabTo('orders')">
+          <svg viewBox="0 0 24 24"><path d="M4.9 7.6h14.2l-1 11.4a2 2 0 0 1-2 1.8H7.9a2 2 0 0 1-2-1.8z"/><path d="M8.9 7.6V6.3a3.1 3.1 0 0 1 6.2 0v1.3"/><path d="M9.6 13.6c1.4 1.5 3.4 1.5 4.8 0" stroke="#00C26E"/></svg>
+          <span class="my-t">待收货</span>
+        </div>
+        <div class="c" onclick="S.orderTab='已完成';tabTo('orders')">
+          <svg viewBox="0 0 24 24"><path d="M6.8 5.2h10.4a3.1 3.1 0 0 1 3.1 3.1v4.6a3.1 3.1 0 0 1-3.1 3.1h-5.6l-5 3.9v-3.9a3.1 3.1 0 0 1-3-3.1V8.3a3.1 3.1 0 0 1 3.1-3.1z"/><path d="M9.4 11.4c1.5 1.6 3.6 1.6 5.1 0"/></svg>
+          <span class="my-t">待评价</span><em class="my-dot">3</em>
+        </div>
+        <div class="c" onclick="S.orderTab='售后';tabTo('orders')">
+          <svg viewBox="0 0 24 24"><path d="M20.2 12.2a8.2 8.2 0 1 1-2.5-5.9"/><path d="M20.4 3.8v4.4h-4.4"/><path d="M9.3 9.8 12 12.6l2.7-2.8M12 12.6v3.6M10 14.4h4"/></svg>
+          <span class="my-t">退款/售后</span>
+        </div>
+        <div class="c s5" onclick="S.orderTab='全部';tabTo('orders')">
+          <svg viewBox="0 0 24 24"><rect x="5.2" y="3.4" width="13.6" height="17.2" rx="2.6"/><path d="M8.6 8.6h6.8M8.6 12.6h6.8"/><path d="M8.6 16.6h3.4" stroke="#00C26E"/></svg>
+          <span class="my-t">全部订单</span>
+        </div>
+      </div>
+
+      <div class="my-w my-b3">
+        <div class="c" onclick="toast('免费返 45 元（模拟）')"><span class="my-tile"><svg viewBox="0 0 27 30.5"><rect width="27" height="30.5" fill="#FB7A57"/><path d="M0 0h27v9.5c-4.6 3.4-9.4 5-13.5 5S4.6 12.9 0 9.5z" fill="#FFE7E0"/><text x="13.5" y="24.6" font-size="11" font-weight="800" fill="#FFF" text-anchor="middle" font-family="Arial,Helvetica,sans-serif">&#165;45</text></svg></span><span class="my-t">免费返45</span></div>
+        <div class="c" onclick="toast('0.1 元抢鸡蛋（模拟）')"><span class="my-tile"><svg viewBox="0 0 27 30.5"><rect width="27" height="30.5" fill="#EC5866"/><path d="M0 0h27v10.5c-4.4 3.2-9 4.7-13.5 4.7S4.4 13.7 0 10.5z" fill="#FFF1F2"/><text x="13.5" y="24.8" font-size="9.5" font-weight="800" fill="#FFF" text-anchor="middle" font-family="Arial,Helvetica,sans-serif">拼团</text></svg></span><span class="my-t">0.1抢鸡蛋</span></div>
+        <div class="c" onclick="toast('进群有礼（模拟）')"><span class="my-tile"><svg viewBox="0 0 27 30.5"><rect width="27" height="30.5" fill="#4CBF3C"/><path d="M0 0h27v10.5c-4.4 3.2-9 4.7-13.5 4.7S4.4 13.7 0 10.5z" fill="#F0FCEB"/><text x="13.5" y="24.8" font-size="11" font-weight="800" fill="#FFF" text-anchor="middle" font-family="Arial,Helvetica,sans-serif">&#165;40</text></svg></span><span class="my-t">进群有礼</span></div>
+        <div class="c" onclick="toast('满 12 减 12（模拟）')"><span class="my-tile"><svg viewBox="0 0 27 30.5"><rect width="27" height="30.5" fill="#F2323F"/><circle cx="13.5" cy="8.4" r="5.4" fill="#F5CE55"/><circle cx="13.5" cy="8.4" r="3.5" fill="#E9B71F"/><text x="13.5" y="25.6" font-size="11.5" font-weight="800" fill="#FFF" text-anchor="middle" font-family="Arial,Helvetica,sans-serif">12</text></svg></span><span class="my-t">满12-12</span></div>
+        <div class="c" onclick="toast('邀请老用户赚 2 元（模拟）')"><span class="my-tile"><svg viewBox="0 0 27 30.5"><rect width="27" height="30.5" fill="#F0453F"/><path d="M0 0h27v9.5c-4.6 3.4-9.4 5-13.5 5S4.6 12.9 0 9.5z" fill="#FFE9E4"/><text x="13.5" y="24.4" font-size="11.5" font-weight="800" fill="#FFF" text-anchor="middle" font-family="Arial,Helvetica,sans-serif">&#165;2</text></svg></span><span class="my-t">邀老用户赚</span></div>
+      </div>
+
+      <div class="my-w my-b4">
+        <div class="r">
+          <div class="c" onclick="toast('朴朴客服（模拟）')">
+            <svg viewBox="0 0 24 24"><path d="M4.8 13.4v-1.3a7.2 7.2 0 0 1 14.4 0v1.3"/><rect x="2.6" y="12.8" width="3.7" height="5.9" rx="1.8"/><rect x="17.7" y="12.8" width="3.7" height="5.9" rx="1.8"/><path d="M19.6 18.7v.4a2.3 2.3 0 0 1-2.3 2.3h-2.6"/></svg>
+            <span class="my-t">朴朴客服</span>
+          </div>
+          <div class="c" onclick="toast('购买朴朴卡（模拟）')">
+            <svg viewBox="0 0 24 24"><rect x="2.8" y="5.8" width="18.4" height="12.4" rx="2.6"/><path d="M2.8 10.2h18.4"/><path d="M3.4 6.4l8.6 6.2 8.6-6.2"/></svg>
+            <span class="my-t">购买朴朴卡</span>
+          </div>
+          <div class="c" onclick="toast('收货地址（模拟）')">
+            <svg viewBox="0 0 24 24"><path d="M12 21s6.8-6.1 6.8-11.1A6.8 6.8 0 0 0 5.2 9.9C5.2 14.9 12 21 12 21z"/><circle cx="12" cy="9.7" r="2.4"/></svg>
+            <span class="my-t">收货地址</span>
+          </div>
+          <div class="c" onclick="toast('发票报销（模拟）')">
+            <svg viewBox="0 0 24 24"><rect x="5.4" y="3.4" width="13.2" height="17.2" rx="2.4"/><path d="M9 8.4h6M9 12.4h6M9 16.4h3.4"/></svg>
+            <span class="my-t">发票报销</span>
+          </div>
+          <div class="c" onclick="toast('到货提醒（模拟）')">
+            <svg viewBox="0 0 24 24"><path d="M18.4 8.8a6.4 6.4 0 1 0-12.8 0c0 7.2-2.8 8.8-2.8 8.8h18.4S18.4 16 18.4 8.8"/><path d="M13.9 21a2.2 2.2 0 0 1-3.8 0"/></svg>
+            <span class="my-t">到货提醒</span>
+          </div>
+        </div>
+        <div class="r">
+          <div class="c" onclick="toast('朴朴热招：推荐奖（模拟）')">
+            <svg viewBox="0 0 24 24"><path d="M11.6 5.4a7.4 7.4 0 1 0 0 14.8 7.4 7.4 0 0 0 0-14.8z"/><path d="M8.6 14c.7 1.2 1.7 1.8 2.7 1.8s2-.6 2.7-1.8"/><circle cx="9.2" cy="10.4" r=".95" fill="#2F2F2F" stroke="none"/><circle cx="13.8" cy="10.4" r=".95" fill="#2F2F2F" stroke="none"/><path d="M18.6 3.6v6.4M15.4 6.8h6.4"/></svg>
+            <span class="my-t">朴朴热招</span><em class="my-bdg">推荐奖</em>
+          </div>
+          <div class="c" onclick="toast('我常买（模拟）')">
+            <svg viewBox="0 0 24 24"><path d="M4.9 7.6h14.2l-1 11.4a2 2 0 0 1-2 1.8H7.9a2 2 0 0 1-2-1.8z"/><path d="M8.9 7.6V6.3a3.1 3.1 0 0 1 6.2 0v1.3"/></svg>
+            <span class="my-t">我常买</span>
+          </div>
+          <div class="c" onclick="toast('我的收藏（模拟）')">
+            <svg viewBox="0 0 24 24"><path d="m12 4.8 2.3 4.7 5.2.8-3.8 3.7.9 5.2-4.6-2.5-4.6 2.5.9-5.2-3.8-3.7 5.2-.8z"/><path d="M9.8 12.6c.6.8 1.4 1.2 2.2 1.2s1.6-.4 2.2-1.2"/></svg>
+            <span class="my-t">我的收藏</span>
+          </div>
+          <div class="c" onclick="toast('意见反馈：请反馈（模拟）')">
+            <svg viewBox="0 0 24 24"><path d="M15.6 16.6h-8a2.4 2.4 0 0 1-2.4-2.4V6.6a2.4 2.4 0 0 1 2.4-2.4h8a2.4 2.4 0 0 1 2.4 2.4v7.6a2.4 2.4 0 0 1-2.4 2.4z"/><path d="M8.4 9.6h5.6M8.4 13h4"/></svg>
+            <span class="my-t">意见反馈</span><em class="my-bdg">请反馈</em>
+          </div>
+          <div class="c" onclick="toast('营业资质（模拟）')">
+            <svg viewBox="0 0 24 24"><rect x="3.6" y="6.6" width="16.8" height="10.8" rx="3"/><circle cx="9" cy="12" r="2.2"/><path d="M13.8 10.6h3.8M13.8 13.4h2.4"/></svg>
+            <span class="my-t">营业资质</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="my-bn" onclick="toast('写商品评价可抽奖（模拟）')">
+        <span class="ribbon"></span>
+        <span class="blk"><span class="who">我</span></span>
+        <span class="coin">P</span>
+        <span class="sp" style="left:96px;top:14px;width:5px;height:5px"></span>
+        <span class="sp" style="left:126px;top:74px;width:4px;height:4px"></span>
+        <span class="sp" style="left:300px;top:16px;width:5px;height:5px"></span>
+        <span class="sp" style="left:246px;top:88px;width:4px;height:4px"></span>
+        <div class="tt">写商品评价可抽奖</div>
+        <div class="go">参与<br>抽奖</div>
+      </div>
+    </div>
+  </div>`
+});
+
+/* ---------- 会员中心 ---------- */
+SCREENS.member = () => ({
+  nav:{ type:'plain', back:true, title:'朴朴会员', dark:'#2A2418', tint:'#F0E3C2' }, bg:'#F4F5F6',
+  bottom:`<div style="flex:1 1 auto;font-size:11.5px;color:#9AA0A6;line-height:1.4">年卡 ¥98 起<br>
+      <span style="color:#C8A24A;font-weight:600">月均约 8.2 元</span></div>
+    <div style="height:40px;padding:0 30px;border-radius:20px;background:linear-gradient(120deg,#E9D08C,#C8A24A);
+      color:#3A3020;display:flex;align-items:center;font-size:14px;font-weight:700;cursor:pointer" onclick="toast('调起微信支付（模拟）')">立即续费</div>`,
+  body:`
+  <div style="background:linear-gradient(160deg,#3A3020,#2A2418);padding:6px 18px 40px;position:relative;overflow:hidden">
+    <div style="position:absolute;right:-40px;top:-40px;width:170px;height:170px;border-radius:50%;
+      background:radial-gradient(circle,rgba(200,162,74,.28),transparent 68%)"></div>
+    <div style="position:relative">
+      <div style="display:flex;align-items:center;gap:9px">
+        <span style="width:34px;height:34px;border-radius:11px;background:linear-gradient(140deg,#E9D08C,#C8A24A);
+          display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#3A3020">PP</span>
+        <div><div style="font-size:15px;font-weight:700;color:#F5E7C4">朴朴会员</div>
+          <div style="font-size:11px;color:#A99A72;margin-top:2px">有效期至 2027-03-18</div></div>
+        <span style="margin-left:auto;font-size:11px;color:#C8A24A;border:1px solid rgba(200,162,74,.5);border-radius:999px;padding:4px 11px">已开通</span>
+      </div>
+      <div style="display:flex;gap:22px;margin-top:18px">
+        ${[['18','累计省下（元）'],['2','本周免费菜余量'],['36','返利券待用']].map(x=>`
+          <div><div style="font-size:19px;font-weight:700;color:#F5E7C4;font-family:ui-monospace,Menlo,monospace">${x[0]}</div>
+          <div style="font-size:10.5px;color:#A99A72;margin-top:3px">${x[1]}</div></div>`).join('')}
+      </div></div>
+  </div>
+  <div style="margin:-26px 12px 0;background:#FFF;border-radius:12px;padding:15px 16px;position:relative">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <span style="font-size:13.5px;font-weight:600">本周免费菜</span>
+      <span style="font-size:11.5px;color:#C8A24A;font-weight:600;cursor:pointer" onclick="toast('已领取 2 件免费菜，结算时自动 0 元')">去领取 ›</span></div>
+    <div style="display:flex;gap:9px">
+      ${[['p3','小番茄 500g'],['p5','小青菜 400g']].map(x=>{const p=findP(x[0]);return `
+      <div onclick="quickAdd('${x[0]}')" style="flex:1;border:1px solid #F0F2F4;border-radius:8px;padding:9px;display:flex;gap:8px;
+        align-items:center;cursor:pointer">
+        <span class="thumb ${p.th}" style="width:34px;height:34px;border-radius:6px"></span>
+        <div style="min-width:0"><div style="font-size:11.5px;font-weight:500">${x[1]}</div>
+        <div style="font-size:10px;color:#C8A24A">会员 ¥0</div></div></div>`}).join('')}
+    </div>
+    <div style="font-size:10.5px;color:#9AA0A6;margin-top:9px">每周限领 2 次，周日 24:00 过期不补</div>
+  </div>
+  <div class="card" style="margin-top:10px;padding:14px 16px">
+    <div style="font-size:13.5px;font-weight:600;margin-bottom:6px">会员权益</div>
+    ${[['菜','每周免费菜','每周 2 件指定商品 0 元，随单配送'],
+       ['价','会员专享价','标记「会员价」商品享折扣，部分商品每周限购 1 件'],
+       ['运','免配送费','单笔满 ¥28 免配送费（含会员价订单）'],
+       ['返','消费返利','按订单实付 2% 返「有门槛券」，<b style="color:#FF7A18">非现金、不可提现</b>']]
+      .map((x,i)=>`<div style="display:flex;align-items:flex-start;gap:11px;padding:11px 0;${i<3?'border-bottom:1px solid #F6F7F8':''}">
+      <span style="width:28px;height:28px;border-radius:9px;background:#FBF3DE;display:flex;align-items:center;
+        justify-content:center;font-size:12px;color:#8A6E1E;font-weight:600;flex:0 0 auto">${x[0]}</span>
+      <div style="flex:1 1 auto"><div style="font-size:12.5px;font-weight:600">${x[1]}</div>
+      <div style="font-size:11px;color:#9AA0A6;margin-top:3px">${x[2]}</div></div></div>`).join('')}
+    <div style="background:#FFF7EC;border-radius:8px;padding:9px 11px;font-size:11px;color:#B4581A;line-height:1.5;margin-top:6px">
+      权益说明：返利以优惠券形式发放，需满足使用门槛方可抵扣，不构成现金权益。</div>
+  </div>
+  <div style="height:14px"></div>`
+});
+
+/* ===================== 动作 ===================== */
+function quickAdd(id){
+  const p = findP(id); if(!p || p.dead) return toast('该商品已售罄');
+  const it = S.cart.find(i=>i.id===id && i.ok);
+  if(it) it.qty++;
+  else { S.cart.push({id, qty:1, ok:true}); S.checked[id]=true; }
+  render(); toast('已加入购物车');
+}
+function buyNow(id){
+  const p = findP(id); if(!p || p.dead) return toast('该商品已售罄');
+  const it = S.cart.find(i=>i.id===id && i.ok);
+  if(it) it.qty++; else { S.cart.push({id, qty:1, ok:true}); S.checked[id]=true; }
+  S.param = null; go('checkout');
+}
+function setQty(id, d){
+  const it = S.cart.find(i=>i.id===id); if(!it) return;
+  it.qty += d;
+  if(it.qty<=0){ S.cart = S.cart.filter(i=>i.id!==id); }
+  render();
+}
+function removeItem(id){ S.cart = S.cart.filter(i=>i.id!==id); render(); toast('已删除'); }
+function toggleItem(id){ if(!S.checked[id] && !S.cart.find(i=>i.id===id&&i.ok)) return toast('失效商品不可结算'); S.checked[id]=!S.checked[id]; render(); }
+function toggleAll(){
+  const ok = S.cart.filter(i=>i.ok);
+  const all = ok.every(i=>S.checked[i.id]);
+  ok.forEach(i=>S.checked[i.id] = !all);
+  render();
+}
+function switchCat(c){ S.cat=c; render(); }
+function switchCTab(t){ S.cTab=t; render(); }
+function cartManage(){ toast('管理模式：可批量删除 / 移入收藏'); }
+function doneHome(){ tabTo('home'); }
+function doSearch(kw){ S.search=kw; go('result'); }
+function reorder(){
+  ['p3','p10'].forEach(id=>{ const it=S.cart.find(i=>i.id===id&&i.ok); if(it) it.qty++; else { S.cart.push({id,qty:1,ok:true}); S.checked[id]=true; } });
+  render(); toast('已把上次的 2 件商品加入购物车');
+}
+function submitOrder(){
+  const st = cartStats();
+  if(!st.checkedCount) return toast('请先勾选要结算的商品');
+  const items = S.cart.filter(i=>i.ok && S.checked[i.id]).map(i=>({id:i.id, qty:i.qty}));
+  S.order = { no:'PP'+Date.now().toString().slice(-14), pay:st.pay, sub:st.sub, coupon:st.coupon, points:st.points, items, eta:'18:42' };
+  // 支付中
+  const loading = document.createElement('div');
+  loading.className='loading';
+  loading.innerHTML='<div class="spinner"></div><div style="font-size:13px;color:#61666D">正在调起微信支付…</div>';
+  document.querySelector('.body').appendChild(loading);
+  setTimeout(()=>{
+    S.cart = S.cart.filter(i=>!(i.ok && S.checked[i.id]));
+    Object.keys(S.checked).forEach(k=>delete S.checked[k]);
+    loading.remove();
+    S.stack=[]; S.screen='success'; render();
+  }, 1200);
+}
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('on'), 1700);
+}
+
+/* ===================== 渲染 ===================== */
+function render(){
+  const sc = SCREENS[S.screen] ? SCREENS[S.screen]() : SCREENS.home();
+  const st = cartStats();
+  const dark = sc.nav.dark, tint = sc.nav.tint || '#1F2329';
+
+  // 状态栏 & 导航栏底色
+  const sb = document.getElementById('statusbar'), nb = document.getElementById('navbar');
+  sb.style.background = dark || '#FFF'; sb.style.color = dark ? tint : '#1F2329';
+  nb.style.background = dark || sc.nav.bg || '#FFF';
+  nb.style.color = dark ? tint : '#1F2329';
+  nb.className = 'nav-bar' + (sc.nav.type==='home'||sc.nav.type==='searchInput'||sc.nav.type==='tabs'||sc.nav.type==='cart' ? '' : ' bordered') + (sc.nav.type==='cart' ? ' ct-nav' : '');
+
+  // 导航栏内容
+  let navHTML = '';
+  const CT_LOC = `<div class="ct-loc">
+      <span class="ct-pin"></span><span class="ct-name">安泰世界城</span><span class="ct-caret"></span>
+      <span class="ct-tools"><span class="ct-more"><i></i><i></i><i></i></span><span class="ct-vsep"></span>
+      <span class="ct-scan"><i></i></span></span></div>
+    <div class="ct-title"><span class="ct-t1">购物车</span><span class="ct-t2">我常买</span>
+      <span class="ct-t3" onclick="toast('优惠券（模拟）：2 张可用')">优惠券(2)</span>
+      <span class="ct-t4" onclick="cartManage()">管理</span></div>`;
+  if(sc.nav.type==='cart'){
+    navHTML = CT_LOC;
+  } else if(sc.nav.type==='home'){
+    navHTML = `
+      <div style="display:flex;align-items:center;gap:4px;font-size:14px;font-weight:600;flex:0 0 auto">
+        <span style="color:#00C26E">${IC.pin}</span>康桥花园三期
+        <span style="width:0;height:0;border-left:3.5px solid transparent;border-right:3.5px solid transparent;border-top:4.5px solid #1F2329"></span>
+      </div>
+      <div onclick="go('search')" style="flex:1 1 auto;height:32px;background:#F4F5F6;border-radius:16px;display:flex;align-items:center;
+        gap:5px;padding:0 11px;color:#9AA0A6;font-size:12.5px;cursor:pointer">
+        <span style="color:#9AA0A6">${IC.search}</span>搜索「阳光玫瑰青提」</div>
+      <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:#1F2329;stroke-width:1.8;stroke-linecap:round;
+        cursor:pointer" onclick="toast('扫码（模拟）')"><path d="M3 8h18M3 8l1.5 12h15L21 8M8 8V5.5A4 4 0 0 1 16 5.5V8"/></svg>`;
+  } else if(sc.nav.type==='search'){
+    navHTML = `<div onclick="go('search')" style="flex:1 1 auto;height:32px;background:#F4F5F6;border-radius:16px;display:flex;
+      align-items:center;gap:5px;padding:0 11px;color:#9AA0A6;font-size:12.5px;cursor:pointer">
+      <span style="color:#9AA0A6">${IC.search}</span>搜索</div>
+      <div class="nav-right"><div class="dots" style="display:flex;gap:3px"><i style="width:3.5px;height:3.5px;border-radius:50%;background:currentColor;display:block"></i><i style="width:3.5px;height:3.5px;border-radius:50%;background:currentColor;display:block"></i><i style="width:3.5px;height:3.5px;border-radius:50%;background:currentColor;display:block"></i></div></div>`;
+  } else if(sc.nav.type==='searchInput'){
+    navHTML = `<div style="flex:1 1 auto;height:32px;background:#F4F5F6;border-radius:16px;display:flex;align-items:center;
+      gap:5px;padding:0 11px;font-size:12.5px;border:1px solid #EEF0F2">
+      <span style="color:#00C26E">${IC.search}</span><span style="color:#1F2329">${S.search||''}</span>
+      <span style="width:1.5px;height:14px;background:#00C26E"></span>
+      <span style="margin-left:auto;width:15px;height:15px;border-radius:50%;background:#C8CDD4;color:#FFF;font-size:11px;
+        display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="S.search='';render()">×</span></div>
+      <span style="font-size:13.5px;color:#61666D;flex:0 0 auto;cursor:pointer" onclick="back()">取消</span>`;
+  } else if(sc.nav.type==='tabs'){
+    const tabs = ['全部','待付款','配送中','已完成','售后'];
+    navHTML = `<div class="tabs" style="padding:0 14px;border-bottom:none;background:transparent">` +
+      tabs.map(t=>`<span class="${t===S.orderTab?'on':''}" onclick="S.orderTab='${t}';render()">${t}</span>`).join('') + `</div>`;
+  } else if(sc.nav.type==='mine'){
+    navHTML = `<div class="nav-title" style="color:${tint};text-align:left;padding-left:16px;font-size:16px">我的</div>
+      <div class="nav-right" style="color:${tint}">
+        <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;cursor:pointer" onclick="toast('消息中心（模拟）')"><path d="M18 8a6 6 0 1 0-12 0c0 7-2.5 8-2.5 8h17S18 15 18 8"/><path d="M13.7 20.5a2 2 0 0 1-3.4 0"/></svg>
+        <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;cursor:pointer" onclick="toast('设置（模拟）')"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/></svg></div>`;
+  } else {
+    const t = sc.nav.titleLeft
+      ? `<div class="nav-title" style="text-align:left;padding-left:14px">${sc.nav.title||''}</div>`
+      : `<div class="nav-title">${sc.nav.title||''}</div>`;
+    navHTML = (sc.nav.back ? `<div class="back-ic" onclick="back()"></div>` : '') + t +
+      (sc.nav.right ? `<div class="nav-right">${sc.nav.right}</div>`
+        : sc.nav.type==='plain' ? `<div class="nav-right"><div class="dots" style="display:flex;gap:3px"><i style="width:3.5px;height:3.5px;border-radius:50%;background:currentColor;display:block"></i><i style="width:3.5px;height:3.5px;border-radius:50%;background:currentColor;display:block"></i><i style="width:3.5px;height:3.5px;border-radius:50%;background:currentColor;display:block"></i></div></div>` : '');
+  }
+  if(sc.nav.type==='none'){ nb.style.display='none'; } else { nb.style.display=''; }
+  nb.innerHTML = navHTML;
+
+  // 主体
+  const body = document.getElementById('body');
+  body.innerHTML = `<div class="screen">${sc.body}</div>`;
+
+  // 底部
+  const bb = document.getElementById('bottombar');
+  if(sc.tab !== undefined){
+    const TABS = [
+      ['home','首页',IC_HOUSE],['category','分类',IC.cat],['live','直播',IC_LIVE],
+      ['cart','购物车',IC.cart],['mine','我的',IC.me]
+    ];
+    const tabbarHTML = `<div class="tabbar">${TABS.map((t,i)=>{
+      const bdg = t[0]==='cart' ? `<span class="badge">${st.count||''}</span>` : '';
+      const act = t[0]==='live' ? `toast('直播频道（本次未设计）')` : `tabTo('${t[0]}')`;
+      return `<div class="tab ${i===sc.tab?'on':''}" onclick="${act}">${t[2]}${bdg}${t[1]}</div>`;
+    }).join('')}</div>`;
+    bb.innerHTML = (sc.cartFooter ? `<div class="ct-jdfoot">${sc.bottom}</div>` : '') + tabbarHTML;
+  } else if(sc.bottom){
+    bb.innerHTML = `<div class="bottom-bar">${sc.bottom}</div>`;
+  } else {
+    bb.innerHTML = '';
+  }
+
+  // 左栏状态
+  document.getElementById('st-screen').textContent = S.screen;
+  document.getElementById('st-count').textContent = st.count;
+  document.getElementById('st-sub').textContent = money(st.sub);
+  document.getElementById('st-gap').textContent = money(st.gap);
+  document.getElementById('st-order').textContent = S.order ? S.order.no.slice(-8) : '-';
+  document.querySelectorAll('#jump button').forEach(b=>b.classList.toggle('cur', b.dataset.s===S.screen && !b.dataset.act));
+  bindStick();
+}
+
+/* ---------- 吸顶栏：切换 Tab 不重渲染（保住滚动位置） ---------- */
+function pickTab(el, i){
+  S.fTab = i;
+  el.parentNode.querySelectorAll('span').forEach((x, j)=>x.className = (j===i ? 'on' : ''));
+  toast(FTABS[i] + '（模拟重新加载推荐流）');
+}
+
+/* ---------- 两段式吸顶（逐层吸，不是一起吸） ----------
+   第 1 段：首页原搜索框整体滚出可视区 → 搜索框从顶部滑下钉住（56px）
+   第 2 段：推荐流头部的「为你推荐」Tab 行滚到「搜索框下沿」时它才吸住
+   stage 0 = 都没吸 / 1 = 只有搜索框 / 2 = 两层都吸 */
+function bindStick(){
+  const sc = document.querySelector('.screen'); if(!sc) return;
+  const st = sc.querySelector('.stick'); if(!st) return;
+  const fs = sc.querySelector('.feedslot');
+  const hs = sc.querySelector('.hero .hero-search');   /* 首页顶部原本那个搜索框 */
+  const upd = ()=>{
+    const base = sc.getBoundingClientRect().top;
+    const stOn = hs ? (hs.getBoundingClientRect().bottom - base) <= 0.5 : sc.scrollTop > 0;
+    st.classList.toggle('on', stOn);
+    if(!fs){ window.__stickStage = stOn ? 1 : 0; return; }
+    const off = stOn ? st.offsetHeight : 0;   /* 第 2 层贴在第一层下沿；第一层还没来时贴容器顶 */
+    fs.style.top = off + 'px';
+    const fsOn = (fs.getBoundingClientRect().top - base) <= off + 0.5;
+    fs.classList.toggle('on', fsOn);
+    window.__stickStage = stOn ? (fsOn ? 2 : 1) : 0;
+  };
+  sc.addEventListener('scroll', upd, {passive:true});
+  window.addEventListener('resize', upd);
+  upd();
+  window.__stickUpd = upd;
+}
+
+/* 左栏跳转按钮 */
+const JUMP = [['home','首页'],['feed','推荐流（首页内）',1],['category','分类'],['search','搜索'],['result','搜索结果'],
+  ['detail','商品详情'],['cart','购物车'],['checkout','确认订单'],['success','支付成功'],['track','订单追踪'],
+  ['orders','订单列表'],['mine','我的'],['member','会员中心']];
+document.getElementById('jump').innerHTML = JUMP.map(j=>
+  `<button data-s="${j[0]}"${j[2]?' data-act="1"':''} onclick="jumpTo('${j[0]}')">${j[1]}</button>`).join('');
+function jumpTo(s){
+  S.stack=[]; S.screen = (s==='feed' ? 'home' : s); render();
+  if(s==='feed'){
+    /* 落到「Tab 行刚好吸在搜索框下沿」的位置（下沿 = 第 1 层实际高度，不写死） */
+    const sc=document.querySelector('.screen'), fs=sc && sc.querySelector('.feedslot');
+    const stk=sc && sc.querySelector('.stick');
+    if(sc && fs) sc.scrollTop += fs.getBoundingClientRect().top - sc.getBoundingClientRect().top
+                                - (stk ? stk.offsetHeight : 56);
+  }
+}
+document.getElementById('btn-reset').onclick = ()=>{ S = initState(); render(); toast('已重置为初始状态'); };
+
+/* 首次渲染 */
+render();
+</script>
+</body>
+</html>
