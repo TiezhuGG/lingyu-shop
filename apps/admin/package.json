@@ -10,6 +10,7 @@
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
+    "@lingyu/contracts": "workspace:*",
     "vue": "3.5.43",
     "vue-router": "4.6.3",
     "pinia": "3.0.4"

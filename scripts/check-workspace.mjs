@@ -26,7 +26,7 @@ for (const area of ['apps','packages']) {
   }
 }
 assert.deepEqual(actual.sort(), expected.sort());
-for (const path of ['AGENTS.md','docs/tasks.md','docs/progress.md','docs/development.md','database/schema','database/migrations','database/seeds','openspec/specs','openspec/changes','tests/integration','tests/contract','tests/e2e','tests/load','infra/containers','infra/deploy','infra/monitoring']) {
+for (const path of ['AGENTS.md','docs/tasks.md','docs/progress.md','docs/development.md','database/schema','database/migrations','database/seeds','openspec/specs','openspec/changes','tests/integration','tests/contract','tests/e2e','tests/load','infra/containers','infra/deploy','infra/monitoring','packages/contracts/src/openapi.json','packages/contracts/src/generated/openapi.ts']) {
   assert(existsSync(resolve(root, path)), `Missing ${path}`);
 }
 
@@ -46,5 +46,9 @@ for (const entry of ['admin', 'miniapp', 'contracts', 'ui-tokens']) {
 const server = readJson('packages/server-modules/package.json');
 assert.equal(server.exports['.'].require, './dist/index.js');
 for (const app of ['api','worker']) assert.equal(readJson('apps/' + app + '/package.json').dependencies[server.name], 'workspace:*');
+const contracts = readJson('packages/contracts/package.json');
+assert.equal(contracts.devDependencies['openapi-typescript'], '7.13.0');
+assert.equal(contracts.scripts.generate, 'openapi-typescript src/openapi.json -o src/generated/openapi.ts');
+assert.equal(contracts.exports['.'].require, './dist/index.js');
 
 console.log('PASS: runtime, 9 workspace manifests, required directories and backend dependency boundaries.');

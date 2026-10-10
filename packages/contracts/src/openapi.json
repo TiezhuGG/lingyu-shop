@@ -1,0 +1,173 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Lingyu engineering contract probe",
+    "version": "0.1.0",
+    "description": "A non-business probe for the shared HTTP contract boundary."
+  },
+  "paths": {
+    "/api/v1/_contract/probe": {
+      "post": {
+        "operationId": "contractProbe",
+        "summary": "Validate the generated engineering contract without business side effects",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractProbeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Validated probe input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractProbeSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Input does not match the public schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Safe internal error boundary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RequestId": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 64,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$"
+      },
+      "AmountMinor": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 12,
+        "pattern": "^(0|[1-9][0-9]*)$",
+        "description": "Non-negative decimal integer in minor currency units; never a JSON number."
+      },
+      "DeliveryMode": {
+        "type": "string",
+        "enum": ["pickup", "delivery"]
+      },
+      "ContractProbeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["amountMinor", "deliveryMode"],
+        "properties": {
+          "amountMinor": {
+            "$ref": "#/components/schemas/AmountMinor"
+          },
+          "deliveryMode": {
+            "$ref": "#/components/schemas/DeliveryMode"
+          }
+        }
+      },
+      "ContractProbeData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["amountMinor", "deliveryMode"],
+        "properties": {
+          "amountMinor": {
+            "$ref": "#/components/schemas/AmountMinor"
+          },
+          "deliveryMode": {
+            "$ref": "#/components/schemas/DeliveryMode"
+          }
+        }
+      },
+      "ContractProbeSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "data", "requestId"],
+        "properties": {
+          "code": {
+            "const": "OK"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ContractProbeData"
+          },
+          "requestId": {
+            "$ref": "#/components/schemas/RequestId"
+          }
+        }
+      },
+      "ValidationField": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "rule"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 128,
+            "pattern": "^/(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]*$"
+          },
+          "rule": {
+            "type": "string",
+            "enum": ["additionalProperties", "enum", "minLength", "pattern", "required", "type"]
+          }
+        }
+      },
+      "ValidationDetails": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fields"],
+        "properties": {
+          "fields": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "$ref": "#/components/schemas/ValidationField"
+            }
+          }
+        }
+      },
+      "ApiError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message", "requestId"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": ["CONFLICT", "FORBIDDEN", "INTERNAL_ERROR", "NOT_FOUND", "RATE_LIMITED", "SERVICE_UNAVAILABLE", "UNAUTHENTICATED", "VALIDATION_FAILED"]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "requestId": {
+            "$ref": "#/components/schemas/RequestId"
+          },
+          "details": {
+            "$ref": "#/components/schemas/ValidationDetails"
+          }
+        }
+      }
+    }
+  }
+}

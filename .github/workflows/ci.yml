@@ -30,6 +30,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
       - run: pnpm typecheck
+      - run: pnpm contracts:verify
       - run: pnpm db:validate
       - run: pnpm db:generate
       - run: pnpm build

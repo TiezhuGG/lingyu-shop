@@ -48,7 +48,40 @@ test('real shared lifecycle, readiness failure/recovery and API/Worker connectio
     }, 'API readiness did not succeed');
     await eventually(async () => worker.output().includes('no jobs registered.'), 'Worker startup failed');
     assert.equal((await fetch('http://127.0.0.1:19371/missing')).status, 404);
-    assert.deepEqual(await (await fetch('http://127.0.0.1:19371/health')).json(), { status: 'ok', service: 'api', scope: 'engineering' });
+    const health = await fetch('http://127.0.0.1:19371/health', { headers: { 'x-request-id': 'health-check-12345' } });
+    assert.equal(health.headers.get('x-request-id'), 'health-check-12345');
+    assert.deepEqual(await health.json(), { status: 'ok', service: 'api', scope: 'engineering', requestId: 'health-check-12345' });
+    const requestId = 'contract-probe-12345';
+    const probe = await fetch('http://127.0.0.1:19371/api/v1/_contract/probe', {
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-request-id': requestId },
+      body: JSON.stringify({ amountMinor: '1250', deliveryMode: 'pickup' }),
+    });
+    assert.equal(probe.status, 200);
+    assert.equal(probe.headers.get('x-request-id'), requestId);
+    assert.deepEqual(await probe.json(), { code: 'OK', data: { amountMinor: '1250', deliveryMode: 'pickup' }, requestId });
+    for (const input of [
+      { amountMinor: '1250', deliveryMode: 'pickup', internalOnly: 'must-not-echo' },
+      { amountMinor: 1250, deliveryMode: 'pickup' },
+      { amountMinor: '1250', deliveryMode: 'courier' },
+    ]) {
+      const invalid = await fetch('http://127.0.0.1:19371/api/v1/_contract/probe', {
+        method: 'POST', headers: { 'content-type': 'application/json', 'x-request-id': requestId }, body: JSON.stringify(input),
+      });
+      assert.equal(invalid.status, 400);
+      const body = await invalid.json();
+      assert.equal(body.code, 'VALIDATION_FAILED');
+      assert.equal(body.requestId, requestId);
+      assert(!JSON.stringify(body).includes('must-not-echo'));
+    }
+    const invalidTrace = 'invalid$request-id';
+    const invalidTraceResponse = await fetch('http://127.0.0.1:19371/api/v1/_contract/probe', {
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-request-id': invalidTrace },
+      body: JSON.stringify({ amountMinor: '1', deliveryMode: 'delivery' }),
+    });
+    const replacementTrace = invalidTraceResponse.headers.get('x-request-id');
+    assert.equal(invalidTraceResponse.status, 200);
+    assert.notEqual(replacementTrace, invalidTrace);
+    assert.match(replacementTrace, /^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$/);
     assert(await connections(api.child.pid) > 0);
     assert(await connections(worker.child.pid) > 0);
     const tables = await admin.query("SELECT tablename FROM pg_tables WHERE schemaname = 'public'");

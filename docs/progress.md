@@ -1,5 +1,17 @@
 # 开发进度
 
+## 2026-10-10：T01-D2 HTTP 契约边界与生成探针（验收中）
+
+批初读取根 AGENTS、tasks/progress、路线、开发说明、原型映射、总体设计 API/事务/测试/目录章节、ADR-001/002、现有 specs/changes 与 D1 源码/测试；无局部 AGENTS。起点 `41f6ca6`、工作区干净。按依赖确认 T01-D1 已验收后，唯一可直接推进的下一项为 T01-D2；T01-D3 依赖其 HTTP/契约边界，身份/商品仍在其后。
+
+先记录 t01-d2-contract-boundary 设计，再实现无业务副作用的 OpenAPI 3.1/JSON Schema 工程探针。`packages/contracts/src/openapi.json` 是唯一公共 DTO/schema 来源，openapi-typescript 7.13.0 生成 TS 类型与薄客户端；AJV 8.20.0 只在 server-modules 编译相同请求 schema。注册表元数据确认生成器 peer 为 TypeScript 5.x，项目锁定 5.9.3；admin Vue/Vite 与 miniapp DCloud/Vite 均仅导入生成类型，未引入 server-modules/backend-shared 或前端运行时 AJV。生成重跑无漂移，CI 增加 `pnpm contracts:verify`。
+
+API 统一产生/白名单透传 requestId，写入响应头与 JSON；全局错误只输出稳定 `code/message/requestId/details?`，未知异常不含栈、SQL、URL、凭证、字段值或原请求体。`POST /api/v1/_contract/probe` 仅校验整数分字符串、pickup/delivery 和未知字段拒绝，不读写业务事实；health 响应也补 requestId。普通测试覆盖 schema、未知字段/JSON number/枚举、无效 requestId 替换和未知异常脱敏；真实 API 进程测试已加入 `foundation-database.test.mjs`，等待数据库环境执行。
+
+当前 shell Node 为 24.12.0，和工程强制的 24.21.0 不符，历史记录的 D 盘运行时不存在。未改系统配置；下载官方 Node 24.21.0 archive 到忽略 `.local-tools` 并按官方 SHASUMS256 校验后，用 pnpm 12.9.1 更新锁文件和验证。冻结安装完成；生成验证、workspace check、全 workspace typecheck/build、微信构建、H5 构建与常规测试 10/10 通过。最初安装受 store operation lock 拒绝，按审批改用项目 store 重试后成功；无依赖主版本升级。
+
+本机 Docker CLI 当前无法连接 `dockerDesktopLinuxEngine`，因此没有执行 `pnpm test:database` 或新的真实 API/数据库端到端断言；不拿旧 D1 的数据库证据替代。T01-D2 状态保持“进行中”，T01-D3 不开工。已更新 tasks/progress/development、当前能力 spec、变更设计、CI、包 README；未创建 commit 或 push。下一步：恢复 Docker daemon 后先执行 Compose health、`pnpm db:init:local` 和 `pnpm test:database`，通过后再将 T01-D2 标为完成，随后设计并实施 T01-D3 事务/审计端口。
+
 ## 2026-10-09：T01-D1 公共装配与数据库生命周期
 
 批初读取 AGENTS、tasks/progress、D1 相关设计、ADR-001/002、路线/技术设计架构与健康章节、现有代码/CI；无局部 AGENTS。起点 03690fa，工作区干净，上一批由用户提交。先保存 t01-d1-lifecycle 开工设计，再实现，不创建 commit/push。

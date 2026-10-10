@@ -13,14 +13,16 @@
   },
   "scripts": {
     "generate": "prisma generate --config prisma.config.ts",
-    "typecheck": "pnpm generate && tsc --noEmit",
-    "build": "pnpm generate && tsc -p tsconfig.json"
+    "typecheck": "prisma generate --config prisma.config.ts && tsc --noEmit",
+    "build": "prisma generate --config prisma.config.ts && tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@lingyu/contracts": "workspace:*",
     "@nestjs/common": "12.1.2",
     "@prisma/client": "7.10.0",
     "@prisma/client-runtime-utils": "7.10.0",
     "@prisma/adapter-pg": "7.10.0",
+    "ajv": "8.20.0",
     "pg": "8.23.1",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2"

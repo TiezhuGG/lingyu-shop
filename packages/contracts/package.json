@@ -2,8 +2,22 @@
   "name": "@lingyu/contracts",
   "version": "0.0.0",
   "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "build": "tsc -p tsconfig.json"
+    "generate": "openapi-typescript src/openapi.json -o src/generated/openapi.ts",
+    "verify:generated": "openapi-typescript src/openapi.json -o src/generated/openapi.ts && git diff --exit-code -- src/generated/openapi.ts",
+    "typecheck": "openapi-typescript src/openapi.json -o src/generated/openapi.ts && tsc --noEmit",
+    "build": "openapi-typescript src/openapi.json -o src/generated/openapi.ts && tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "openapi-typescript": "7.13.0"
   }
 }

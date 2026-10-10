@@ -10,6 +10,7 @@
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
+    "@lingyu/contracts": "workspace:*",
     "@lingyu/ui-tokens": "workspace:*",
     "@dcloudio/uni-app": "3.0.0-alpha-5030120260930001",
     "@dcloudio/uni-components": "3.0.0-alpha-5030120260930001",

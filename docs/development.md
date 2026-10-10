@@ -2,12 +2,12 @@
 
 ## 实测基线
 
-原始实测日期2026-10-07；当前项目目录 `C:\Users\lll\Desktop\lingyu-shop`。当前框架与数据库探针情况见下文，初始化描述仅作历史记录。
+原始实测日期2026-10-07；2026-10-10 当前执行工作区为 `G:\FFFFFFFFF\AI-Coding\lingyu-shop`，此前桌面目录只保留为历史记录。当前框架与数据库探针情况见下文，初始化描述仅作历史记录。
 
 | 工具 | 实测版本 | 路径/说明 |
 |---|---|---|
-| Node.js | 24.21.0 | `D:\node-v24.21.0-win-x64\node.exe` |
-| pnpm | 12.9.1 | `D:\node-v24.21.0-win-x64\pnpm.cmd` |
+| Node.js | 24.21.0 | package.json 强制版本；本批默认 shell 为 24.12.0，已在忽略的 `.local-tools` 下载官方归档、校验 SHA-256 后仅用于本批验证，未修改系统 Node |
+| pnpm | 12.9.1 | 项目要求版本；本批通过同版本 CLI 在上述 Node 24.21.0 运行 |
 | Git | 2.56.0.windows.1 | `D:\Git\cmd\git.exe` |
 | Shell | PowerShell 当前可用，cmd.exe 为历史替代 | 旧批次PowerShell曾因CET启动失败；当前pnpm使用.cmd入口避免脚本策略限制 |
 
@@ -121,3 +121,9 @@ pnpm.cmd redis:poc
 Windows 本批后半程遇 Prisma schema-engine-windows.exe 被其他程序占用而 EPERM；只读 Restart Manager 报告 RpcLocator，占用服务未停止。可等待占用释放后重试生成，或仅在当前终端设置 PRISMA_SCHEMA_ENGINE_BINARY 指向 Prisma 下载器取得、核对同版本 commit 的隔离副本后构建；不修改源码默认命令，不关闭防护、不强制结束服务。此副本在忽略的 .local-tools，不能作为远程/干净安装依赖。
 
 Linux 本地实测：官方 Node 24.21.0 bookworm-slim 镜像（digest d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20）中，同一套数据库测试 3/3 通过，子进程真实收到 SIGTERM。Windows junction 不能直接挂入 Linux 使用；本次临时制品保留精确运行依赖图，在 Linux 重建链接后执行，未使用扁平化版本替代。容器只读挂载制品/本地环境文件，使用隔离 Compose 网络；测试开关 LINGYU_TEST_COMPOSE=1 只把已通过 loopback 守卫的 PoC 管理地址映射为固定 postgres:5432。该临时制品不是正式部署方案，远程 CI 需 push 后另行取得运行证据。
+
+## T01-D2：HTTP 契约边界与生成
+
+公共 schema 位于 `packages/contracts/src/openapi.json`，生成类型位于 `packages/contracts/src/generated/openapi.ts`。在安装依赖后运行 `pnpm contracts:verify` 重建类型并拒绝漂移；`pnpm typecheck` 验证 server/API/admin/miniapp 都能消费该契约。源码使用 OpenAPI 3.1/JSON Schema、openapi-typescript 7.13.0 和 AJV 8.20.0；前端没有运行时 AJV 依赖。
+
+本批的工程端点是 `POST /api/v1/_contract/probe`，仅用于验证 requestId、未知字段拒绝、十进制字符串金额和配送枚举。成功与错误 JSON 以及响应头均含 requestId；端点没有业务写入，不能当作商品或交易 API。普通 `pnpm test` 覆盖 schema 和脱敏错误边界；`pnpm test:database` 中的 API 进程断言仍需要本机 Compose 可用。2026-10-10 Docker CLI 找不到 `dockerDesktopLinuxEngine`，因此本批未在该状态下执行真实数据库测试，不能以既有 D1 证据替代。
