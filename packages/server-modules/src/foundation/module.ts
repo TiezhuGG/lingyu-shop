@@ -1,6 +1,7 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { BackendConfig, BackendConfigService, ServiceName } from './config';
 import { DatabaseService } from './database';
+import { AuditService } from './audit';
 @Module({})
 export class FoundationModule {
   static register(service: ServiceName, values: BackendConfig): DynamicModule {
@@ -9,8 +10,9 @@ export class FoundationModule {
       providers: [
         { provide: BackendConfigService, useValue: new BackendConfigService(values, service) },
         DatabaseService,
+        AuditService,
       ],
-      exports: [BackendConfigService, DatabaseService],
+      exports: [BackendConfigService, DatabaseService, AuditService],
     };
   }
 }

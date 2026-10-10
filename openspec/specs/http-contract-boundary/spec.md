@@ -1,4 +1,4 @@
-# HTTP 契约边界：T01-D2（验收中）
+# HTTP 契约边界：T01-D2
 
 ## 当前实现
 
@@ -10,4 +10,4 @@
 
 ## 验收边界
 
-契约生成、contracts/server/API/admin/miniapp 类型检查、微信构建、H5 构建和非 Docker 测试已通过。真实 API 进程下的契约请求/错误断言已经写入 `foundation-database.test.mjs`，但本机 Docker daemon 当前不可达，尚未执行；因此本 spec 不是 T01-D2 完成声明。供应商 webhook、身份错误语义、业务 DTO、事务审计及 OpenAPI 版本演进由相应后续任务扩展。
+契约生成、contracts/server/API/admin/miniapp 类型检查、微信构建、H5 构建和非 Docker 测试已通过。真实 API 进程下的契约请求/错误断言已在隔离 PostgreSQL 测试库通过。供应商 webhook、身份错误语义、业务 DTO 及 OpenAPI 版本演进由相应后续任务扩展。

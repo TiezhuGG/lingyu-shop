@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { setTimeout as delay } from 'node:timers/promises';
+import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import foundation from '../../packages/server-modules/dist/index.js';
-const { parseBackendConfig, BackendConfigService, DatabaseService } = foundation;
+const { parseBackendConfig, BackendConfigService, DatabaseService, AuditService } = foundation;
 const source = new URL(process.env.POC_DATABASE_URL ?? '');
 assert(['127.0.0.1', 'localhost'].includes(source.hostname) && source.port === '15432' && source.pathname === '/lingyu_shop_poc', 'Only dedicated local Compose tests are allowed');
 // Explicit isolated Compose runner; keep the supplied URL's local guard above.
@@ -41,6 +42,11 @@ test('real shared lifecycle, readiness failure/recovery and API/Worker connectio
   try {
     const initial = await admin.query("SELECT count(*)::int AS count FROM pg_stat_activity WHERE datname = 'lingyu_shop_test'");
     assert.equal(initial.rows[0].count, 0, 'Test database is already in use; refusing fault injection');
+    const business = new Pool({ connectionString: testUrl.toString(), max: 1, connectionTimeoutMillis: 3000 });
+    try {
+      const tables = await business.query("SELECT tablename FROM pg_tables WHERE schemaname = 'public'");
+      assert(!tables.rows.some(row => row.tablename === 'engineering_probe'), 'PoC tables must remain outside the business test database');
+    } finally { await business.end(); }
     api = launch('api'); worker = launch('worker');
     await eventually(async () => {
       assert.equal(api.child.exitCode, null, api.output());
@@ -84,8 +90,6 @@ test('real shared lifecycle, readiness failure/recovery and API/Worker connectio
     assert.match(replacementTrace, /^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$/);
     assert(await connections(api.child.pid) > 0);
     assert(await connections(worker.child.pid) > 0);
-    const tables = await admin.query("SELECT tablename FROM pg_tables WHERE schemaname = 'public'");
-    assert(tables.rows.some(row => row.tablename === 'engineering_probe'), 'PoC remains in its own database');
     await admin.query('ALTER DATABASE lingyu_shop_test ALLOW_CONNECTIONS false');
     await admin.query('SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1', ['lingyu_shop_test']);
     const started = Date.now();
@@ -121,6 +125,51 @@ test('database service drains active work and rejects readiness after close', { 
     assert.equal(await service.isReady(), false);
     await service.close();
   } finally { await service.close(); }
+});
+
+test('real transaction context commits audit once and leaves no failed or retried residue', { timeout: 15000 }, async () => {
+  const service = new DatabaseService(new BackendConfigService(parseBackendConfig(env), 'api'));
+  const audit = new AuditService();
+  const requestId = 'audit-probe-' + randomUUID();
+  const retryRequestId = 'audit-retry-' + randomUUID();
+  const verify = new Pool({ connectionString: testUrl.toString(), max: 1, connectionTimeoutMillis: 3000 });
+  try {
+    await service.onModuleInit();
+    const committedId = await service.runInTransaction(context => audit.append(context, {
+      actor: { type: 'SYSTEM', id: 'integration-test' }, action: 'probe.commit', objectType: 'foundation-probe', objectId: 'commit', requestId,
+      changes: { result: 'committed', attempts: 1 },
+    }));
+    const committed = await verify.query('SELECT "id", "source", "changes" FROM audit_log WHERE "requestId" = $1', [requestId]);
+    assert.deepEqual(committed.rows, [{ id: committedId, source: 'API', changes: { result: 'committed', attempts: 1 } }]);
+    await assert.rejects(service.runInTransaction(async context => {
+      await audit.append(context, { action: 'probe.rollback', objectType: 'foundation-probe', objectId: 'rollback', requestId });
+      throw new Error('expected rollback');
+    }), /expected rollback/);
+    assert.equal((await verify.query('SELECT count(*)::int AS count FROM audit_log WHERE "requestId" = $1', [requestId])).rows[0].count, 1);
+    await assert.rejects(service.runInTransaction(context => audit.append(context, {
+      action: 'probe.reject-secret', objectType: 'foundation-probe', objectId: 'reject', requestId, changes: { password: 'forbidden' },
+    })), /Invalid audit changes/);
+    let nonRetryAttempts = 0;
+    await assert.rejects(service.runInTransaction(async context => {
+      nonRetryAttempts += 1;
+      await audit.append(context, { action: 'probe.non-retry', objectType: 'foundation-probe', objectId: 'non-retry', requestId });
+      throw { code: 'P2002' };
+    }), error => error?.code === 'P2002');
+    assert.equal(nonRetryAttempts, 1);
+    assert.equal((await verify.query('SELECT count(*)::int AS count FROM audit_log WHERE "requestId" = $1', [requestId])).rows[0].count, 1);
+    let attempts = 0;
+    await service.runInTransaction(async context => {
+      attempts += 1;
+      await audit.append(context, { action: 'probe.retry', objectType: 'foundation-probe', objectId: 'retry', requestId: retryRequestId, changes: { attempt: attempts } });
+      if (attempts === 1) throw { code: 'P2034' };
+    });
+    assert.equal(attempts, 2);
+    assert.deepEqual((await verify.query('SELECT "changes" FROM audit_log WHERE "requestId" = $1', [retryRequestId])).rows, [{ changes: { attempt: 2 } }]);
+  } finally {
+    await verify.query('DELETE FROM audit_log WHERE "requestId" IN ($1, $2)', [requestId, retryRequestId]).catch(() => undefined);
+    await verify.end();
+    await service.close();
+  }
 });
 
 test('unreachable database startup exits promptly without leaking URL', { timeout: 10000 }, async () => {

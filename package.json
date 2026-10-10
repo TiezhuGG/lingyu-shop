@@ -12,17 +12,18 @@
     "typecheck": "pnpm -r typecheck",
     "build": "pnpm -r build",
     "contracts:verify": "pnpm --filter @lingyu/contracts verify:generated",
-    "test": "node --test tests/integration/runtime.test.mjs tests/integration/database-tools.test.mjs tests/integration/foundation.test.mjs tests/integration/http-boundary.test.mjs",
+    "test": "node --test tests/integration/runtime.test.mjs tests/integration/database-tools.test.mjs tests/integration/foundation.test.mjs tests/integration/http-boundary.test.mjs tests/integration/transaction-audit.test.mjs",
     "dev:admin": "pnpm --filter @lingyu/admin dev",
     "dev:api": "pnpm --filter @lingyu/api dev",
     "dev:miniapp": "pnpm --filter @lingyu/miniapp dev:mp-weixin",
     "dev:worker": "pnpm --filter @lingyu/worker dev",
     "db:validate": "prisma validate",
     "db:generate": "prisma generate",
+    "db:migrate:deploy": "node --env-file-if-exists=.env node_modules/prisma/build/index.js migrate deploy --config packages/server-modules/prisma.config.ts",
     "db:poc": "node --env-file-if-exists=.env scripts/database-poc.mjs",
     "redis:poc": "node scripts/redis-poc.mjs",
     "db:init:local": "node --env-file-if-exists=.env scripts/init-local-databases.mjs",
-    "test:database": "node --env-file-if-exists=.env --test tests/integration/foundation-database.test.mjs"
+    "test:database": "node --env-file-if-exists=.env scripts/test-database.mjs"
   },
   "devDependencies": {
     "typescript": "5.9.3",

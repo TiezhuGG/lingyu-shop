@@ -7,3 +7,6 @@ export { HttpBoundaryFilter, RequestId, requestIdMiddleware } from './foundation
 export { parseContractProbe } from './foundation/contract-probe';
 export { ContractValidationException } from './foundation/http-boundary';
 export type { RequestIdRequest, ValidationDetails, ValidationRule } from './foundation/http-boundary';
+export { AuditService } from './foundation/audit';
+export type { AuditAppendInput, AuditActorTypeValue, AuditSource } from './foundation/audit';
+export { TransactionContext, TransactionUnavailableError, isRetryableTransactionError, retryTransaction } from './foundation/transaction';

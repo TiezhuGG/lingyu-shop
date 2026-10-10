@@ -6,3 +6,33 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum AuditSource {
+  API
+  WORKER
+}
+
+enum AuditActorType {
+  SYSTEM
+  CUSTOMER
+  ADMIN
+}
+
+model AuditLog {
+  id             String         @id @db.Uuid
+  source         AuditSource
+  actorType      AuditActorType?
+  actorId        String?        @db.VarChar(128)
+  action         String         @db.VarChar(100)
+  objectType     String         @db.VarChar(100)
+  objectId       String         @db.VarChar(128)
+  requestId      String?        @db.VarChar(64)
+  idempotencyKey String?        @db.VarChar(128)
+  changes        Json?
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("audit_log")
+  @@index([objectType, objectId])
+  @@index([requestId])
+  @@index([idempotencyKey])
+}

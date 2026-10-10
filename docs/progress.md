@@ -1,5 +1,13 @@
 # 开发进度
 
+## 2026-10-10：T01-D2 / T01-D3 公共 HTTP、事务与审计（完成）
+
+本批重新读取根 AGENTS、tasks/progress、路线、开发说明、T01-D 设计、ADR 与现有规格，检查 Git 差异并保留 D2 未提交工作。用户启动 Docker Desktop 后，提升权限访问 daemon；确认没有本项目遗留容器/卷，创建忽略的本地开发 `.env`，启动隔离 PostgreSQL/Redis 并只创建缺失的 lingyu_shop、lingyu_shop_test。D2 真实 API/数据库进程测试 3/3 通过；初次失败来自错误要求 PoC 表已存在，已改为正确证明 PoC 表不进入业务测试库。
+
+D3 先记录 `t01-d3-transaction-audit` 设计，再增加业务边界内的 append-only audit_log 迁移、Serializable `runInTransaction`、一次性事务上下文和 AuditService。重试只接受 T01-C2 已验证的 P2034 或 P2010 内 SQLSTATE 40001/40P01，最多三次；事务内不允许外部副作用，后续由 T12 Outbox 承担。审计只接受小型脱敏标量摘要，不暴露根 Prisma 客户端或任意表 CRUD。真实数据库测试 4/4 证明 API/Worker 生命周期外，还证明成功提交、回滚零残留和冲突重试只留下最终审计；测试清理自身随机 requestId 记录。
+
+迁移先在测试库部署、再部署到空本地业务库，并重复执行确认无待部署迁移。首次业务迁移失败并非 schema/数据错误，而是根脚本没有为 Prisma CLI 载入 `.env`，回退到安全的 `unused` URL；已将 `db:migrate:deploy` 改为显式 `node --env-file-if-exists=.env`，无需删卷或回滚迁移。另一次 workspace check 暴露 pnpm 子进程回落到系统 Node 24.12；在 PATH 首位置入已核验的忽略 Node 24.21 后通过，未改系统运行时。`pnpm check`、全 workspace typecheck/build、微信/H5 构建、普通测试、契约漂移检查和真实数据库验收均在本批复验；远程 CI、生产迁移权限、业务身份/订单/Outbox、微信真机仍未验收。未创建 commit 或 push；下一项按依赖为 T02-A 身份/会话/游客车的先行规格与实现。
+
 ## 2026-10-10：T01-D2 HTTP 契约边界与生成探针（验收中）
 
 批初读取根 AGENTS、tasks/progress、路线、开发说明、原型映射、总体设计 API/事务/测试/目录章节、ADR-001/002、现有 specs/changes 与 D1 源码/测试；无局部 AGENTS。起点 `41f6ca6`、工作区干净。按依赖确认 T01-D1 已验收后，唯一可直接推进的下一项为 T01-D2；T01-D3 依赖其 HTTP/契约边界，身份/商品仍在其后。
