@@ -1,5 +1,25 @@
 # 开发进度
 
+## 2026-10-19：T02-B 管理员会话、RBAC 与仓范围（完成）
+
+用户确认 T02-A 已合并到 main，授权继续并要求后续分支不加 codex 前缀。批初从干净 main（bb705a6）建立 `t02-b-admin-rbac`，读取根 AGENTS、tasks/progress、路线/原型映射、开发说明、ADR、身份规格与技术设计相关章节；无适用局部 AGENTS。用户的任务分支约定已写入根规则。先建立 T02-B 设计，再实施，不复用客户 session/token。
+
+交付：追加 admin_account/admin_grant/admin_session 三表；随机盐 scrypt、登录五次失败锁定 15 分钟、每进程两项并发 KDF、独立 8 小时 HttpOnly Cookie、生产 Secure/__Host-/Strict、精确 Origin/CSRF 和 no-store。固定 IAM_MANAGER / STORE_OPERATOR / STORE_READER，按同一条角色/范围绑定检查权限，IAM 全局角色不自动授予仓业务权限。账号创建、版本更新、停用/逐项授权、审计查询与后台登录/恢复/退出/多项授权表单均交付。逐项授权增删记录角色、范围、版本和受控原因，不保存秘密或私人资料。首次本地账号通过显式环境凭据的手工命令，拒绝 production/已有管理员；没有默认账号或自动 seed。
+
+并发边界：公开 authorizeInTransaction 供未来业务模块在自己的写事务内复用，顺序为 IAM 事务锁→主体行锁→会话行锁→实时权限校验→业务写入，锁持有至事务结束。发现仅有 advisory 锁不能刷新 Serializable 的旧快照，补行锁触发整笔重试；实测业务先授权时撤权等待，撤权/登出先写入时等待中的旧主体重试后拒绝。原始事务客户端仍不从包公开入口暴露，Controller 不承担核心规则。初次真实验收还发现 Prisma 不能反序列化 advisory lock 的 void 返回值，显式转 text 后修复；无未解决测试失败。
+
+验证：沿用根固定 Node 24.21.0 / pnpm 12.9.1，未升级框架、依赖或 lockfile。workspace check、全 workspace build/typecheck（含微信目标）、H5 build、contracts 重建比较、工程/业务 Prisma schema 校验均通过。最终普通测试 21/21；真实隔离 PostgreSQL/API 测试 21/21（含原有基础/客户会话回归及管理员测试父项/子项），覆盖 Cookie/CSRF/Origin、未知字段与数据库 CHECK/唯一约束、跨仓读写角色组合、客户端主体伪造、真实客户令牌与管理员凭据双向隔离、过期/摘要伪造、API 进程重启、权限版本/停用/登出与双向竞争、失败锁定、脱敏审计和密码工作并发上限。Unicode 密码摘要长度与 JSON Schema 代码点语义对齐并测试。未用工程探针冒充库存/资金验收。
+
+迁移：测试库由前三个迁移前向升级成功；本地业务库 lingyu_shop 追加第四个迁移成功，重复部署无待执行项。保留既有客户与审计表，无 drop/reset/删卷；业务库没有创建管理员。恢复方案为回退应用保留表、前向修复；正式环境备份恢复和生产迁移权限另验收。
+
+浏览器：真实测试库的一次性初始管理员通过 bootstrap 脚本创建，验证登录、刷新恢复、新增含 A 仓运营/B 仓只读的两项授权、编辑完整恢复两项绑定、停用后绑定仍保留、审计加载、退出及停用账号重新登录失败；页面不显示 Cookie/CSRF/密码。桌面/窄屏检查发现表格挤压，已改为独立横向滚动；窄屏实际文档宽与 scrollWidth 同为 327px，表格内部 680px，不造成整页溢出。请求视口受现有浏览器缩放影响，未将请求的 375px 当成实际 CSS 宽度。证据：`docs/acceptance/evidence/t02-b/admin-rbac-audit.jpg`、`admin-disabled-login.jpg` 已视觉复核；桌面图是工具捕获的显示区域，不等同完整导出。正常操作无应用控制台错误；预期 401 单列，不作为异常。临时页面/进程已关闭，两条一次性测试账号及其 session/grant/audit 已精确清理；自动测试同样仅清理自己的随机身份与记录。
+
+启动变化：新增 ADMIN_ORIGIN（本地默认 http://127.0.0.1:5173）、`pnpm admin:bootstrap` 和后台同源开发代理；无自动管理员，使用前由用户按 development.md 在自己的终端提供凭据。生产需要同源 HTTPS 代理，不将 Vite 或本地引导用于生产。当前范围 UUID 仅为授权绑定，不代表真实仓店；真实门店归属/显示名在 T03-A 接入。
+
+边界与下一项：T02-B 本地任务完成，T02 整包仍缺 T02-C 的真实微信。生产 MFA/强认证、账号恢复、分布式/IP 限流、审计/会话保留治理、HTTPS 代理/恢复演练、远程 CI 与微信真机未验收。当前全局 IAM 锁需保持短事务，后续扩容必须单独验证细粒度锁方案。下一项按依赖为 T03-A（单仓店/营业/自提配送/区域与后台），先确认 T00-B 的门店资料、营业和服务范围，不以样例启用真实经营规则。
+
+批末已审阅当前 tracked diff、全部未跟踪源码/规格/迁移/测试与截图，并检查空白错误；未提交构建制品、生成 Prisma 客户端、真实凭据或依赖目录。工作区保留给用户审阅；没有创建 commit、合并或 push。
+
 ## 2026-10-18：T02-A 环境复验与客户会话验收（完成）
 
 沿用任务分支 `codex/t02-a-customer-session` 并保留此前全部差异；批初重读根规则、任务/进度、路线、身份设计/相关规格与 ADR、总体设计身份/API 章节，未发现局部 AGENTS。宿主 Docker Compose 5.6.0 可用；沙箱访问 socket 被拒后按审批在宿主运行成功。本机 shell 默认 Node 24.22.0 / pnpm 12.14.0 不符根基线，因此使用应用提供的 Node 24.21.0 与缓存恢复的 pnpm 12.9.1，PATH 同时供子进程继承，未关闭 engines 检查或更改系统默认版本。固定 digest 的 PostgreSQL 17.11、Redis 8.2.10 下载启动后均 healthy，Redis PING 返回 PONG。

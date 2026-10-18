@@ -2,10 +2,20 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Lingyu app API",
-    "version": "0.2.0",
-    "description": "Customer session contracts and an isolated engineering contract probe."
+    "version": "0.3.0",
+    "description": "Independent customer/admin sessions, scoped IAM and an isolated engineering contract probe. Admin writes require an exact configured Origin; authenticated writes also require the CSRF value returned by login/me."
   },
   "paths": {
+    "/api/v1/admin/auth/login": {"post": {"operationId": "adminLogin", "parameters": [{"$ref": "#/components/parameters/AdminOrigin"}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AdminLoginRequest"}}}}, "responses": {"200": {"description": "HttpOnly session cookie and CSRF state", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AdminSessionSuccess"}}}}, "default": {"$ref": "#/components/responses/AdminError"}}}},
+    "/api/v1/admin/auth/me": {"get": {"operationId": "adminMe", "security": [{"AdminCookie": []}], "responses": {"200": {"description": "Live administrator identity", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AdminSessionSuccess"}}}}, "default": {"$ref": "#/components/responses/AdminError"}}}},
+    "/api/v1/admin/auth/logout": {"post": {"operationId": "adminLogout", "parameters": [{"$ref": "#/components/parameters/AdminOrigin"}], "security": [{"AdminCookie": [], "AdminCsrf": []}], "responses": {"200": {"description": "Session revoked", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EmptySuccess"}}}}, "default": {"$ref": "#/components/responses/AdminError"}}}},
+    "/api/v1/admin/iam/admins": {
+      "get": {"operationId": "listAdmins", "security": [{"AdminCookie": []}], "responses": {"200": {"description": "At most 100 administrators, username order", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AdminListSuccess"}}}}, "default": {"$ref": "#/components/responses/AdminError"}}},
+      "post": {"operationId": "createAdmin", "parameters": [{"$ref": "#/components/parameters/AdminOrigin"}], "security": [{"AdminCookie": [], "AdminCsrf": []}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AdminCreateRequest"}}}}, "responses": {"200": {"description": "Created administrator", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AdminAccountSuccess"}}}}, "default": {"$ref": "#/components/responses/AdminError"}}}
+    },
+    "/api/v1/admin/iam/admins/{id}": {"patch": {"operationId": "updateAdmin", "security": [{"AdminCookie": [], "AdminCsrf": []}], "parameters": [{"$ref": "#/components/parameters/AdminOrigin"}, {"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AdminUpdateRequest"}}}}, "responses": {"200": {"description": "Updated administrator, previous sessions revoked", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AdminAccountSuccess"}}}}, "default": {"$ref": "#/components/responses/AdminError"}}}},
+    "/api/v1/admin/iam/audit": {"get": {"operationId": "adminAudit", "security": [{"AdminCookie": []}], "responses": {"200": {"description": "Latest 50 sanitized audit records", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AdminAuditSuccess"}}}}, "default": {"$ref": "#/components/responses/AdminError"}}}},
+    "/api/v1/admin/_access/stores/{storeId}": {"get": {"operationId": "adminStoreAccess", "security": [{"AdminCookie": []}], "parameters": [{"name": "storeId", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Authorization only; does not assert store existence", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EmptySuccess"}}}}, "default": {"$ref": "#/components/responses/AdminError"}}}},
     "/api/v1/app/auth/development-login": {
       "post": {
         "operationId": "developmentLogin",
@@ -100,7 +110,30 @@
     }
   },
   "components": {
+    "parameters": {"AdminOrigin": {"name": "Origin", "in": "header", "required": true, "description": "Exact configured ADMIN_ORIGIN; browser supplies this header.", "schema": {"type": "string"}}},
+    "responses": {"AdminError": {"description": "Standard safe error envelope (400/401/403/404/409/429/500/503)", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ApiError"}}}}},
+    "securitySchemes": {
+      "AdminCookie": {"type": "apiKey", "in": "cookie", "name": "__Host-lingyu-admin", "description": "Development HTTP uses lingyu_admin. Independent of customer credentials."},
+      "AdminCsrf": {"type": "apiKey", "in": "header", "name": "X-CSRF-Token", "description": "Session-derived value returned by login/me; required together with the HttpOnly cookie for authenticated writes."}
+    },
     "schemas": {
+      "AdminRoleName": {"type": "string", "enum": ["IAM_MANAGER", "STORE_OPERATOR", "STORE_READER"]},
+      "AdminStatus": {"type": "string", "enum": ["ACTIVE", "DISABLED"]},
+      "AdminReason": {"type": "string", "enum": ["onboarding", "access_change", "offboarding", "security"]},
+      "AdminUsername": {"type": "string", "minLength": 3, "maxLength": 64, "pattern": "^[a-z][a-z0-9_.-]{2,63}$"},
+      "AdminPassword": {"type": "string", "minLength": 12, "maxLength": 128},
+      "AdminGrantInput": {"type": "object", "additionalProperties": false, "required": ["role", "scopeKey"], "properties": {"role": {"$ref": "#/components/schemas/AdminRoleName"}, "scopeKey": {"type": "string", "minLength": 6, "maxLength": 36, "pattern": "^(GLOBAL|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$"}}},
+      "AdminGrants": {"type": "array", "maxItems": 30, "items": {"$ref": "#/components/schemas/AdminGrantInput"}},
+      "AdminLoginRequest": {"type": "object", "additionalProperties": false, "required": ["username", "password"], "properties": {"username": {"$ref": "#/components/schemas/AdminUsername"}, "password": {"$ref": "#/components/schemas/AdminPassword"}}},
+      "AdminCreateRequest": {"type": "object", "additionalProperties": false, "required": ["username", "password", "grants", "reason"], "properties": {"username": {"$ref": "#/components/schemas/AdminUsername"}, "password": {"$ref": "#/components/schemas/AdminPassword"}, "grants": {"$ref": "#/components/schemas/AdminGrants"}, "reason": {"$ref": "#/components/schemas/AdminReason"}}},
+      "AdminUpdateRequest": {"type": "object", "additionalProperties": false, "required": ["version", "status", "grants", "reason"], "properties": {"version": {"type": "integer", "minimum": 1, "maximum": 2147483646}, "status": {"$ref": "#/components/schemas/AdminStatus"}, "grants": {"$ref": "#/components/schemas/AdminGrants"}, "reason": {"$ref": "#/components/schemas/AdminReason"}}},
+      "AdminAccountData": {"type": "object", "additionalProperties": false, "required": ["id", "username", "status", "version", "grants"], "properties": {"id": {"type": "string"}, "username": {"$ref": "#/components/schemas/AdminUsername"}, "status": {"$ref": "#/components/schemas/AdminStatus"}, "version": {"type": "integer"}, "grants": {"$ref": "#/components/schemas/AdminGrants"}}},
+      "AdminSessionData": {"type": "object", "additionalProperties": false, "required": ["admin", "csrfToken", "expiresAt"], "properties": {"admin": {"$ref": "#/components/schemas/AdminAccountData"}, "csrfToken": {"type": "string"}, "expiresAt": {"type": "string"}}},
+      "AdminSessionSuccess": {"type": "object", "additionalProperties": false, "required": ["code", "data", "requestId"], "properties": {"code": {"const": "OK"}, "data": {"$ref": "#/components/schemas/AdminSessionData"}, "requestId": {"$ref": "#/components/schemas/RequestId"}}},
+      "AdminAccountSuccess": {"type": "object", "additionalProperties": false, "required": ["code", "data", "requestId"], "properties": {"code": {"const": "OK"}, "data": {"$ref": "#/components/schemas/AdminAccountData"}, "requestId": {"$ref": "#/components/schemas/RequestId"}}},
+      "AdminListSuccess": {"type": "object", "additionalProperties": false, "required": ["code", "data", "requestId"], "properties": {"code": {"const": "OK"}, "data": {"type": "array", "items": {"$ref": "#/components/schemas/AdminAccountData"}}, "requestId": {"$ref": "#/components/schemas/RequestId"}}},
+      "AdminAuditItem": {"type": "object", "additionalProperties": false, "required": ["id", "action", "objectType", "objectId", "createdAt"], "properties": {"id": {"type": "string"}, "action": {"type": "string"}, "objectType": {"type": "string"}, "objectId": {"type": "string"}, "actorId": {"type": ["string", "null"]}, "requestId": {"type": ["string", "null"]}, "createdAt": {"type": "string"}, "changes": {"type": ["object", "null"], "additionalProperties": true}}},
+      "AdminAuditSuccess": {"type": "object", "additionalProperties": false, "required": ["code", "data", "requestId"], "properties": {"code": {"const": "OK"}, "data": {"type": "array", "items": {"$ref": "#/components/schemas/AdminAuditItem"}}, "requestId": {"$ref": "#/components/schemas/RequestId"}}},
       "RequestId": {
         "type": "string",
         "minLength": 8,

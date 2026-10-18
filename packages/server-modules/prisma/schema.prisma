@@ -1,4 +1,4 @@
-// Business client only: foundation audit and customer identity/session facts.
+// Business client only: foundation audit, customer identity and independent admin IAM.
 generator client {
   provider = "prisma-client-js"
   output   = "../generated"
@@ -30,6 +30,57 @@ enum CustomerIdentityProvider {
 enum SessionSubjectType {
   CUSTOMER
   ADMIN
+}
+
+enum AdminStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum AdminRoleName {
+  IAM_MANAGER
+  STORE_OPERATOR
+  STORE_READER
+}
+
+model AdminAccount {
+  id               String       @id @db.Uuid
+  username         String       @unique @db.VarChar(64)
+  passwordHash     String       @map("password_hash") @db.VarChar(256)
+  status           AdminStatus  @default(ACTIVE)
+  version          Int          @default(1)
+  failedLoginCount Int          @default(0) @map("failed_login_count")
+  lockedUntil      DateTime?    @map("locked_until") @db.Timestamptz(6)
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  grants           AdminGrant[]
+  sessions         AdminSession[]
+
+  @@map("admin_account")
+}
+
+model AdminGrant {
+  id       String        @id @db.Uuid
+  adminId  String        @map("admin_id") @db.Uuid
+  role     AdminRoleName
+  scopeKey String        @map("scope_key") @db.VarChar(36)
+  admin    AdminAccount  @relation(fields: [adminId], references: [id], onDelete: Restrict)
+
+  @@unique([adminId, role, scopeKey])
+  @@map("admin_grant")
+}
+
+model AdminSession {
+  id         String       @id @db.Uuid
+  adminId    String       @map("admin_id") @db.Uuid
+  digest     String       @db.VarChar(64)
+  version    Int
+  expiresAt  DateTime     @map("expires_at") @db.Timestamptz(6)
+  revokedAt  DateTime?    @map("revoked_at") @db.Timestamptz(6)
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  admin      AdminAccount @relation(fields: [adminId], references: [id], onDelete: Restrict)
+
+  @@index([adminId, expiresAt])
+  @@map("admin_session")
 }
 
 model Customer {

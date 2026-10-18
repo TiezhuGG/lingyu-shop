@@ -17,6 +17,7 @@ export interface BackendConfig {
   readonly shutdownTimeoutMs: number;
   readonly port: number;
   readonly authentication: AuthenticationConfig;
+  readonly adminOrigin: string;
 }
 const invalid = (field: string): never => { throw new Error('Invalid configuration: ' + field); };
 function integer(env: NodeJS.ProcessEnv, field: string, fallback: number, min: number, max: number): number {
@@ -54,8 +55,15 @@ export function parseBackendConfig(env: NodeJS.ProcessEnv): BackendConfig {
   const accessSigningKey = base64urlSecret(env, 'AUTH_ACCESS_SIGNING_KEY');
   const refreshTokenPepper = base64urlSecret(env, 'AUTH_REFRESH_TOKEN_PEPPER');
   if (Buffer.from(accessSigningKey, 'base64url').equals(Buffer.from(refreshTokenPepper, 'base64url'))) return invalid('AUTH_REFRESH_TOKEN_PEPPER');
+  const adminOrigin = env.ADMIN_ORIGIN ?? (environment === 'production' ? '' : 'http://127.0.0.1:5173');
+  try {
+    const origin = new URL(adminOrigin);
+    if (origin.origin !== adminOrigin || origin.username || origin.password ||
+        (environment === 'production' ? origin.protocol !== 'https:' : !['http:', 'https:'].includes(origin.protocol))) return invalid('ADMIN_ORIGIN');
+  } catch { return invalid('ADMIN_ORIGIN'); }
   return Object.freeze({
     environment, databaseUrl: env.DATABASE_URL!,
+    adminOrigin,
     poolMax: integer(env, 'DB_POOL_MAX', 5, 1, 20),
     databaseTimeoutMs: integer(env, 'DB_TIMEOUT_MS', 3000, 100, 30000),
     shutdownTimeoutMs: integer(env, 'SHUTDOWN_TIMEOUT_MS', 10000, 1000, 60000),

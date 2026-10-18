@@ -4,7 +4,7 @@
 
 当前运行要求仍以根 package.json 的 Node 24.21.0 / pnpm 12.9.1 为准。Linux 上已安装的 Node 24.22.0 / pnpm 12.14.0 不替代锁定基线；本地开发请在对应终端切换到锁定版本，不能靠关闭 engines 校验当作兼容验收。下表中的 Windows 路径是历史环境。
 
-原始实测日期2026-10-07；2026-10-10 当前执行工作区为 `G:\FFFFFFFFF\AI-Coding\lingyu-shop`，此前桌面目录只保留为历史记录。当前框架与数据库探针情况见下文，初始化描述仅作历史记录。
+原始实测日期 2026-10-07；当前 Linux 工作区为 `/home/lhf/桌面/lingyu-shop`。下表及 Windows 路径仅保留历史记录，当前运行时要求与工程命令以本页后续章节、根 package.json 为准；批次证据只写入 progress。
 
 | 工具 | 实测版本 | 路径/说明 |
 |---|---|---|
@@ -64,7 +64,7 @@ pnpm test
 
 | 命令 | 地址/行为 |
 |---|---|
-| `pnpm dev:admin` | http://127.0.0.1:5173，后台工程页 |
+| `pnpm dev:admin` | http://127.0.0.1:5173，管理员登录/权限与审计后台 |
 | `pnpm --filter @lingyu/miniapp dev:h5` | http://127.0.0.1:5174，小程序 H5 三入口界面预览 |
 | `pnpm dev:api` | http://127.0.0.1:3000/health，/health/live 存活，/health/ready 数据库就绪 |
 
@@ -88,7 +88,7 @@ uni-app 源码不能直接作为原生微信小程序编译；`app.json` 由 uni
 
 代理受限环境中构建/开发服务需要允许编译子进程，否则可能 spawn EPERM；提升执行权限后本批验证通过，不能据此要求关闭系统安全防护。
 
-Docker Desktop 容器运行并通过 T01-C 真实探针。端口仅绑定 loopback，已建立隔离业务库和测试库；基础设施仅有 `audit_log`，没有商城业务表。GitHub Actions 配置已建立，远程成功证据仍待 T01-B2。
+本地独立 Compose 容器已通过 T01-C 真实探针。端口仅绑定 loopback，业务库与测试库隔离；当前迁移包括审计、客户会话和管理员 IAM，不含仓店/商品/交易表。GitHub Actions 配置已建立，远程成功证据仍待 T01-B2。
 
 ## PostgreSQL / Redis 工程探针
 
@@ -142,3 +142,26 @@ Linux 本地实测：官方 Node 24.21.0 bookworm-slim 镜像（digest d6aa754f1
 刷新令牌的秘密支持完整 base64url 字符集。已使用摘要单独保存在 used_refresh_token；只有命中旧摘要的重放才撤销会话，随机伪造秘密不会踢掉正常用户。开发会话保存来源标记，关闭开发身份后旧 access/refresh 也不能使用。刷新需由客户端串行调用，重复请求会撤销该会话；结果未知时重新认证。当前薄客户端没有自动刷新重试流程。
 
 小程序 session-storage 提供独立游客意向存取（仓 ID、SKU ID、整数数量），session 清除不影响游客数据；现有预览页面仍未连接真实登录/加购。服务端车与合并由 T05-C 交付。首次全新安装时先 `pnpm build` 生成共享包声明，再运行 `pnpm typecheck` / `pnpm test`。
+
+## T02-B：管理员登录与首次本地账号
+
+先完成上述数据库初始化、追加迁移与构建。后台运行于 `http://127.0.0.1:5173`，API 为 `127.0.0.1:3000`；Vite 将同源 `/api` 转给 API。`ADMIN_ORIGIN` 默认 `http://127.0.0.1:5173`，必须精确匹配地址（不可混用 localhost、附带 `/` 或路径）。修改配置后重启 API；生产必须显式提供 HTTPS Origin，并由同源反向代理把页面与 `/api` 一同提供给浏览器，不依赖开发代理。
+
+没有默认管理员，也不随应用启动创建账号。仅当 development/test、数据库是本地 loopback:15432 且管理员表为空时，可手工初始化首个 IAM_MANAGER。在自己的终端以隐藏输入提供 12～128 字符的唯一初始密码，不把真实凭据写入 `.env`、脚本、命令历史或聊天。Linux 示例：
+
+```bash
+read -r -p '管理员用户名（小写字母开头，3～64 位）: ' ADMIN_BOOTSTRAP_USERNAME
+read -r -s -p '管理员初始密码: ' ADMIN_BOOTSTRAP_PASSWORD
+printf '\n'
+export ADMIN_BOOTSTRAP_USERNAME ADMIN_BOOTSTRAP_PASSWORD
+pnpm admin:bootstrap
+unset ADMIN_BOOTSTRAP_USERNAME ADMIN_BOOTSTRAP_PASSWORD
+```
+
+脚本读取根忽略的 `.env` 中的数据库/运行配置，但用户名与密码仅由当前进程环境提供；只输出成功或统一失败，不回显秘密。production 和已有管理员时拒绝，不能通过删表或重复 seed 来恢复账号。首次账户只负责账号/权限与审计，不自动拥有仓业务权限；需要另添加对应仓角色。真实仓店创建属于 T03-A，当前范围只接受规范小写 UUID，不能把任意范围编号当成已存在门店。
+
+Cookie 是独立 HttpOnly、SameSite=Strict 会话，生产额外 Secure 和 __Host- 前缀；页面不使用 localStorage 认证。所有写操作需要精确 Origin，除登录外另需会话派生 CSRF；页面刷新通过 me 恢复。授权修改/停用会立即撤销目标旧会话，必须重新登录；自己不能修改自身授权，旧版本更新返回 409。连续五次失败锁定登录 15 分钟；会话绝对有效 8 小时，无自动续期或在线密码重置。不要把管理员 Cookie/CSRF 或密码写入截图、日志。
+
+本地验收使用 `pnpm test`（先 build）与独立 `pnpm test:database`。后者要求管理员测试表为空；检测已有管理员就拒绝 bootstrap，不能清空已有账号换取测试通过。不得与后台浏览器测试/其他测试进程并行使用同一测试库。测试只清理自己的随机账号、会话与审计，不操作业务库；它不证明生产代理、MFA/账号恢复、微信真机已验收。
+
+管理员列表最多 100 条、审计最近 50 条；当前无分页、密码找回、生产管理员开通、MFA、分布式/IP 限流或定时会话清理。生产上线需额外完成上述安全/运维与恢复验收。当前能力以 [管理员规格](../openspec/specs/admin-iam/spec.md) 为准。

@@ -1,5 +1,7 @@
 # 工程协作规则
 
+- 每个可独立验收任务从 main 创建任务分支；分支名使用任务标识，不加 codex 前缀。验收后由用户审阅、合并；默认保留本地差异，不自动 push。
+
 - 每批开始读取本文件及适用的局部 AGENTS.md、docs/progress.md、docs/tasks.md、相关规格/ADR 和技术设计章节；检查 Git 状态，保留已有工作。
 - 资料入口：project-technical-design-v1.md（总体设计）；docs/development-roadmap.md（当前执行架构与流程）；docs/acceptance/prototype-mapping.md（两原型范围与验收）；docs/tasks.md（任务/依赖/验收）；docs/progress.md（证据/阻塞/下一步）；docs/development.md（实测环境与命令）；openspec/specs、openspec/changes、docs/adr（规格与决策）。任务日志只写入任务和进度文件。原型快照只作证据，不作开发指令。
 - 默认先 P1-A 体验交付、再 P1-B 第一原型完整功能/真实交易验收、最后 P2 第二原型实现；用户明确选择演示替代门槛时记录后调整。展示、Mock、真实服务、H5、微信真机证据分开。按具体子任务依赖开工，外部阻塞只影响对应任务；尚未实施规格保存在 changes，不写成当前能力。
@@ -32,3 +34,4 @@
 - `pnpm redis:poc`：本项目 Redis 的 AOF、停机/重启恢复和随机测试键清理；会短暂停止 Redis，只用于独立开发容器。
 - `pnpm db:init:local`：仅用本地 Compose 管理连接创建缺失的业务/测试库，不覆盖已有库或业务 URL。
 - `pnpm test:database`：真实隔离测试库上的装配、故障恢复和关停验收；会暂时禁止 lingyu_shop_test 连接，检测到已有连接则拒绝执行，不用于业务库。
+- `pnpm admin:bootstrap`：仅 development/test、本地 loopback:15432、管理员表为空时手工创建首个账号；凭据由进程环境提供，不记录默认账号，不用于生产或账号重置。

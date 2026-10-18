@@ -3,6 +3,7 @@ import { Body, Controller, Get, HttpCode, Module, Post, ServiceUnavailableExcept
 import { NestFactory } from '@nestjs/core';
 import { AppAuthenticationGuard, CurrentAppPrincipal, CustomerSessionService, DatabaseService, FoundationModule, HttpBoundaryFilter, installShutdown, parseBackendConfig, parseContractProbe, parseDevelopmentLogin, parseRefreshSession, RequestId, requestIdMiddleware } from '@lingyu/server-modules';
 import type { AppPrincipal } from '@lingyu/server-modules';
+import { AdminAuthController, AdminIamController } from '@lingyu/server-modules';
 
 @Controller('health')
 class HealthController {
@@ -57,11 +58,15 @@ class AppAuthenticationController {
 }
 async function main(): Promise<void> {
   const config = parseBackendConfig(process.env);
-  @Module({ imports: [FoundationModule.register('api', config)], controllers: [HealthController, ContractProbeController, AppAuthenticationController] })
+  @Module({ imports: [FoundationModule.register('api', config)], controllers: [HealthController, ContractProbeController, AppAuthenticationController, AdminAuthController, AdminIamController] })
   class AppModule {}
   const app = await NestFactory.create(AppModule, { abortOnError: false, logger: false });
   app.use(requestIdMiddleware);
   app.use('/api/v1/app/auth', (_request: unknown, response: { setHeader(name: string, value: string): void }, next: () => void) => {
+    response.setHeader('cache-control', 'no-store');
+    next();
+  });
+  app.use('/api/v1/admin', (_request: unknown, response: { setHeader(name: string, value: string): void }, next: () => void) => {
     response.setHeader('cache-control', 'no-store');
     next();
   });

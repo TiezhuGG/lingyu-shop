@@ -4,6 +4,118 @@
  */
 
 export interface paths {
+    "/api/v1/admin/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["adminLogin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["adminMe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["adminLogout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/iam/admins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listAdmins"];
+        put?: never;
+        post: operations["createAdmin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/iam/admins/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["updateAdmin"];
+        trace?: never;
+    };
+    "/api/v1/admin/iam/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["adminAudit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/_access/stores/{storeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["adminStoreAccess"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/app/auth/development-login": {
         parameters: {
             query?: never;
@@ -93,6 +205,83 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @enum {string} */
+        AdminRoleName: "IAM_MANAGER" | "STORE_OPERATOR" | "STORE_READER";
+        /** @enum {string} */
+        AdminStatus: "ACTIVE" | "DISABLED";
+        /** @enum {string} */
+        AdminReason: "onboarding" | "access_change" | "offboarding" | "security";
+        AdminUsername: string;
+        AdminPassword: string;
+        AdminGrantInput: {
+            role: components["schemas"]["AdminRoleName"];
+            scopeKey: string;
+        };
+        AdminGrants: components["schemas"]["AdminGrantInput"][];
+        AdminLoginRequest: {
+            username: components["schemas"]["AdminUsername"];
+            password: components["schemas"]["AdminPassword"];
+        };
+        AdminCreateRequest: {
+            username: components["schemas"]["AdminUsername"];
+            password: components["schemas"]["AdminPassword"];
+            grants: components["schemas"]["AdminGrants"];
+            reason: components["schemas"]["AdminReason"];
+        };
+        AdminUpdateRequest: {
+            version: number;
+            status: components["schemas"]["AdminStatus"];
+            grants: components["schemas"]["AdminGrants"];
+            reason: components["schemas"]["AdminReason"];
+        };
+        AdminAccountData: {
+            id: string;
+            username: components["schemas"]["AdminUsername"];
+            status: components["schemas"]["AdminStatus"];
+            version: number;
+            grants: components["schemas"]["AdminGrants"];
+        };
+        AdminSessionData: {
+            admin: components["schemas"]["AdminAccountData"];
+            csrfToken: string;
+            expiresAt: string;
+        };
+        AdminSessionSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["AdminSessionData"];
+            requestId: components["schemas"]["RequestId"];
+        };
+        AdminAccountSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["AdminAccountData"];
+            requestId: components["schemas"]["RequestId"];
+        };
+        AdminListSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["AdminAccountData"][];
+            requestId: components["schemas"]["RequestId"];
+        };
+        AdminAuditItem: {
+            id: string;
+            action: string;
+            objectType: string;
+            objectId: string;
+            actorId?: string | null;
+            requestId?: string | null;
+            createdAt: string;
+            changes?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        AdminAuditSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["AdminAuditItem"][];
+            requestId: components["schemas"]["RequestId"];
+        };
         RequestId: string;
         /** @description Non-negative decimal integer in minor currency units; never a JSON number. */
         AmountMinor: string;
@@ -163,14 +352,223 @@ export interface components {
             details?: components["schemas"]["ValidationDetails"];
         };
     };
-    responses: never;
-    parameters: never;
+    responses: {
+        /** @description Standard safe error envelope (400/401/403/404/409/429/500/503) */
+        AdminError: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ApiError"];
+            };
+        };
+    };
+    parameters: {
+        /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+        AdminOrigin: string;
+    };
     requestBodies: never;
     headers: never;
     pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    adminLogin: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+                Origin: components["parameters"]["AdminOrigin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description HttpOnly session cookie and CSRF state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSessionSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    adminMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Live administrator identity */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSessionSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    adminLogout: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+                Origin: components["parameters"]["AdminOrigin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Session revoked */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptySuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    listAdmins: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description At most 100 administrators, username order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminListSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    createAdmin: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+                Origin: components["parameters"]["AdminOrigin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Created administrator */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminAccountSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    updateAdmin: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+                Origin: components["parameters"]["AdminOrigin"];
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated administrator, previous sessions revoked */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminAccountSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    adminAudit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Latest 50 sanitized audit records */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminAuditSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    adminStoreAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                storeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Authorization only; does not assert store existence */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptySuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
     developmentLogin: {
         parameters: {
             query?: never;

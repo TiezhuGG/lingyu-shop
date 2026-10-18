@@ -12,4 +12,4 @@ const prisma = resolve('node_modules/prisma/build/index.js');
 const config = resolve('packages/server-modules/prisma.config.ts');
 
 execFileSync(process.execPath, [prisma, 'migrate', 'deploy', '--config', config], { env, stdio: 'inherit' });
-execFileSync(process.execPath, ['--test', '--test-concurrency=1', 'tests/integration/foundation-database.test.mjs', 'tests/integration/identity-database.test.mjs'], { env, stdio: 'inherit' });
+execFileSync(process.execPath, ['--test', '--test-concurrency=1', 'tests/integration/foundation-database.test.mjs', 'tests/integration/identity-database.test.mjs', 'tests/integration/admin-database.test.mjs'], { env, stdio: 'inherit' });

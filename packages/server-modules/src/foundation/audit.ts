@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import type { Prisma } from '../../generated';
 import { AuditActorType, AuditSource as PrismaAuditSource } from '../../generated';
-import { TransactionContext } from './transaction';
+import { TransactionContext, transactionClientFor } from './transaction';
 
 export type AuditSource = 'API' | 'WORKER';
 export type AuditActorTypeValue = 'SYSTEM' | 'CUSTOMER' | 'ADMIN';
@@ -79,5 +79,12 @@ export function createAuditAppender(client: Prisma.TransactionClient, auditSourc
 export class AuditService {
   append(context: TransactionContext, input: AuditAppendInput): Promise<string> {
     return context.appendAudit(input);
+  }
+
+  recent(context: TransactionContext) {
+    return transactionClientFor(context).auditLog.findMany({
+      take: 50, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      select: { id: true, actorId: true, action: true, objectType: true, objectId: true, requestId: true, changes: true, createdAt: true },
+    });
   }
 }

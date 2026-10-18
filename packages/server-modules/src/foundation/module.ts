@@ -4,6 +4,8 @@ import { DatabaseService } from './database';
 import { AuditService } from './audit';
 import { AppAuthenticationGuard } from '../identity/http';
 import { CustomerSessionService } from '../identity/service';
+import { AdminService } from '../admin/service';
+import { AdminAuthenticationGuard, AdminOriginGuard } from '../admin/http';
 @Module({})
 export class FoundationModule {
   static register(service: ServiceName, values: BackendConfig): DynamicModule {
@@ -15,8 +17,11 @@ export class FoundationModule {
         AuditService,
         CustomerSessionService,
         AppAuthenticationGuard,
+        AdminService,
+        AdminAuthenticationGuard,
+        AdminOriginGuard,
       ],
-      exports: [BackendConfigService, DatabaseService, AuditService, CustomerSessionService, AppAuthenticationGuard],
+      exports: [BackendConfigService, DatabaseService, AuditService, CustomerSessionService, AppAuthenticationGuard, AdminService, AdminAuthenticationGuard, AdminOriginGuard],
     };
   }
 }
