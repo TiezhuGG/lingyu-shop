@@ -2,6 +2,8 @@
 
 ## 实测基线
 
+当前运行要求仍以根 package.json 的 Node 24.21.0 / pnpm 12.9.1 为准。Linux 上已安装的 Node 24.22.0 / pnpm 12.14.0 不替代锁定基线；本地开发请在对应终端切换到锁定版本，不能靠关闭 engines 校验当作兼容验收。下表中的 Windows 路径是历史环境。
+
 原始实测日期2026-10-07；2026-10-10 当前执行工作区为 `G:\FFFFFFFFF\AI-Coding\lingyu-shop`，此前桌面目录只保留为历史记录。当前框架与数据库探针情况见下文，初始化描述仅作历史记录。
 
 | 工具 | 实测版本 | 路径/说明 |
@@ -128,3 +130,15 @@ Linux 本地实测：官方 Node 24.21.0 bookworm-slim 镜像（digest d6aa754f1
 公共 schema 位于 `packages/contracts/src/openapi.json`，生成类型位于 `packages/contracts/src/generated/openapi.ts`。在安装依赖后运行 `pnpm contracts:verify` 重建类型并拒绝漂移；`pnpm typecheck` 验证 server/API/admin/miniapp 都能消费该契约。源码使用 OpenAPI 3.1/JSON Schema、openapi-typescript 7.13.0 和 AJV 8.20.0；前端没有运行时 AJV 依赖。
 
 本批的工程端点是 `POST /api/v1/_contract/probe`，仅用于验证 requestId、未知字段拒绝、十进制字符串金额和配送枚举。成功与错误 JSON 以及响应头均含 requestId；端点没有业务写入，不能当作商品或交易 API。普通 `pnpm test` 覆盖 schema、脱敏错误边界与事务重试；`pnpm test:database` 已在本机 Compose 通过 API 进程和真实审计事务断言。
+
+## T02-A：客户会话与开发身份
+
+本地 `.env` 还必须配置两个不同的、至少解码为 32 字节的 base64url 值：`AUTH_ACCESS_SIGNING_KEY` 与 `AUTH_REFRESH_TOKEN_PEPPER`；可选的 access/refresh 生命周期分别由 `AUTH_ACCESS_TTL_SECONDS`、`AUTH_REFRESH_TTL_SECONDS` 控制。示例配置不含可用密钥，不能提交真实 `.env`。
+
+`AUTH_DEVELOPMENT_LOGIN_ENABLED=true` 仅允许 development/test；production 配置此值会在启动前拒绝。开发登录只用于隔离开发/测试身份，不代表微信登录，也不接受客户端的微信 openid、手机号或任意 customer ID。客户会话 API 为 `/api/v1/app/auth/development-login`、`/refresh`、`/logout` 和 `/me`；接口/字段以 OpenAPI 为准。刷新令牌和密钥不得写入日志、审计或截图。
+
+`pnpm contracts:verify` 现在在临时位置重新生成 OpenAPI 类型并逐字比较提交的生成文件，因此业务契约变更可以与其生成文件同批提交，同时仍能拒绝手工漂移。
+
+刷新令牌的秘密支持完整 base64url 字符集。已使用摘要单独保存在 used_refresh_token；只有命中旧摘要的重放才撤销会话，随机伪造秘密不会踢掉正常用户。开发会话保存来源标记，关闭开发身份后旧 access/refresh 也不能使用。刷新需由客户端串行调用，重复请求会撤销该会话；结果未知时重新认证。当前薄客户端没有自动刷新重试流程。
+
+小程序 session-storage 提供独立游客意向存取（仓 ID、SKU ID、整数数量），session 清除不影响游客数据；现有预览页面仍未连接真实登录/加购。服务端车与合并由 T05-C 交付。首次全新安装时先 `pnpm build` 生成共享包声明，再运行 `pnpm typecheck` / `pnpm test`。

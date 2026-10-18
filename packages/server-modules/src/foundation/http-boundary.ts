@@ -28,7 +28,7 @@ export const RequestId = createParamDecorator((_data: unknown, context): string 
   return request.requestId ?? defaultRequestId();
 });
 
-export type ValidationRule = 'additionalProperties' | 'enum' | 'minLength' | 'pattern' | 'required' | 'type';
+export type ValidationRule = 'additionalProperties' | 'enum' | 'maxLength' | 'minLength' | 'pattern' | 'required' | 'type';
 export interface ValidationDetails {
   readonly fields: ReadonlyArray<{ readonly path: string; readonly rule: ValidationRule }>;
 }

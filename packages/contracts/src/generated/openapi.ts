@@ -4,6 +4,74 @@
  */
 
 export interface paths {
+    "/api/v1/app/auth/development-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a development-only customer session */
+        post: operations["developmentLogin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rotate an app customer refresh token */
+        post: operations["refreshAppSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke the current app customer session */
+        post: operations["logoutAppSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the current app customer session identity */
+        get: operations["getCurrentAppCustomer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/_contract/probe": {
         parameters: {
             query?: never;
@@ -30,6 +98,41 @@ export interface components {
         AmountMinor: string;
         /** @enum {string} */
         DeliveryMode: "pickup" | "delivery";
+        DevelopmentLoginRequest: {
+            developmentId: string;
+        };
+        RefreshSessionRequest: {
+            refreshToken: string;
+        };
+        IsoTimestamp: string;
+        AppSessionData: {
+            accessToken: string;
+            refreshToken: string;
+            accessExpiresAt: components["schemas"]["IsoTimestamp"];
+            refreshExpiresAt: components["schemas"]["IsoTimestamp"];
+        };
+        AppSessionSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["AppSessionData"];
+            requestId: components["schemas"]["RequestId"];
+        };
+        EmptySuccess: {
+            /** @constant */
+            code: "OK";
+            data: Record<string, never>;
+            requestId: components["schemas"]["RequestId"];
+        };
+        CurrentCustomerData: {
+            customerId: string;
+            sessionId: string;
+        };
+        CurrentCustomerSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["CurrentCustomerData"];
+            requestId: components["schemas"]["RequestId"];
+        };
         ContractProbeRequest: {
             amountMinor: components["schemas"]["AmountMinor"];
             deliveryMode: components["schemas"]["DeliveryMode"];
@@ -47,7 +150,7 @@ export interface components {
         ValidationField: {
             path: string;
             /** @enum {string} */
-            rule: "additionalProperties" | "enum" | "minLength" | "pattern" | "required" | "type";
+            rule: "additionalProperties" | "enum" | "maxLength" | "minLength" | "pattern" | "required" | "type";
         };
         ValidationDetails: {
             fields: components["schemas"]["ValidationField"][];
@@ -68,6 +171,148 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    developmentLogin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DevelopmentLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Customer session */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppSessionSuccess"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Development login is unavailable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    refreshAppSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshSessionRequest"];
+            };
+        };
+        responses: {
+            /** @description Rotated customer session */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppSessionSuccess"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Invalid or replayed refresh token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    logoutAppSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Session revoked */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptySuccess"];
+                };
+            };
+            /** @description Authentication is required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    getCurrentAppCustomer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current customer */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrentCustomerSuccess"];
+                };
+            };
+            /** @description Authentication is required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
     contractProbe: {
         parameters: {
             query?: never;

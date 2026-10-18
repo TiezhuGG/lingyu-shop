@@ -1,4 +1,4 @@
-// Business client only. No commerce tables exist at T01-D1.
+// Business client only: foundation audit and customer identity/session facts.
 generator client {
   provider = "prisma-client-js"
   output   = "../generated"
@@ -16,6 +16,71 @@ enum AuditActorType {
   SYSTEM
   CUSTOMER
   ADMIN
+}
+
+enum CustomerStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum CustomerIdentityProvider {
+  DEVELOPMENT
+}
+
+enum SessionSubjectType {
+  CUSTOMER
+  ADMIN
+}
+
+model Customer {
+  id         String         @id @db.Uuid
+  status     CustomerStatus @default(ACTIVE)
+  createdAt  DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  identities CustomerIdentity[]
+
+  @@map("customer")
+  @@index([status])
+}
+
+model CustomerIdentity {
+  id          String                   @id @db.Uuid
+  customerId  String                   @map("customer_id") @db.Uuid
+  provider    CustomerIdentityProvider
+  providerKey String                   @unique @map("provider_key") @db.VarChar(256)
+  createdAt   DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  customer    Customer                 @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("customer_identity")
+  @@index([customerId])
+}
+
+model Session {
+  id                String             @id @db.Uuid
+  subjectId         String             @map("subject_id") @db.Uuid
+  subjectType       SessionSubjectType @map("subject_type")
+  developmentOnly   Boolean            @default(true) @map("development_only")
+  refreshHash       String             @map("refresh_hash") @db.VarChar(128)
+  refreshExpiresAt  DateTime           @map("refresh_expires_at") @db.Timestamptz(6)
+  revokedAt         DateTime?          @map("revoked_at") @db.Timestamptz(6)
+  revokeReason      String?            @map("revoke_reason") @db.VarChar(64)
+  lastUsedAt        DateTime           @default(now()) @map("last_used_at") @db.Timestamptz(6)
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  usedRefreshTokens UsedRefreshToken[]
+
+  @@map("session")
+  @@index([subjectId, subjectType])
+  @@index([refreshExpiresAt])
+}
+
+model UsedRefreshToken {
+  sessionId String   @map("session_id") @db.Uuid
+  digest    String   @db.VarChar(64)
+  usedAt    DateTime @default(now()) @map("used_at") @db.Timestamptz(6)
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, digest])
+  @@map("used_refresh_token")
 }
 
 model AuditLog {

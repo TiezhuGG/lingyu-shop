@@ -1,11 +1,55 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Lingyu engineering contract probe",
-    "version": "0.1.0",
-    "description": "A non-business probe for the shared HTTP contract boundary."
+    "title": "Lingyu app API",
+    "version": "0.2.0",
+    "description": "Customer session contracts and an isolated engineering contract probe."
   },
   "paths": {
+    "/api/v1/app/auth/development-login": {
+      "post": {
+        "operationId": "developmentLogin",
+        "summary": "Create a development-only customer session",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DevelopmentLoginRequest"}}}},
+        "responses": {
+          "200": {"description": "Customer session", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AppSessionSuccess"}}}},
+          "400": {"description": "Invalid request", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ApiError"}}}},
+          "404": {"description": "Development login is unavailable", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ApiError"}}}}
+        }
+      }
+    },
+    "/api/v1/app/auth/refresh": {
+      "post": {
+        "operationId": "refreshAppSession",
+        "summary": "Rotate an app customer refresh token",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RefreshSessionRequest"}}}},
+        "responses": {
+          "200": {"description": "Rotated customer session", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AppSessionSuccess"}}}},
+          "400": {"description": "Invalid request", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ApiError"}}}},
+          "401": {"description": "Invalid or replayed refresh token", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ApiError"}}}}
+        }
+      }
+    },
+    "/api/v1/app/auth/logout": {
+      "post": {
+        "operationId": "logoutAppSession",
+        "summary": "Revoke the current app customer session",
+        "responses": {
+          "200": {"description": "Session revoked", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EmptySuccess"}}}},
+          "401": {"description": "Authentication is required", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ApiError"}}}}
+        }
+      }
+    },
+    "/api/v1/app/auth/me": {
+      "get": {
+        "operationId": "getCurrentAppCustomer",
+        "summary": "Read the current app customer session identity",
+        "responses": {
+          "200": {"description": "Current customer", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CurrentCustomerSuccess"}}}},
+          "401": {"description": "Authentication is required", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ApiError"}}}}
+        }
+      }
+    },
     "/api/v1/_contract/probe": {
       "post": {
         "operationId": "contractProbe",
@@ -74,6 +118,77 @@
         "type": "string",
         "enum": ["pickup", "delivery"]
       },
+      "DevelopmentLoginRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["developmentId"],
+        "properties": {
+          "developmentId": {"type": "string", "minLength": 3, "maxLength": 64, "pattern": "^[A-Za-z0-9_-]+$"}
+        }
+      },
+      "RefreshSessionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["refreshToken"],
+        "properties": {
+          "refreshToken": {"type": "string", "minLength": 80, "maxLength": 80, "pattern": "^[0-9a-fA-F-]{36}\\.[A-Za-z0-9_-]{43}$"}
+        }
+      },
+      "IsoTimestamp": {
+        "type": "string",
+        "minLength": 20,
+        "maxLength": 40
+      },
+      "AppSessionData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["accessToken", "refreshToken", "accessExpiresAt", "refreshExpiresAt"],
+        "properties": {
+          "accessToken": {"type": "string", "minLength": 20, "maxLength": 4096},
+          "refreshToken": {"type": "string", "minLength": 80, "maxLength": 160},
+          "accessExpiresAt": {"$ref": "#/components/schemas/IsoTimestamp"},
+          "refreshExpiresAt": {"$ref": "#/components/schemas/IsoTimestamp"}
+        }
+      },
+      "AppSessionSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "data", "requestId"],
+        "properties": {
+          "code": {"const": "OK"},
+          "data": {"$ref": "#/components/schemas/AppSessionData"},
+          "requestId": {"$ref": "#/components/schemas/RequestId"}
+        }
+      },
+      "EmptySuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "data", "requestId"],
+        "properties": {
+          "code": {"const": "OK"},
+          "data": {"type": "object", "additionalProperties": false},
+          "requestId": {"$ref": "#/components/schemas/RequestId"}
+        }
+      },
+      "CurrentCustomerData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["customerId", "sessionId"],
+        "properties": {
+          "customerId": {"type": "string", "minLength": 36, "maxLength": 36},
+          "sessionId": {"type": "string", "minLength": 36, "maxLength": 36}
+        }
+      },
+      "CurrentCustomerSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "data", "requestId"],
+        "properties": {
+          "code": {"const": "OK"},
+          "data": {"$ref": "#/components/schemas/CurrentCustomerData"},
+          "requestId": {"$ref": "#/components/schemas/RequestId"}
+        }
+      },
       "ContractProbeRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -128,7 +243,7 @@
           },
           "rule": {
             "type": "string",
-            "enum": ["additionalProperties", "enum", "minLength", "pattern", "required", "type"]
+            "enum": ["additionalProperties", "enum", "maxLength", "minLength", "pattern", "required", "type"]
           }
         }
       },

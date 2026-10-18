@@ -23,7 +23,7 @@ const validatorSchema = replaceComponentReferences({
   $ref: '#/$defs/ContractProbeRequest',
 });
 const validate = new Ajv({ allErrors: true, strict: true }).compile<ContractProbeRequest>(validatorSchema as AnySchema);
-const validationRules = new Set<ValidationRule>(['additionalProperties', 'enum', 'minLength', 'pattern', 'required', 'type']);
+const validationRules = new Set<ValidationRule>(['additionalProperties', 'enum', 'maxLength', 'minLength', 'pattern', 'required', 'type']);
 
 function pathFor(error: ErrorObject): string {
   if (error.keyword === 'required' || error.keyword === 'additionalProperties') return '/';

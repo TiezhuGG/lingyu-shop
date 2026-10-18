@@ -2,7 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import foundation from '../../packages/server-modules/dist/index.js';
 
-const { ContractValidationException, HttpBoundaryFilter, parseContractProbe } = foundation;
+const { ContractValidationException, HttpBoundaryFilter, parseContractProbe, parseRefreshSession } = foundation;
+
+test('refresh schema accepts the entire base64url alphabet emitted by the server', () => {
+  const refreshToken = '11111111-1111-4111-8111-111111111111.' + '_'.repeat(43);
+  assert.deepEqual(parseRefreshSession({ refreshToken }), { refreshToken });
+});
 
 test('contract probe schema accepts integer strings and rejects unknown fields without echoing input', () => {
   assert.deepEqual(parseContractProbe({ amountMinor: '1250', deliveryMode: 'pickup' }), { amountMinor: '1250', deliveryMode: 'pickup' });

@@ -13,7 +13,7 @@
   },
   "scripts": {
     "generate": "openapi-typescript src/openapi.json -o src/generated/openapi.ts",
-    "verify:generated": "openapi-typescript src/openapi.json -o src/generated/openapi.ts && git diff --exit-code -- src/generated/openapi.ts",
+    "verify:generated": "node scripts/verify-generated.mjs",
     "typecheck": "openapi-typescript src/openapi.json -o src/generated/openapi.ts && tsc --noEmit",
     "build": "openapi-typescript src/openapi.json -o src/generated/openapi.ts && tsc -p tsconfig.json"
   },

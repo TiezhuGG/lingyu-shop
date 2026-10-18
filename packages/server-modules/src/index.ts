@@ -10,3 +10,7 @@ export type { RequestIdRequest, ValidationDetails, ValidationRule } from './foun
 export { AuditService } from './foundation/audit';
 export type { AuditAppendInput, AuditActorTypeValue, AuditSource } from './foundation/audit';
 export { TransactionContext, TransactionUnavailableError, isRetryableTransactionError, retryTransaction } from './foundation/transaction';
+export { CustomerSessionService } from './identity/service';
+export type { AppPrincipal, AppSessionTokens } from './identity/service';
+export { AppAuthenticationGuard, CurrentAppPrincipal } from './identity/http';
+export { parseDevelopmentLogin, parseRefreshSession } from './identity/contract';

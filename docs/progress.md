@@ -1,5 +1,27 @@
 # 开发进度
 
+## 2026-10-18：T02-A 环境复验与客户会话验收（完成）
+
+沿用任务分支 `codex/t02-a-customer-session` 并保留此前全部差异；批初重读根规则、任务/进度、路线、身份设计/相关规格与 ADR、总体设计身份/API 章节，未发现局部 AGENTS。宿主 Docker Compose 5.6.0 可用；沙箱访问 socket 被拒后按审批在宿主运行成功。本机 shell 默认 Node 24.22.0 / pnpm 12.14.0 不符根基线，因此使用应用提供的 Node 24.21.0 与缓存恢复的 pnpm 12.9.1，PATH 同时供子进程继承，未关闭 engines 检查或更改系统默认版本。固定 digest 的 PostgreSQL 17.11、Redis 8.2.10 下载启动后均 healthy，Redis PING 返回 PONG。
+
+基础真实数据库测试 4/4 首次通过后，补充回归确认并修正三个问题：刷新 schema 漏掉 base64url 的 `_`；伪造秘密被误判重放而撤销正常 session；关闭开发身份入口后旧开发令牌仍可用。追加迁移新增 development_only 标记和 used_refresh_token 摘要历史，只有命中已使用摘要才触发撤销；开发来源在 access/refresh 时同时校验。密钥/pepper 不同值校验和 auth no-store 响应头一并补齐。还将原始事务客户端改为内部 WeakMap 适配，不从公开上下文提供任意仓储回调。
+
+真实 PostgreSQL/API 验收现为 10/10：包含首次身份并发唯一、刷新并发只有一次成功且重放撤销、伪造秘密不误撤销、过期/签名/audience/主体类型/停用客户/登出拒绝、开发身份关闭后拒绝旧令牌、真实 API 进程重启恢复和原有数据库故障恢复/关停/审计事务。测试只清理随机自有身份及其 session/审计，失败也进入清理。测试库从原两迁移前向升级成功；空本地业务库三迁移部署成功并重复部署无待执行项，没有 drop/reset 或删卷。
+
+游客本地存储由原来仅预留键补成有界单仓 SKU/整数数量意向，session 清除不删除游客意向；平台存储适配测试单列，不冒充微信真机或真实服务端车。普通测试 15/15、workspace check、完整 typecheck/build（含微信目标）、H5 build、contracts 重建比较均通过。小程序首次沙箱构建因读取网卡信息被拒，按权限流程在宿主重跑通过。CI 调整为 build 先于 typecheck，避免干净 checkout 缺共享包声明；远程 CI run 仍未执行。未升级依赖或改 lockfile。
+
+T02-A 已满足其客户会话/本地游客意向边界，当前能力同步 customer-session spec，tasks 标记完成。小程序预览页面仍未连接真实微信登录/购物车；真实微信、管理员 RBAC、服务端车与幂等合并分别留 T02-C、T02-B、T05-C。自动刷新客户端、过期 session 定时清理和生产密钥轮换没有作为已实现能力记录。分支差异与新文件已审阅，默认保留给用户；未创建 commit、合并或 push。下一项按依赖为 T02-B 管理员会话/RBAC/仓范围，远程 CI/真机仍按各自任务验收。
+
+## 2026-10-18：T02-A 客户身份、会话与开发身份隔离（进行中）
+
+从干净 `main` 创建任务分支 `codex/t02-a-customer-session`，并在开工前重新读取根 AGENTS、任务/进度、路线、原型映射、开发说明、总体设计的身份/API/测试章节、ADR 与当前代码；无局部 AGENTS。先新增 `t02-a-customer-session` 设计，明确本批只实现客户会话与严格隔离的开发身份：真实微信 code/AppID/Secret 留给 T02-C，管理员 cookie/CSRF/RBAC 留给 T02-B，购物车事实和幂等合并留给 T05-C。
+
+已加入 customer、customer_identity、session 的前向迁移，以及短期 HS256 access token、数据库只保存摘要的随机 refresh token、旋转、登出、旧 refresh 重放撤销和每次受保护请求的 session/customer 状态检查。主体只从 access session 得到；开发入口只在 development/test 且显式配置时开放，production 启动前拒绝启用。身份成功/撤销/重放阻断均在同一事务追加不含令牌、密钥或私人资料的审计摘要。OpenAPI 增加开发登录、刷新、登出和当前身份；小程序增加独立会话存储，清除 session 不会触碰留给 T05-C 的游客车存储键。
+
+发现原 `contracts:verify` 用 Git 工作树差异验证生成文件，导致同批合法 schema/生成文件变更必然失败；已改为在临时目录重新生成并逐字比较，不修改工作树。锁文件冻结安装完成且无 lockfile 改动；`pnpm check`、contracts 验证、全 workspace typecheck/build、微信构建、H5 构建以及普通 `pnpm test` 12/12 均通过。首次全量 typecheck 因在未构建依赖时并行解析 contracts 失败，按已记录规则先构建 contracts/server 后重跑通过；另修正 Prisma 生成类型要求的 UUID 参数注解。
+
+真实 PostgreSQL/API 验收尚未执行：当前环境起初没有 `.env`，已仅创建忽略的本地 Compose 配置；随后 `docker compose ... up -d --wait` 因执行账号无 `/var/run/docker.sock` 权限被拒。没有绕过 Docker 权限、修改系统配置、删除容器/卷或声称数据库迁移和重放场景已通过。因此 T02-A 保持进行中，未创建 commit 或 push。恢复 Docker socket 访问后，先启动独立 Compose、`pnpm db:init:local`，再执行 `pnpm test:database`；通过刷新轮换/重放撤销、登出、迁移与 API 进程断言后才可标记完成并合并回 main。
+
 ## 2026-10-10：T01-D2 / T01-D3 公共 HTTP、事务与审计（完成）
 
 本批重新读取根 AGENTS、tasks/progress、路线、开发说明、T01-D 设计、ADR 与现有规格，检查 Git 差异并保留 D2 未提交工作。用户启动 Docker Desktop 后，提升权限访问 daemon；确认没有本项目遗留容器/卷，创建忽略的本地开发 `.env`，启动隔离 PostgreSQL/Redis 并只创建缺失的 lingyu_shop、lingyu_shop_test。D2 真实 API/数据库进程测试 3/3 通过；初次失败来自错误要求 PoC 表已存在，已改为正确证明 PoC 表不进入业务测试库。

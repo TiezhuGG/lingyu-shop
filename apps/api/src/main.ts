@@ -1,7 +1,8 @@
 import 'reflect-metadata';
-import { Body, Controller, Get, HttpCode, Module, Post, ServiceUnavailableException } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Module, Post, ServiceUnavailableException, UseGuards } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { DatabaseService, FoundationModule, HttpBoundaryFilter, installShutdown, parseBackendConfig, parseContractProbe, RequestId, requestIdMiddleware } from '@lingyu/server-modules';
+import { AppAuthenticationGuard, CurrentAppPrincipal, CustomerSessionService, DatabaseService, FoundationModule, HttpBoundaryFilter, installShutdown, parseBackendConfig, parseContractProbe, parseDevelopmentLogin, parseRefreshSession, RequestId, requestIdMiddleware } from '@lingyu/server-modules';
+import type { AppPrincipal } from '@lingyu/server-modules';
 
 @Controller('health')
 class HealthController {
@@ -23,12 +24,47 @@ class ContractProbeController {
     return { code: 'OK', data, requestId };
   }
 }
+
+@Controller('api/v1/app/auth')
+class AppAuthenticationController {
+  constructor(private readonly sessions: CustomerSessionService) {}
+
+  @Post('development-login')
+  @HttpCode(200)
+  async developmentLogin(@Body() input: unknown, @RequestId() requestId: string) {
+    return { code: 'OK', data: await this.sessions.developmentLogin(parseDevelopmentLogin(input).developmentId, requestId), requestId };
+  }
+
+  @Post('refresh')
+  @HttpCode(200)
+  async refresh(@Body() input: unknown, @RequestId() requestId: string) {
+    return { code: 'OK', data: await this.sessions.refresh(parseRefreshSession(input).refreshToken, requestId), requestId };
+  }
+
+  @Post('logout')
+  @HttpCode(200)
+  @UseGuards(AppAuthenticationGuard)
+  async logout(@CurrentAppPrincipal() principal: AppPrincipal, @RequestId() requestId: string) {
+    await this.sessions.logout(principal, requestId);
+    return { code: 'OK', data: {}, requestId };
+  }
+
+  @Get('me')
+  @UseGuards(AppAuthenticationGuard)
+  me(@CurrentAppPrincipal() principal: AppPrincipal, @RequestId() requestId: string) {
+    return { code: 'OK', data: { customerId: principal.customerId, sessionId: principal.sessionId }, requestId };
+  }
+}
 async function main(): Promise<void> {
   const config = parseBackendConfig(process.env);
-  @Module({ imports: [FoundationModule.register('api', config)], controllers: [HealthController, ContractProbeController] })
+  @Module({ imports: [FoundationModule.register('api', config)], controllers: [HealthController, ContractProbeController, AppAuthenticationController] })
   class AppModule {}
   const app = await NestFactory.create(AppModule, { abortOnError: false, logger: false });
   app.use(requestIdMiddleware);
+  app.use('/api/v1/app/auth', (_request: unknown, response: { setHeader(name: string, value: string): void }, next: () => void) => {
+    response.setHeader('cache-control', 'no-store');
+    next();
+  });
   app.useGlobalFilters(new HttpBoundaryFilter());
   const server = app.getHttpServer();
   const close = installShutdown(app, () => new Promise<void>((resolve, reject) => {

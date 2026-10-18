@@ -25,7 +25,7 @@ test('transaction retry only accepts verified conflict shapes and is bounded', a
 });
 
 test('transaction context cannot append after its callback lifetime', async () => {
-  const context = new TransactionContext(1, 'API', async () => 'audit-id');
+  const context = new TransactionContext(1, 'API', async () => 'audit-id', {});
   assert.equal(await context.appendAudit({ action: 'test.create', objectType: 'test', objectId: '1' }), 'audit-id');
   context.invalidate();
   await assert.rejects(context.appendAudit({ action: 'test.create', objectType: 'test', objectId: '1' }), TransactionUnavailableError);

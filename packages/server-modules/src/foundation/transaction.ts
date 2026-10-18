@@ -5,6 +5,15 @@ export class TransactionUnavailableError extends Error {
   constructor() { super('Transaction unavailable'); }
 }
 
+const transactionClients = new WeakMap<TransactionContext, Prisma.TransactionClient>();
+
+/** Internal repository adapter access; deliberately absent from the package's public exports. */
+export function transactionClientFor(context: TransactionContext): Prisma.TransactionClient {
+  const client = transactionClients.get(context);
+  if (!client) throw new TransactionUnavailableError();
+  return client;
+}
+
 /** A single callback attempt; it becomes invalid as soon as the callback settles. */
 export class TransactionContext {
   #active = true;
@@ -13,14 +22,15 @@ export class TransactionContext {
     readonly attempt: number,
     readonly source: AuditSource,
     private readonly appendAuditRecord: AuditAppender,
-  ) {}
+    client: Prisma.TransactionClient,
+  ) { transactionClients.set(this, client); }
 
   async appendAudit(input: AuditAppendInput): Promise<string> {
     if (!this.#active) throw new TransactionUnavailableError();
     return this.appendAuditRecord(input);
   }
 
-  invalidate(): void { this.#active = false; }
+  invalidate(): void { this.#active = false; transactionClients.delete(this); }
 }
 
 export function isRetryableTransactionError(error: unknown): boolean {

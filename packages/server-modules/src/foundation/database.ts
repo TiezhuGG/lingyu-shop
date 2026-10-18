@@ -41,7 +41,7 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
     const transaction = retryTransaction(async attempt => this.client.$transaction(async client => {
       if (this.draining) throw new TransactionUnavailableError();
       const source = this.serviceSource();
-      const context = new TransactionContext(attempt, source, createAuditAppender(client, source));
+      const context = new TransactionContext(attempt, source, createAuditAppender(client, source), client);
       try { return await operation(context); }
       finally { context.invalidate(); }
     }, { ...serializableTransactionOptions, maxWait: this.timeout(), timeout: this.timeout() }));

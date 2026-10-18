@@ -12,7 +12,12 @@ assert(['127.0.0.1', 'localhost'].includes(source.hostname) && source.port === '
 // Explicit isolated Compose runner; keep the supplied URL's local guard above.
 if (process.env.LINGYU_TEST_COMPOSE === '1') { source.hostname = 'postgres'; source.port = '5432'; }
 const testUrl = new URL(source); testUrl.pathname = '/lingyu_shop_test';
-const env = { ...process.env, NODE_ENV: 'test', DATABASE_URL: testUrl.toString(), DB_TIMEOUT_MS: '500', PORT: '19371' };
+const env = {
+  ...process.env, NODE_ENV: 'test', DATABASE_URL: testUrl.toString(), DB_TIMEOUT_MS: '500', PORT: '19371',
+  AUTH_ACCESS_SIGNING_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  AUTH_REFRESH_TOKEN_PEPPER: 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+  AUTH_DEVELOPMENT_LOGIN_ENABLED: 'true',
+};
 const admin = new Pool({ connectionString: source.toString(), max: 1, connectionTimeoutMillis: 3000 });
 function launch(service, extra = {}) {
   const child = spawn(process.execPath, ['apps/' + service + '/dist/main.js'], { env: { ...env, ...extra }, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
@@ -88,6 +93,79 @@ test('real shared lifecycle, readiness failure/recovery and API/Worker connectio
     assert.equal(invalidTraceResponse.status, 200);
     assert.notEqual(replacementTrace, invalidTrace);
     assert.match(replacementTrace, /^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$/);
+    const authDevelopmentIds = ['integration-' + randomUUID(), 'logout-' + randomUUID()];
+    const verifyAuth = new Pool({ connectionString: testUrl.toString(), max: 1, connectionTimeoutMillis: 3000 });
+    try {
+    const login = await fetch('http://127.0.0.1:19371/api/v1/app/auth/development-login', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ developmentId: authDevelopmentIds[0] }),
+    });
+    assert.equal(login.status, 200);
+    assert.equal(login.headers.get('cache-control'), 'no-store');
+    const loginBody = await login.json();
+    assert.equal(loginBody.code, 'OK');
+    assert.match(loginBody.data.accessToken, /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
+    assert.match(loginBody.data.refreshToken, /^[0-9a-f-]{36}\.[A-Za-z0-9_-]{43}$/i);
+    const invalidLogin = await fetch('http://127.0.0.1:19371/api/v1/app/auth/development-login', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ developmentId: 'valid-user', customerId: 'must-not-be-accepted' }),
+    });
+    assert.equal(invalidLogin.status, 400);
+    assert(!JSON.stringify(await invalidLogin.json()).includes('must-not-be-accepted'));
+    const me = await fetch('http://127.0.0.1:19371/api/v1/app/auth/me', { headers: { authorization: 'Bearer ' + loginBody.data.accessToken } });
+    assert.equal(me.status, 200);
+    const meBody = await me.json();
+    assert.equal(meBody.data.sessionId, loginBody.data.refreshToken.slice(0, 36));
+    const rotated = await fetch('http://127.0.0.1:19371/api/v1/app/auth/refresh', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ refreshToken: loginBody.data.refreshToken }),
+    });
+    assert.equal(rotated.status, 200);
+    const rotatedBody = await rotated.json();
+    assert.notEqual(rotatedBody.data.refreshToken, loginBody.data.refreshToken);
+    const replay = await fetch('http://127.0.0.1:19371/api/v1/app/auth/refresh', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ refreshToken: loginBody.data.refreshToken }),
+    });
+    assert.equal(replay.status, 401);
+    assert.equal((await fetch('http://127.0.0.1:19371/api/v1/app/auth/me', { headers: { authorization: 'Bearer ' + rotatedBody.data.accessToken } })).status, 401);
+    const secondLogin = await fetch('http://127.0.0.1:19371/api/v1/app/auth/development-login', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ developmentId: authDevelopmentIds[1] }),
+    });
+    assert.equal(secondLogin.status, 200);
+    const secondLoginBody = await secondLogin.json();
+    const secondMe = await fetch('http://127.0.0.1:19371/api/v1/app/auth/me?customerId=' + meBody.data.customerId, {
+      headers: { authorization: 'Bearer ' + secondLoginBody.data.accessToken },
+    });
+    assert.equal(secondMe.status, 200);
+    assert.notEqual((await secondMe.json()).data.customerId, meBody.data.customerId);
+    await closeProcess(api);
+    api = launch('api');
+    await eventually(async () => {
+      assert.equal(api.child.exitCode, null, api.output());
+      try { return (await fetch('http://127.0.0.1:19371/health/ready')).status === 200; } catch { return false; }
+    }, 'API did not restart');
+    const restoredMe = await fetch('http://127.0.0.1:19371/api/v1/app/auth/me', {
+      headers: { authorization: 'Bearer ' + secondLoginBody.data.accessToken },
+    });
+    assert.equal(restoredMe.status, 200);
+    assert.equal((await restoredMe.json()).data.sessionId, secondLoginBody.data.refreshToken.slice(0, 36));
+    const logout = await fetch('http://127.0.0.1:19371/api/v1/app/auth/logout', {
+      method: 'POST', headers: { authorization: 'Bearer ' + secondLoginBody.data.accessToken },
+    });
+    assert.equal(logout.status, 200);
+    assert.equal((await fetch('http://127.0.0.1:19371/api/v1/app/auth/me', { headers: { authorization: 'Bearer ' + secondLoginBody.data.accessToken } })).status, 401);
+    const audit = await verifyAuth.query('SELECT "changes" FROM audit_log WHERE "objectId" = $1', [meBody.data.sessionId]);
+    assert(!JSON.stringify(audit.rows).includes(loginBody.data.refreshToken));
+    } finally {
+      const customers = await verifyAuth.query('SELECT customer_id FROM customer_identity WHERE provider_key = ANY($1::text[])', [authDevelopmentIds.map(id => 'development:' + id)]);
+      const customerIds = customers.rows.map(row => row.customer_id);
+      const sessions = await verifyAuth.query('SELECT id FROM session WHERE subject_id = ANY($1::uuid[])', [customerIds]);
+      const sessionIds = sessions.rows.map(row => row.id);
+      const objectIds = [...sessionIds, ...customerIds];
+      try {
+        await verifyAuth.query('DELETE FROM audit_log WHERE "objectId" = ANY($1::text[])', [objectIds]);
+        await verifyAuth.query('DELETE FROM session WHERE id = ANY($1::uuid[])', [sessionIds]);
+        await verifyAuth.query('DELETE FROM customer_identity WHERE "customer_id" = ANY($1::uuid[])', [customerIds]);
+        await verifyAuth.query('DELETE FROM customer WHERE id = ANY($1::uuid[])', [customerIds]);
+      } finally { await verifyAuth.end(); }
+    }
     assert(await connections(api.child.pid) > 0);
     assert(await connections(worker.child.pid) > 0);
     await admin.query('ALTER DATABASE lingyu_shop_test ALLOW_CONNECTIONS false');

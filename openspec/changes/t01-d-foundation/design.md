@@ -1,6 +1,6 @@
 # T01-D：后端公共基础实施设计
 
-状态：D1 已实施并通过验收（详见 backend-foundation spec）；D2/D3 仍为待实现设计。T01-C2 已完成；本文后续事务、审计和 HTTP 契约不代表当前能力。
+状态：D1/D2/D3 均已实施并通过验收（详见 backend-foundation、http-contract-boundary 当前规格及各子项设计）。T01-C2 已完成；本文保留其原始实施边界，不替代当前能力规格。
 
 ## 任务拆分与顺序
 
