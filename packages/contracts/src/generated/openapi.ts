@@ -4,6 +4,102 @@
  */
 
 export interface paths {
+    "/api/v1/app/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listPublishedProducts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listCatalogDrafts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/categories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["saveCatalogCategory"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/products/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCatalogDraft"];
+        put: operations["saveCatalogDraft"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/products/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["publishCatalogProduct"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/products/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["withdrawCatalogProduct"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/app/storefront": {
         parameters: {
             query?: never;
@@ -237,6 +333,155 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        CatalogId: string;
+        CatalogPageRequest: {
+            cursor?: components["schemas"]["CatalogId"];
+            limit?: string;
+        };
+        CatalogVersion: number;
+        CatalogName: string;
+        /** @enum {string} */
+        CatalogUnit: "PIECE" | "PACK" | "BOX" | "BOTTLE" | "BAG";
+        CatalogOption: {
+            name: string;
+            value: string;
+        };
+        CatalogOptions: components["schemas"]["CatalogOption"][];
+        CatalogSkuDraft: {
+            id: components["schemas"]["CatalogId"];
+            code: string;
+            unit: components["schemas"]["CatalogUnit"];
+            options: components["schemas"]["CatalogOptions"];
+            active: boolean;
+            priceMinor: components["schemas"]["DraftMinor"];
+        };
+        CatalogSkus: components["schemas"]["CatalogSkuDraft"][];
+        CatalogCategoryRequest: {
+            version: components["schemas"]["CatalogVersion"];
+            name: components["schemas"]["CatalogName"];
+            sort: number;
+            active: boolean;
+            /** @constant */
+            reason: "catalog_change";
+        };
+        CatalogCategory: {
+            id: components["schemas"]["CatalogId"];
+            version: number;
+            name: components["schemas"]["CatalogName"];
+            sort: number;
+            active: boolean;
+        };
+        CatalogProductRequest: {
+            version: components["schemas"]["CatalogVersion"];
+            categoryId: components["schemas"]["CatalogId"];
+            name: components["schemas"]["CatalogName"];
+            description: string;
+            skus: components["schemas"]["CatalogSkus"];
+            /** @constant */
+            reason: "catalog_change";
+        };
+        CatalogPublicationRequest: {
+            version: components["schemas"]["CatalogVersion"];
+            /** @constant */
+            reason: "publication_change";
+        };
+        CatalogProductSummary: {
+            id: components["schemas"]["CatalogId"];
+            name: components["schemas"]["CatalogName"];
+            categoryId: components["schemas"]["CatalogId"];
+            version: number;
+            publishedVersion: number | null;
+        };
+        CatalogProductDraft: {
+            id: components["schemas"]["CatalogId"];
+            name: components["schemas"]["CatalogName"];
+            categoryId: components["schemas"]["CatalogId"];
+            description: string;
+            version: number;
+            publishedVersion: number | null;
+            skus: components["schemas"]["CatalogSkus"];
+            publishedName: string | null;
+            publishedPrices: {
+                id: components["schemas"]["CatalogId"];
+                priceMinor: components["schemas"]["AmountMinor"];
+            }[];
+        };
+        CatalogPublishedSku: {
+            id: components["schemas"]["CatalogId"];
+            code: string;
+            unit: components["schemas"]["CatalogUnit"];
+            options: components["schemas"]["CatalogOptions"];
+            priceMinor: components["schemas"]["AmountMinor"];
+            priceVersion: number;
+        };
+        CatalogPublishedProduct: {
+            id: components["schemas"]["CatalogId"];
+            storeId: components["schemas"]["CatalogId"];
+            version: number;
+            name: components["schemas"]["CatalogName"];
+            description: string;
+            category: {
+                id: components["schemas"]["CatalogId"];
+                name: string;
+                sort: number;
+            };
+            skus: components["schemas"]["CatalogPublishedSku"][];
+            /** @constant */
+            inventoryStatus: "NOT_CONNECTED";
+            /** @constant */
+            purchasable: false;
+        };
+        CatalogPublicData: {
+            items: components["schemas"]["CatalogPublishedProduct"][];
+            nextCursor: string | null;
+            hasMore: boolean;
+            /** @constant */
+            checkoutEnabled: false;
+        };
+        CatalogAdminData: {
+            categories: components["schemas"]["CatalogCategory"][];
+            items: components["schemas"]["CatalogProductSummary"][];
+            nextCursor: string | null;
+            hasMore: boolean;
+        };
+        CatalogSavedData: {
+            product: components["schemas"]["CatalogProductDraft"];
+            auditId: string;
+        };
+        CatalogCategorySavedData: {
+            category: components["schemas"]["CatalogCategory"];
+            auditId: string;
+        };
+        CatalogPublicSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["CatalogPublicData"];
+            requestId: components["schemas"]["RequestId"];
+        };
+        CatalogAdminSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["CatalogAdminData"];
+            requestId: components["schemas"]["RequestId"];
+        };
+        CatalogDraftSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["CatalogProductDraft"];
+            requestId: components["schemas"]["RequestId"];
+        };
+        CatalogSavedSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["CatalogSavedData"];
+            requestId: components["schemas"]["RequestId"];
+        };
+        CatalogCategorySavedSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["CatalogCategorySavedData"];
+            requestId: components["schemas"]["RequestId"];
+        };
         /** @enum {string} */
         FulfillmentMethod: "EXPRESS" | "LOCAL_DELIVERY" | "PICKUP";
         /** @description Integer minor units, null means undecided (not free). */
@@ -455,6 +700,9 @@ export interface components {
         };
     };
     parameters: {
+        CatalogId: components["schemas"]["CatalogId"];
+        CatalogCursor: components["schemas"]["CatalogId"];
+        CatalogLimit: string;
         /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
         AdminOrigin: string;
     };
@@ -464,6 +712,197 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    listPublishedProducts: {
+        parameters: {
+            query?: {
+                cursor?: components["parameters"]["CatalogCursor"];
+                limit?: components["parameters"]["CatalogLimit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Published snapshots and matching integer-minor price versions; no inventory or checkout promise */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogPublicSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    listCatalogDrafts: {
+        parameters: {
+            query?: {
+                cursor?: components["parameters"]["CatalogCursor"];
+                limit?: components["parameters"]["CatalogLimit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Scoped categories and a page of product draft summaries */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogAdminSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    saveCatalogCategory: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+                Origin: components["parameters"]["AdminOrigin"];
+            };
+            path: {
+                id: components["parameters"]["CatalogId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CatalogCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description Versioned classification configuration and audit */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogCategorySavedSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    getCatalogDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["CatalogId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Product draft, never a public snapshot */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogDraftSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    saveCatalogDraft: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+                Origin: components["parameters"]["AdminOrigin"];
+            };
+            path: {
+                id: components["parameters"]["CatalogId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CatalogProductRequest"];
+            };
+        };
+        responses: {
+            /** @description Draft and price changes committed with audit */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogSavedSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    publishCatalogProduct: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+                Origin: components["parameters"]["AdminOrigin"];
+            };
+            path: {
+                id: components["parameters"]["CatalogId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CatalogPublicationRequest"];
+            };
+        };
+        responses: {
+            /** @description Immutable product and price version atomically published */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogSavedSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    withdrawCatalogProduct: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+                Origin: components["parameters"]["AdminOrigin"];
+            };
+            path: {
+                id: components["parameters"]["CatalogId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CatalogPublicationRequest"];
+            };
+        };
+        responses: {
+            /** @description Public pointer removed; history retained */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogSavedSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
     getPublicStorefront: {
         parameters: {
             query?: never;

@@ -1,4 +1,4 @@
-// Business client only: foundation audit, customer identity and independent admin IAM.
+// Business client: foundation/identity/IAM, Store, Catalog and Pricing (no engineering probes).
 generator client {
   provider = "prisma-client-js"
   output   = "../generated"
@@ -51,8 +51,100 @@ model Store {
   createdAt         DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
   fulfillmentDrafts StoreFulfillmentDraft[]
+  catalogCategories CatalogCategory[]
+  catalogProducts   CatalogProduct[]
 
   @@map("store")
+}
+
+model CatalogCategory {
+  id       String @id @db.Uuid
+  storeId  String @map("store_id") @db.Uuid
+  name     String @db.VarChar(80)
+  sort     Int
+  active   Boolean @default(true)
+  version  Int @default(1)
+  store    Store @relation(fields: [storeId], references: [id], onDelete: Restrict)
+  products CatalogProduct[]
+  @@unique([storeId, name])
+  @@map("catalog_category")
+}
+
+model CatalogProduct {
+  id               String @id @db.Uuid
+  storeId          String @map("store_id") @db.Uuid
+  categoryId       String @map("category_id") @db.Uuid
+  name             String @db.VarChar(80)
+  description      String @db.VarChar(1000)
+  version          Int @default(1)
+  publishedVersion Int? @map("published_version")
+  store            Store @relation(fields: [storeId], references: [id], onDelete: Restrict)
+  category         CatalogCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  skus             CatalogSku[]
+  publications     CatalogPublication[]
+  @@index([storeId, id])
+  @@map("catalog_product")
+}
+
+model CatalogSku {
+  id           String @id @db.Uuid
+  productId    String @map("product_id") @db.Uuid
+  code         String @unique @db.VarChar(48)
+  unit         String @db.VarChar(8)
+  options      Json
+  optionsKey   String @map("options_key") @db.VarChar(1200)
+  active       Boolean @default(true)
+  product      CatalogProduct @relation(fields: [productId], references: [id], onDelete: Restrict)
+  publications CatalogPublishedSku[]
+  draftPrice   SkuPriceDraft?
+  priceVersions SkuPriceVersion[]
+  @@unique([productId, optionsKey])
+  @@map("catalog_sku")
+}
+
+model CatalogPublication {
+  productId    String @map("product_id") @db.Uuid
+  version      Int
+  name         String @db.VarChar(80)
+  description  String @db.VarChar(1000)
+  categoryId   String @map("category_id") @db.Uuid
+  categoryName String @map("category_name") @db.VarChar(80)
+  categorySort Int @map("category_sort")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  product      CatalogProduct @relation(fields: [productId], references: [id], onDelete: Restrict)
+  skus         CatalogPublishedSku[]
+  prices       SkuPriceVersion[]
+  @@id([productId, version])
+  @@map("catalog_publication")
+}
+
+model CatalogPublishedSku {
+  productId   String @map("product_id") @db.Uuid
+  version     Int
+  skuId       String @map("sku_id") @db.Uuid
+  publication CatalogPublication @relation(fields: [productId, version], references: [productId, version], onDelete: Restrict)
+  sku         CatalogSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  @@id([productId, version, skuId])
+  @@map("catalog_published_sku")
+}
+
+// Pricing owns these tables; Catalog calls its public transactional interface.
+model SkuPriceDraft {
+  skuId      String @id @map("sku_id") @db.Uuid
+  priceMinor BigInt? @map("price_minor")
+  sku        CatalogSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  @@map("sku_price_draft")
+}
+
+model SkuPriceVersion {
+  productId   String @map("product_id") @db.Uuid
+  version     Int
+  skuId       String @map("sku_id") @db.Uuid
+  priceMinor  BigInt @map("price_minor")
+  publication CatalogPublication @relation(fields: [productId, version], references: [productId, version], onDelete: Restrict)
+  sku         CatalogSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  @@id([productId, version, skuId])
+  @@map("sku_price_version")
 }
 
 model StoreFulfillmentDraft {

@@ -5,6 +5,7 @@ import { AppAuthenticationGuard, CurrentAppPrincipal, CustomerSessionService, Da
 import type { AppPrincipal } from '@lingyu/server-modules';
 import { AdminAuthController, AdminIamController } from '@lingyu/server-modules';
 import { PublicStorefrontController, AdminStorefrontController } from '@lingyu/server-modules';
+import { PublicCatalogController, AdminCatalogController } from '@lingyu/server-modules';
 
 @Controller('health')
 class HealthController {
@@ -59,7 +60,7 @@ class AppAuthenticationController {
 }
 async function main(): Promise<void> {
   const config = parseBackendConfig(process.env);
-  @Module({ imports: [FoundationModule.register('api', config)], controllers: [HealthController, ContractProbeController, AppAuthenticationController, AdminAuthController, AdminIamController, PublicStorefrontController, AdminStorefrontController] })
+  @Module({ imports: [FoundationModule.register('api', config)], controllers: [HealthController, ContractProbeController, AppAuthenticationController, AdminAuthController, AdminIamController, PublicStorefrontController, AdminStorefrontController, PublicCatalogController, AdminCatalogController] })
   class AppModule {}
   const app = await NestFactory.create(AppModule, { abortOnError: false, logger: false });
   app.use(requestIdMiddleware);
@@ -72,6 +73,9 @@ async function main(): Promise<void> {
     next();
   });
   app.use('/api/v1/app/storefront', (_request: unknown, response: { setHeader(name: string, value: string): void }, next: () => void) => {
+    response.setHeader('cache-control', 'no-store'); next();
+  });
+  app.use('/api/v1/app/products', (_request: unknown, response: { setHeader(name: string, value: string): void }, next: () => void) => {
     response.setHeader('cache-control', 'no-store'); next();
   });
   app.useGlobalFilters(new HttpBoundaryFilter());

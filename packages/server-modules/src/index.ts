@@ -24,3 +24,7 @@ export { AdminAuthenticationGuard, CurrentAdmin, readAdminCookie, serializeAdmin
 export { StorefrontService, onlineSalesScopeId } from './store/service';
 export { PublicStorefrontController, AdminStorefrontController } from './store/controller';
 export { parseStorefrontUpdate } from './store/contract';
+export { CatalogService } from './catalog/service';
+export { PricingService } from './pricing/service';
+export { PublicCatalogController, AdminCatalogController } from './catalog/controller';
+export { parseCatalogCategory, parseCatalogId, parseCatalogPage, parseCatalogProduct, parseCatalogPublication } from './catalog/contract';

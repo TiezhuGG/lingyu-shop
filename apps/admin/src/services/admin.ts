@@ -14,6 +14,11 @@ async function request<T>(path: string, method = 'GET', input?: unknown): Promis
   return body.data as T;
 }
 export const adminApi = {
+  catalog: (cursor?: string) => request<Schema['CatalogAdminData']>('catalog' + (cursor ? '?cursor=' + encodeURIComponent(cursor) : '')),
+  catalogProduct: (id: string) => request<Schema['CatalogProductDraft']>('catalog/products/' + encodeURIComponent(id)),
+  saveCategory: (id: string, input: Schema['CatalogCategoryRequest']) => request<Schema['CatalogCategorySavedData']>('catalog/categories/' + encodeURIComponent(id), 'PUT', input),
+  saveProduct: (id: string, input: Schema['CatalogProductRequest']) => request<Schema['CatalogSavedData']>('catalog/products/' + encodeURIComponent(id), 'PUT', input),
+  publishProduct: (id: string, input: Schema['CatalogPublicationRequest'], action: 'publish' | 'withdraw') => request<Schema['CatalogSavedData']>('catalog/products/' + encodeURIComponent(id) + '/' + action, 'POST', input),
   async publicStorefront(): Promise<Schema['StorefrontData']> {
     const response = await fetch('/api/v1/app/storefront', { credentials: 'omit' });
     if (!response.ok) throw new AdminRequestError(response.status);
