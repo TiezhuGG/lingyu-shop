@@ -26,5 +26,6 @@ export { PublicStorefrontController, AdminStorefrontController } from './store/c
 export { parseStorefrontUpdate } from './store/contract';
 export { CatalogService } from './catalog/service';
 export { PricingService } from './pricing/service';
+export { LocalImageStore, LocalImageStoreError } from './asset/local-image-store';
 export { PublicCatalogController, AdminCatalogController } from './catalog/controller';
 export { parseCatalogCategory, parseCatalogId, parseCatalogPage, parseCatalogProduct, parseCatalogPublication } from './catalog/contract';
