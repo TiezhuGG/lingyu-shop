@@ -37,6 +37,37 @@ enum AdminStatus {
   DISABLED
 }
 
+enum FulfillmentMethod {
+  EXPRESS
+  LOCAL_DELIVERY
+  PICKUP
+}
+
+model Store {
+  id                String                   @id @db.Uuid
+  displayName       String                   @map("display_name") @db.VarChar(64)
+  mode              String                   @default("ONLINE") @db.VarChar(16)
+  version           Int                      @default(1)
+  createdAt         DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  fulfillmentDrafts StoreFulfillmentDraft[]
+
+  @@map("store")
+}
+
+model StoreFulfillmentDraft {
+  storeId            String            @map("store_id") @db.Uuid
+  method             FulfillmentMethod
+  feeMinor           BigInt?           @map("fee_minor")
+  freeAboveMinor     BigInt?           @map("free_above_minor")
+  serviceDescription String?           @map("service_description") @db.VarChar(500)
+  pickupAddress      String?           @map("pickup_address") @db.VarChar(200)
+  store              Store             @relation(fields: [storeId], references: [id], onDelete: Restrict)
+
+  @@id([storeId, method])
+  @@map("store_fulfillment_draft")
+}
+
 enum AdminRoleName {
   IAM_MANAGER
   STORE_OPERATOR

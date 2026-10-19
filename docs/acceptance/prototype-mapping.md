@@ -6,6 +6,8 @@ P1-01 外壳证据：发现 `apps/miniapp/src/pages/index/index.vue`、市集 `p
 
 ## 原型证据边界
 
+商城先行调整见 ADR-003：T03-A0 交付真实商城基础资料与快递/同城/自提草稿，用户端商品仍为示例。未开通方式不能视为 P1-04 已可履约；原型自提/配送的演示切换不作为当前支持承诺，实体门店按需接入。
+
 | 来源 | 本地快照 | SHA256 |
 |---|---|---|
 | https://pupu.wozai.xin/5000.html | ../reference/5000.html | 228BE1D547D14753AFC9B00ABC8E82EE9974F87F08DF703970B9FF02281BC95A |
@@ -23,8 +25,8 @@ P1-01 外壳证据：发现 `apps/miniapp/src/pages/index/index.vue`、市集 `p
 | P1-02a | 发现双列图文卡：展示；话题标签仅选中 | 真内容分页、话题筛选、推荐/关注流、详情；空结果/加载失败可重试 | T04-B | content/list/detail；内容后台；GET content/posts |
 | P1-02b | “+”、作者、点赞数：展示 | 图文草稿/发布/审核、作者信息、幂等点赞关注；未审/修改版本不公开 | T04-A/B | content/publish；审核后台；posts/relations |
 | P1-02c | 原型无完整审核举报页：补齐 | 上传归属、审核拒绝理由、举报与下架，作者可查看自己的状态 | T04-A/B | moderation/reports；assets/upload-tickets |
-| P1-03 | 搜索、Banner、店名/距离、返回/更多：展示 | 商品关键词搜索、固定 Banner 配置、店铺信息；无定位不虚报距离；返回发现；更多提供店铺/协议固定菜单 | T03-A/C,T05-B | market/search/store；仓店/CMS；stores/products |
-| P1-04 | 自提/配送：交互仅选中 | 当前模式保存，自提展示门店，配送选地址；营业/范围/不支持模式明确反馈 | T03-A,T06-A,T08-B | market/address/checkout；stores/quotes |
+| P1-03 | 搜索、Banner、店名/距离、返回/更多：展示 | 商品关键词搜索、固定 Banner 配置、商城资料；有实体配置时显示门店，无定位不虚报距离；返回发现；更多提供店铺/协议固定菜单 | T03-A0/A1/C,T05-B | market/search/store；商城/可选实体/CMS；storefront/products |
+| P1-04 | 自提/配送：交互仅选中 | 商城保留快递/同城/自提；草稿不收费，实际支持状态/范围/时段、配送地址或自提点有效后才开放，失败明确反馈 | T03-A0/A1,T06-A,T08-B | market/address/checkout；storefront/quotes |
 | P1-05 | 左分类/热销：交互仅样式 | 分类真实过滤与空类目状态；上架与当前仓可售一致 | T03-B,T05-B | 分类/SKU后台；products?categoryId |
 | P1-06a | 名称/标签/现价/划线价：“选规格”实际直接加购 | 单 SKU 可快捷加，多 SKU 弹选择；缺货/下架拒绝；金额来自当前价目 | T03-B,T05-B/C | SkuSelector；Catalog/Pricing/Cart |
 | P1-06b | 促销专区加号可加购，“更多优惠”展示 | 固定促销商品列表与入口可用；使用 SKU ID 和明确价格，不读文本计算 | T03-C,T05-B/C | 固定专题后台；products/cart |

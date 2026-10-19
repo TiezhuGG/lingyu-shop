@@ -21,3 +21,6 @@ export { parseAdminInput } from './admin/contract';
 export { hasAdminPermission, validateAdminGrants } from './admin/policy';
 export type { AdminPermission } from './admin/policy';
 export { AdminAuthenticationGuard, CurrentAdmin, readAdminCookie, serializeAdminCookie } from './admin/http';
+export { StorefrontService, onlineSalesScopeId } from './store/service';
+export { PublicStorefrontController, AdminStorefrontController } from './store/controller';
+export { parseStorefrontUpdate } from './store/contract';

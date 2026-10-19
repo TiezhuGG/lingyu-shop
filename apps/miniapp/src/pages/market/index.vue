@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { onShow } from '@dcloudio/uni-app';
+import type { components } from '@lingyu/contracts';
+import { getStorefront } from '../../services/storefront';
 import PreviewNotice from '../../components/PreviewNotice.vue';
 import PageState from '../../components/PageState.vue';
 import PreviewStates from '../../components/PreviewStates.vue';
@@ -7,7 +10,14 @@ import ProductCard from '../../components/ProductCard.vue';
 import { categories, products } from '../../features/preview-fixtures';
 import { usePreviewState } from '../../features/use-preview-state';
 const category = ref('精选好物');
-const mode = ref('自提');
+const storefront = ref<components['schemas']['StorefrontData'] | null>(null);
+const storefrontState = ref<'loading' | 'ready' | 'error'>('loading');
+async function loadStorefront() {
+  storefrontState.value = 'loading';
+  try { storefront.value = await getStorefront(); storefrontState.value = 'ready'; }
+  catch { storefront.value = null; storefrontState.value = 'error'; }
+}
+onShow(loadStorefront);
 const { state, changeState, retry } = usePreviewState();
 const visibleProducts = computed(() => category.value === '精选好物' ? products : products.filter(item => item.category === category.value));
 </script>
@@ -17,7 +27,7 @@ const visibleProducts = computed(() => category.value === '精选好物' ? produ
       <text class="page-title">市集</text>
       <button disabled class="search-placeholder">⌕ 搜索商品 · 未开放</button>
     </view>
-    <PreviewNotice />
+    <PreviewNotice message="商品为示例，暂不可购买；商城资料独立读取" />
     <view class="market-banner">
       <view class="eyebrow">把喜欢带回家</view>
       <view class="banner-title">每日好物，认真挑选</view>
@@ -25,14 +35,14 @@ const visibleProducts = computed(() => category.value === '精选好物' ? produ
     </view>
     <view class="store-row">
       <view>
-        <view class="section-title">灵域生活馆 · 示例店铺</view>
-        <view class="muted">营业与服务范围待接入</view>
+        <view class="section-title">{{ storefront?.displayName ?? '线上商城' }}</view>
+        <view v-if="storefrontState === 'loading'" class="muted">正在读取商城资料…</view>
+        <view v-else-if="storefrontState === 'error'" class="muted">商城资料暂未连接，以下仍为示例商品</view>
+        <view v-else class="muted">{{ storefront?.configured ? '线上销售范围，不代表实体门店' : '商城名称尚未设置' }}</view>
       </view>
-      <view class="mode-switch">
-        <button v-for="item in ['自提', '配送']" :key="item" :class="{ active: mode === item }" @click="mode = item">{{ item }}</button>
-      </view>
+      <button v-if="storefrontState === 'error'" class="soft-button" @click="loadStorefront">重试资料</button>
     </view>
-    <view class="mode-hint">{{ mode }}模式预览 · 地址、时段与费用尚未开放</view>
+    <view class="mode-hint">快递 / 同城配送 / 自提规则保留，尚未开通 · 暂不支持下单</view>
     <PreviewStates :state="state" @change="changeState" />
     <view class="catalog-layout">
       <scroll-view scroll-y class="category-scroll">

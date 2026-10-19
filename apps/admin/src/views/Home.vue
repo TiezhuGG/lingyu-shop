@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import type { components } from '@lingyu/contracts';
 import { adminApi, AdminRequestError } from '../services/admin';
+import StorefrontSettings from '../components/StorefrontSettings.vue';
 type Schema = components['schemas'];
 const session = ref<Schema['AdminSessionData'] | null>(null);
 const accounts = ref<Schema['AdminAccountData'][]>([]);
@@ -12,7 +13,7 @@ const editing = ref<Schema['AdminAccountData'] | null>(null);
 const form = ref({ username: '', password: '', status: 'ACTIVE' as Schema['AdminStatus'], reason: 'onboarding' as Schema['AdminReason'] });
 const grants = ref<Schema['AdminGrantInput'][]>([{ role: 'STORE_READER', scopeKey: '' }]);
 const manager = computed(() => session.value?.admin.grants.some(grant => grant.role === 'IAM_MANAGER' && grant.scopeKey === 'GLOBAL'));
-const roles: Record<Schema['AdminRoleName'], string> = { IAM_MANAGER: '账号与权限管理', STORE_OPERATOR: '仓店运营', STORE_READER: '仓店只读' };
+const roles: Record<Schema['AdminRoleName'], string> = { IAM_MANAGER: '账号与权限管理', STORE_OPERATOR: '商城/仓店运营', STORE_READER: '商城/仓店只读' };
 function report(error: unknown) {
   const status = error instanceof AdminRequestError ? error.status : 0;
   message.value = ({ 401: '登录未成功或会话已失效，请重新登录。', 403: '当前操作未获授权，请核对账号、范围或重新登录。', 409: '信息已更新或操作受保护，请刷新后重试。', 400: '请检查输入和授权范围编号。', 429: '请求较多，请稍后再试。' } as Record<number, string>)[status] ?? '暂时无法连接服务，请稍后重试。';
@@ -67,8 +68,9 @@ onMounted(async () => {
       <section class="panel"><h2>{{ session.admin.username }}</h2><p>会话有效至 {{ new Date(session.expiresAt).toLocaleString('zh-CN') }}</p>
         <h3>你的角色与范围</h3><ul><li v-for="grant in session.admin.grants" :key="grant.role + grant.scopeKey">{{ roles[grant.role] }} · {{ grant.scopeKey === 'GLOBAL' ? '全局账号管理' : grant.scopeKey }}</li></ul>
         <p v-if="!session.admin.grants.length">暂无授权，请联系账号管理员。</p>
-        <p class="hint">仓店和商品功能将在后续任务接入。范围编号目前仅表示权限绑定。</p>
+        <p class="hint">商城销售范围不代表真实门店。实体门店与履约开通须后续配置和验收。</p>
       </section>
+      <StorefrontSettings :session="session" @unauthenticated="report(new AdminRequestError(401))" />
       <template v-if="manager">
         <section class="panel"><div class="row"><h2>管理员（最多 100 条）</h2><button :disabled="busy" @click="perform(refreshAccounts)">刷新列表</button></div>
           <div class="table-wrap"><table><thead><tr><th>账号</th><th>状态</th><th>角色与范围</th><th>操作</th></tr></thead><tbody>

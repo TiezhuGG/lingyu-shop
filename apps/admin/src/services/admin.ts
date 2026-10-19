@@ -14,6 +14,13 @@ async function request<T>(path: string, method = 'GET', input?: unknown): Promis
   return body.data as T;
 }
 export const adminApi = {
+  async publicStorefront(): Promise<Schema['StorefrontData']> {
+    const response = await fetch('/api/v1/app/storefront', { credentials: 'omit' });
+    if (!response.ok) throw new AdminRequestError(response.status);
+    return (await response.json()).data;
+  },
+  storefront: () => request<Schema['StorefrontAdminData']>('storefront'),
+  saveStorefront: (input: Schema['StorefrontUpdateRequest']) => request<Schema['StorefrontSavedData']>('storefront', 'PUT', input),
   async me() { const data = await request<Schema['AdminSessionData']>('auth/me'); csrf = data.csrfToken; return data; },
   async login(input: Schema['AdminLoginRequest']) { const data = await request<Schema['AdminSessionData']>('auth/login', 'POST', input); csrf = data.csrfToken; return data; },
   async logout() { await request('auth/logout', 'POST'); csrf = ''; },

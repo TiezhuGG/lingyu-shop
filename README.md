@@ -2,6 +2,8 @@
 
 依据 [技术设计](project-technical-design-v1.md) 建立的 pnpm workspace。已完成框架入口、一期三入口界面预览及本地真实 PostgreSQL/Redis 工程探针；商城业务服务与微信真机验收尚未完成。
 
+当前按 [ADR-003](docs/adr/ADR-003-online-storefront-first.md) 先做商城，不要求真实门店，但保留快递、同城配送和自提。T03-A0 提供真实商城名称与三种规则草稿；商品仍为示例，草稿不收费、不启用下单或履约。
+
 - apps：miniapp（小程序）、admin（后台）、api（接口）、worker（任务）。
 - packages：contracts（数据契约）、server-modules（共享后端模块）、backend-shared（后端内核）、config（配置）、ui-tokens（视觉变量）。
 - database：schema、migrations、seeds。

@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/api/v1/app/storefront": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPublicStorefront"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/storefront": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAdminStorefront"];
+        put: operations["saveStorefront"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/auth/login": {
         parameters: {
             query?: never;
@@ -206,6 +238,65 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /** @enum {string} */
+        FulfillmentMethod: "EXPRESS" | "LOCAL_DELIVERY" | "PICKUP";
+        /** @description Integer minor units, null means undecided (not free). */
+        DraftMinor: string | null;
+        FulfillmentRuleDraft: {
+            method: components["schemas"]["FulfillmentMethod"];
+            feeMinor: components["schemas"]["DraftMinor"];
+            freeAboveMinor: components["schemas"]["DraftMinor"];
+            serviceDescription: string | null;
+            pickupAddress: string | null;
+        };
+        FulfillmentDrafts: components["schemas"]["FulfillmentRuleDraft"][];
+        StorefrontData: {
+            storeId: string;
+            /** @constant */
+            mode: "ONLINE";
+            configured: boolean;
+            displayName: string | null;
+            version: number;
+            fulfillmentMethods: components["schemas"]["FulfillmentMethod"][];
+            enabledMethods: components["schemas"]["FulfillmentMethod"][];
+            /** @constant */
+            physicalStoreEnabled: false;
+            /** @constant */
+            checkoutEnabled: false;
+        };
+        StorefrontAdminData: {
+            storefront: components["schemas"]["StorefrontData"];
+            fulfillmentRules: components["schemas"]["FulfillmentDrafts"];
+        };
+        StorefrontUpdateRequest: {
+            version: number;
+            displayName: string;
+            fulfillmentRules: components["schemas"]["FulfillmentDrafts"];
+            /** @constant */
+            reason: "configuration_change";
+        };
+        StorefrontSavedData: {
+            settings: components["schemas"]["StorefrontAdminData"];
+            auditId: string;
+        };
+        StorefrontSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["StorefrontData"];
+            requestId: components["schemas"]["RequestId"];
+        };
+        StorefrontAdminSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["StorefrontAdminData"];
+            requestId: components["schemas"]["RequestId"];
+        };
+        StorefrontSavedSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["StorefrontSavedData"];
+            requestId: components["schemas"]["RequestId"];
+        };
+        /** @enum {string} */
         AdminRoleName: "IAM_MANAGER" | "STORE_OPERATOR" | "STORE_READER";
         /** @enum {string} */
         AdminStatus: "ACTIVE" | "DISABLED";
@@ -373,6 +464,75 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getPublicStorefront: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Online sales scope; drafts do not enable fulfillment or checkout */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontSuccess"];
+                };
+            };
+        };
+    };
+    getAdminStorefront: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Authorized settings and three fulfillment drafts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontAdminSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    saveStorefront: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+                Origin: components["parameters"]["AdminOrigin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StorefrontUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Versioned settings committed with audit */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontSavedSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
     adminLogin: {
         parameters: {
             query?: never;
