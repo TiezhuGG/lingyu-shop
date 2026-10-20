@@ -14,6 +14,9 @@ async function request<T>(path: string, method = 'GET', input?: unknown): Promis
   return body.data as T;
 }
 export const adminApi = {
+  cms: (code: Schema['CmsPageCode'], before?: string) => request<Schema['CmsAdminData']>('cms/' + code + (before ? '?before=' + encodeURIComponent(before) : '')),
+  saveCms: (code: Schema['CmsPageCode'], input: Schema['CmsSaveRequest']) => request<Schema['CmsSavedData']>('cms/' + code, 'PUT', input),
+  changeCms: (code: Schema['CmsPageCode'], action: 'publish' | 'withdraw' | 'rollback', input: Schema['CmsPublicationRequest'] | Schema['CmsRollbackRequest']) => request<Schema['CmsSavedData']>('cms/' + code + '/' + action, 'POST', input),
   catalog: (cursor?: string) => request<Schema['CatalogAdminData']>('catalog' + (cursor ? '?cursor=' + encodeURIComponent(cursor) : '')),
   catalogProduct: (id: string) => request<Schema['CatalogProductDraft']>('catalog/products/' + encodeURIComponent(id)),
   saveCategory: (id: string, input: Schema['CatalogCategoryRequest']) => request<Schema['CatalogCategorySavedData']>('catalog/categories/' + encodeURIComponent(id), 'PUT', input),

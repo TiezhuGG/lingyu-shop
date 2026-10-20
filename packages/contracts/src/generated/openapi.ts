@@ -4,6 +4,86 @@
  */
 
 export interface paths {
+    "/api/v1/app/cms/{pageCode}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["readPublishedText"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/cms/{pageCode}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["readTextDraft"];
+        put: operations["saveTextDraft"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/cms/{pageCode}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["publishText"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/cms/{pageCode}/rollback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["rollbackText"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/cms/{pageCode}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["withdrawText"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/app/products": {
         parameters: {
             query?: never;
@@ -333,6 +413,75 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @enum {string} */
+        CmsPageCode: "STORY" | "TERMS" | "PRIVACY";
+        CmsEmptyQuery: Record<string, never>;
+        CmsHistoryQuery: {
+            before?: string;
+        };
+        CmsTitle: string;
+        CmsBody: string;
+        CmsSaveRequest: {
+            version: components["schemas"]["CatalogVersion"];
+            title: components["schemas"]["CmsTitle"];
+            body: components["schemas"]["CmsBody"];
+            /** @constant */
+            reason: "content_change";
+        };
+        CmsPublicationRequest: {
+            version: components["schemas"]["CatalogVersion"];
+            /** @constant */
+            reason: "content_publication";
+        };
+        CmsRollbackRequest: {
+            version: components["schemas"]["CatalogVersion"];
+            targetVersion: number;
+            /** @constant */
+            reason: "content_rollback";
+        };
+        CmsTextRevision: {
+            version: number;
+            title: components["schemas"]["CmsTitle"];
+            body: components["schemas"]["CmsBody"];
+            publishedAt: string;
+            sourceVersion: number | null;
+        };
+        CmsPublicData: {
+            pageCode: components["schemas"]["CmsPageCode"];
+            published: components["schemas"]["CmsTextRevision"] | null;
+        };
+        CmsAdminData: {
+            pageCode: components["schemas"]["CmsPageCode"];
+            version: number;
+            title: components["schemas"]["CmsTitle"];
+            body: components["schemas"]["CmsBody"];
+            published: components["schemas"]["CmsTextRevision"] | null;
+            history: components["schemas"]["CmsTextRevision"][];
+            nextCursor: string | null;
+            hasMore: boolean;
+        };
+        CmsSavedData: {
+            page: components["schemas"]["CmsAdminData"];
+            auditId: string;
+        };
+        CmsPublicSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["CmsPublicData"];
+            requestId: components["schemas"]["RequestId"];
+        };
+        CmsAdminSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["CmsAdminData"];
+            requestId: components["schemas"]["RequestId"];
+        };
+        CmsSavedSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["CmsSavedData"];
+            requestId: components["schemas"]["RequestId"];
+        };
         CatalogId: string;
         CatalogPageRequest: {
             cursor?: components["schemas"]["CatalogId"];
@@ -700,6 +849,7 @@ export interface components {
         };
     };
     parameters: {
+        CmsPageCode: components["schemas"]["CmsPageCode"];
         CatalogId: components["schemas"]["CatalogId"];
         CatalogCursor: components["schemas"]["CatalogId"];
         CatalogLimit: string;
@@ -712,6 +862,174 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    readPublishedText: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pageCode: components["parameters"]["CmsPageCode"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Published text or empty, never draft or consent */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsPublicSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    readTextDraft: {
+        parameters: {
+            query?: {
+                before?: string;
+            };
+            header?: never;
+            path: {
+                pageCode: components["parameters"]["CmsPageCode"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Draft, publication and ten history records with cursor */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsAdminSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    saveTextDraft: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+                Origin: components["parameters"]["AdminOrigin"];
+            };
+            path: {
+                pageCode: components["parameters"]["CmsPageCode"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CmsSaveRequest"];
+            };
+        };
+        responses: {
+            /** @description Draft saved with audit */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsSavedSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    publishText: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+                Origin: components["parameters"]["AdminOrigin"];
+            };
+            path: {
+                pageCode: components["parameters"]["CmsPageCode"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CmsPublicationRequest"];
+            };
+        };
+        responses: {
+            /** @description New immutable publication */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsSavedSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    rollbackText: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+                Origin: components["parameters"]["AdminOrigin"];
+            };
+            path: {
+                pageCode: components["parameters"]["CmsPageCode"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CmsRollbackRequest"];
+            };
+        };
+        responses: {
+            /** @description Copy history to new publication, draft unchanged */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsSavedSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    withdrawText: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+                Origin: components["parameters"]["AdminOrigin"];
+            };
+            path: {
+                pageCode: components["parameters"]["CmsPageCode"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CmsPublicationRequest"];
+            };
+        };
+        responses: {
+            /** @description Clear publication pointer, retain history */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsSavedSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
     listPublishedProducts: {
         parameters: {
             query?: {

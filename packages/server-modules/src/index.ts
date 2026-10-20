@@ -27,5 +27,8 @@ export { parseStorefrontUpdate } from './store/contract';
 export { CatalogService } from './catalog/service';
 export { PricingService } from './pricing/service';
 export { LocalImageStore, LocalImageStoreError } from './asset/local-image-store';
+export { TextCmsService } from './cms/service';
+export { PublicTextCmsController, AdminTextCmsController } from './cms/controller';
+export { parseCmsPageCode, parseCmsSave, parseCmsPublication, parseCmsRollback, parseCmsHistory, parseCmsPublicQuery } from './cms/contract';
 export { PublicCatalogController, AdminCatalogController } from './catalog/controller';
 export { parseCatalogCategory, parseCatalogId, parseCatalogPage, parseCatalogProduct, parseCatalogPublication } from './catalog/contract';

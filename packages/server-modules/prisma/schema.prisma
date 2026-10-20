@@ -1,4 +1,4 @@
-// Business client: foundation/identity/IAM, Store, Catalog and Pricing (no engineering probes).
+// Business client: foundation/identity/IAM, Store, Catalog, Pricing and text CMS (no engineering probes).
 generator client {
   provider = "prisma-client-js"
   output   = "../generated"
@@ -53,8 +53,35 @@ model Store {
   fulfillmentDrafts StoreFulfillmentDraft[]
   catalogCategories CatalogCategory[]
   catalogProducts   CatalogProduct[]
+  cmsTextPages      CmsTextPage[]
 
   @@map("store")
+}
+
+model CmsTextPage {
+  storeId          String @map("store_id") @db.Uuid
+  pageCode         String @map("page_code") @db.VarChar(16)
+  title            String @db.VarChar(80)
+  body             String @db.Text
+  version          Int @default(1)
+  publishedVersion Int? @map("published_version")
+  store            Store @relation(fields: [storeId], references: [id], onDelete: Restrict)
+  revisions        CmsTextRevision[]
+  @@id([storeId, pageCode])
+  @@map("cms_text_page")
+}
+
+model CmsTextRevision {
+  storeId       String @map("store_id") @db.Uuid
+  pageCode      String @map("page_code") @db.VarChar(16)
+  version       Int
+  title         String @db.VarChar(80)
+  body          String @db.Text
+  publishedAt   DateTime @default(now()) @map("published_at") @db.Timestamptz(6)
+  sourceVersion Int? @map("source_version")
+  page          CmsTextPage @relation(fields: [storeId, pageCode], references: [storeId, pageCode], onDelete: Restrict)
+  @@id([storeId, pageCode, version])
+  @@map("cms_text_revision")
 }
 
 model CatalogCategory {

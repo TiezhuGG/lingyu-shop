@@ -4,6 +4,7 @@ import type { components } from '@lingyu/contracts';
 import { adminApi, AdminRequestError } from '../services/admin';
 import StorefrontSettings from '../components/StorefrontSettings.vue';
 import CatalogManager from '../components/CatalogManager.vue';
+import TextCmsManager from '../components/TextCmsManager.vue';
 type Schema = components['schemas'];
 const session = ref<Schema['AdminSessionData'] | null>(null);
 const accounts = ref<Schema['AdminAccountData'][]>([]);
@@ -73,6 +74,7 @@ onMounted(async () => {
       </section>
       <StorefrontSettings :session="session" @unauthenticated="report(new AdminRequestError(401))" />
       <CatalogManager :session="session" @unauthenticated="report(new AdminRequestError(401))" />
+      <TextCmsManager :session="session" @unauthenticated="report(new AdminRequestError(401))" />
       <template v-if="manager">
         <section class="panel"><div class="row"><h2>管理员（最多 100 条）</h2><button :disabled="busy" @click="perform(refreshAccounts)">刷新列表</button></div>
           <div class="table-wrap"><table><thead><tr><th>账号</th><th>状态</th><th>角色与范围</th><th>操作</th></tr></thead><tbody>

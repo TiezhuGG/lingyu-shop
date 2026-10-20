@@ -1,11 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
 import type { components } from '@lingyu/contracts';
 export type AdminGrantInput = components['schemas']['AdminGrantInput'];
-export type AdminPermission = 'iam.admin.read' | 'iam.admin.manage' | 'audit.read' | 'store.read' | 'store.configure' | 'catalog.read' | 'catalog.write' | 'catalog.sku.publish';
+export type AdminPermission = 'iam.admin.read' | 'iam.admin.manage' | 'audit.read' | 'store.read' | 'store.configure' | 'catalog.read' | 'catalog.write' | 'catalog.sku.publish' | 'cms.read' | 'cms.write' | 'cms.publish';
 const permissions: Record<AdminGrantInput['role'], readonly AdminPermission[]> = {
   IAM_MANAGER: ['iam.admin.read', 'iam.admin.manage', 'audit.read'],
-  STORE_OPERATOR: ['store.read', 'store.configure', 'catalog.read', 'catalog.write', 'catalog.sku.publish'],
-  STORE_READER: ['store.read', 'catalog.read'],
+  STORE_OPERATOR: ['store.read', 'store.configure', 'catalog.read', 'catalog.write', 'catalog.sku.publish', 'cms.read', 'cms.write', 'cms.publish'],
+  STORE_READER: ['store.read', 'catalog.read', 'cms.read'],
 };
 const storeId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 export function validateAdminGrants(grants: readonly AdminGrantInput[]): void {

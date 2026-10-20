@@ -7,7 +7,8 @@
       }
     },
     { "path": "pages/market/index", "style": { "navigationBarTitleText": "市集" } },
-    { "path": "pages/mine/index", "style": { "navigationBarTitleText": "我的" } }
+    { "path": "pages/mine/index", "style": { "navigationBarTitleText": "我的" } },
+    { "path": "pages/content/index", "style": { "navigationBarTitleText": "故事与协议" } }
   ],
   "tabBar": {
     "color": "#7a847e", "selectedColor": "#07a95a", "backgroundColor": "#ffffff", "borderStyle": "white",

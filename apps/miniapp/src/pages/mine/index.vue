@@ -5,10 +5,12 @@ import PreviewStates from '../../components/PreviewStates.vue';
 import { usePreviewState } from '../../features/use-preview-state';
 const { state, changeState, retry } = usePreviewState();
 const services = ['收货地址', '意见反馈', '协议与隐私', '品牌故事', '物流查询'];
+const textPages = [{ code: 'STORY', label: '品牌故事' }, { code: 'TERMS', label: '服务条款' }, { code: 'PRIVACY', label: '隐私说明' }] as const;
+function openText(code: typeof textPages[number]['code']) { uni.navigateTo({ url: '/pages/content/index?pageCode=' + code }); }
 </script>
 <template>
   <view class="lingyu-theme page-shell">
-    <PreviewNotice />
+    <PreviewNotice message="资料与资产仍为预览；故事与协议读取后台已发布内容" />
     <PreviewStates :state="state" @change="changeState" />
     <scroll-view scroll-y class="page-scroll">
       <PageState :state="state" @retry="retry" />
@@ -51,10 +53,11 @@ const services = ['收货地址', '意见反馈', '协议与隐私', '品牌故�
         </view>
         <view class="card service-card">
           <view class="section-title">生活服务</view>
-          <button v-for="item in services" :key="item" disabled class="service-row">
+          <button v-for="item in services.filter(item => !['协议与隐私', '品牌故事'].includes(item))" :key="item" disabled class="service-row">
             <text>{{ item }}</text>
             <text class="muted">尚未开放 ›</text>
           </button>
+          <button v-for="item in textPages" :key="item.code" class="service-row" @click="openText(item.code)"><text>{{ item.label }}</text><text class="muted">公开内容 ›</text></button>
         </view>
         <view class="bottom-hint">期待与你一起，把生活过得更好</view>
       </view>
