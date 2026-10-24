@@ -1,5 +1,19 @@
 # 开发进度
 
+## 2026-10-24：T03-C0-F1 Windows 私有图片暂存修复（完成）
+
+用户要求继续下一个任务。main已包含用户提交1bea023，工作区干净；读取根规则、任务/进度、开发方式、路线、相关ADR、CMS/资产规格及总体设计存储章节，无局部AGENTS。从main创建t03-c0-f1-windows-store。为T04-A本机上传依赖先完成可独立验收的Windows修复，不提前宣称资产上传或CMS图片已交付；先保存changes设计再实现。
+
+根因实测：Windows将'/'解析到当前盘根，旧代码与原始parse.root比较漏拒绝；临时目录ADMINI~1在新建子目录realpath时展开Administrator，旧字符串比较误拒绝；Windows没有Node O_NOFOLLOW常量，原位运算实际不能提供该保护。修复解析后根检查，Windows只允许本地盘绝对路径；拒绝UNC/设备路径、目录/祖先junction或symlink，校验后使用canonical路径。读取先lstat拒绝链接，句柄stat以bigint dev/ino校验身份后才读取；Linux仍使用O_NOFOLLOW/属主/mode，未放宽保护。
+
+新增内部Windows ACL适配，仅通过系统Windows PowerShell的固定.NET脚本，新建暂存目录在写字节前设置受保护DACL，allow只含进程用户和SYSTEM。已有目录/文件只验证不改权限；宽松目录、额外SID allow、异常属主、命令不可用/超时均失败关闭。属主允许当前用户/SYSTEM/Administrators，以兼容Windows提升权限创建文件语义；不修改父目录/系统安全策略，不新增后台进程。路径通过环境变量作为数据传递，不拼接命令源，子进程隐藏窗口，公开错误仍固定脱敏。
+
+验证：固定本机Node24.22.1/pnpm11.25.0；全workspace build（含微信产物）、typecheck、check通过；Windows专项4/4、完整普通测试40/40，零失败/零跳过。保留原两项验收，新增盘根/驱动相对/UNC/设备拒绝、短路径大小写、祖先junction不创建目标子目录、相同摘要的文件symlink拒绝、目录ACL不合格拒绝且不改原SDDL、文件增加Everyone Read后拒绝；原并发去重/篡改/UNVERIFIED仍通过。测试仅用随机临时目录并finally清理。沙箱禁止设置ACL时按预期失败，宿主验证通过；初版Get/Set-Acl受父进程PSModulePath影响不能自动加载模块，最终改用.NET API并通过验证，不改系统模块或执行策略。没有跳过保护来迁就沙箱。
+
+无新依赖/锁文件、数据库/迁移/API/页面/启动配置变化，业务图片未写入。未复验Linux运行、真实数据库、H5、微信工具/真机或生产存储；本次全工程微信编译不等于新真机证据。现适配是development/test私有暂存，仍无HTTP上传、解码扫描、READY或公开文件服务；生产拒绝。Windows每次权限验证启动短时系统PowerShell，有开发性能成本，不作为生产实现。
+
+收尾：同步当前存储spec、tasks/development；审阅tracked diff与全部新Windows适配/设计文件，git diff --check通过；不包含凭据/个人资料/依赖/制品。差异保留，未创建commit、合并或push。下一批T04-A资产票据/确认/归属/状态子能力→T03-C2；完整T04-A图文审核与真实扫描仍各自验收。
+
 ## 2026-10-24：T01-B1-F2 本机运行时与微信编译恢复
 
 用户授权采用本机Node24.22.1/pnpm11.25.0，替代原24.21.0/12.9.1。读取根规则、任务/进度、开发说明、ADR和既有微信修复设计；无局部AGENTS。从main新建t01-b1-f2-local-runtime，保留用户两份微信配置差异。D:\nodejs\node.exe与终端Node均24.22.1；可用pnpm.cmd为11.25.0（Codex bundled fallback，D:\nodejs无pnpm.cmd）。根packageManager/engines与CI同步，工程检查从manifest比对pnpm声明；框架/ORM/lockfile不变。
