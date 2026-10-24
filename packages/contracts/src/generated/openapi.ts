@@ -4,6 +4,118 @@
  */
 
 export interface paths {
+    "/api/v1/admin/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listOwnAssets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/assets/upload-tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["issueAssetUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/assets/{id}/bytes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["asset_bytes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/assets/{id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["asset_confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/assets/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["asset_revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/assets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["readOwnAsset"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/assets/{id}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["readOwnDevelopmentImage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/app/cms/{pageCode}": {
         parameters: {
             query?: never;
@@ -413,6 +525,58 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AssetIssueRequest: {
+            uploadId: string;
+            /** @constant */
+            purpose: "CMS_IMAGE";
+            /** @enum {string} */
+            mime: "image/png" | "image/jpeg";
+            size: number;
+            sha256: string;
+        };
+        AssetBytesRequest: {
+            dataBase64: string;
+        };
+        AssetEmptyRequest: Record<string, never>;
+        AssetRevokeRequest: {
+            version: number;
+        };
+        AssetListQuery: {
+            before?: string;
+        };
+        AssetData: {
+            id: string;
+            /** @constant */
+            purpose: "CMS_IMAGE";
+            /** @enum {string} */
+            status: "ISSUED" | "STORED" | "DEVELOPMENT_READY" | "REVOKED";
+            /** @enum {string} */
+            mime: "image/png" | "image/jpeg";
+            size: number;
+            version: number;
+            width: number | null;
+            height: number | null;
+            expiresAt: string;
+            createdAt: string;
+            /** @constant */
+            developmentOnly: true;
+        };
+        AssetPage: {
+            items: components["schemas"]["AssetData"][];
+            nextCursor: string | null;
+        };
+        AssetSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["AssetData"];
+            requestId: components["schemas"]["RequestId"];
+        };
+        AssetPageSuccess: {
+            /** @constant */
+            code: "OK";
+            data: components["schemas"]["AssetPage"];
+            requestId: components["schemas"]["RequestId"];
+        };
         /** @enum {string} */
         CmsPageCode: "STORY" | "TERMS" | "PRIVACY";
         CmsEmptyQuery: Record<string, never>;
@@ -862,6 +1026,193 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    listOwnAssets: {
+        parameters: {
+            query?: {
+                before?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Development-only private asset; not production malware scanning */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetPageSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    issueAssetUpload: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+                Origin: components["parameters"]["AdminOrigin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetIssueRequest"];
+            };
+        };
+        responses: {
+            /** @description Development-only private asset; not production malware scanning */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    asset_bytes: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+                Origin: components["parameters"]["AdminOrigin"];
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetBytesRequest"];
+            };
+        };
+        responses: {
+            /** @description Development-only private asset; not production malware scanning */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    asset_confirm: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+                Origin: components["parameters"]["AdminOrigin"];
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetEmptyRequest"];
+            };
+        };
+        responses: {
+            /** @description Development-only private asset; not production malware scanning */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    asset_revoke: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured ADMIN_ORIGIN; browser supplies this header. */
+                Origin: components["parameters"]["AdminOrigin"];
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetRevokeRequest"];
+            };
+        };
+        responses: {
+            /** @description Development-only private asset; not production malware scanning */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    readOwnAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Development-only private asset; not production malware scanning */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSuccess"];
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
+    readOwnDevelopmentImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Authenticated PNG; development-only, no-store, nosniff */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": string;
+                };
+            };
+            default: components["responses"]["AdminError"];
+        };
+    };
     readPublishedText: {
         parameters: {
             query?: never;

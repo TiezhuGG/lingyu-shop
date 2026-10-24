@@ -14,6 +14,11 @@ async function request<T>(path: string, method = 'GET', input?: unknown): Promis
   return body.data as T;
 }
 export const adminApi = {
+  assets: (before?: string) => request<Schema['AssetPage']>('assets' + (before ? '?before=' + encodeURIComponent(before) : '')),
+  issueAsset: (input: Schema['AssetIssueRequest']) => request<Schema['AssetData']>('assets/upload-tickets', 'POST', input),
+  uploadAsset: (id: string, dataBase64: string) => request<Schema['AssetData']>('assets/' + encodeURIComponent(id) + '/bytes', 'POST', { dataBase64 }),
+  confirmAsset: (id: string) => request<Schema['AssetData']>('assets/' + encodeURIComponent(id) + '/confirm', 'POST', {}),
+  revokeAsset: (id: string, version: number) => request<Schema['AssetData']>('assets/' + encodeURIComponent(id) + '/revoke', 'POST', { version }),
   cms: (code: Schema['CmsPageCode'], before?: string) => request<Schema['CmsAdminData']>('cms/' + code + (before ? '?before=' + encodeURIComponent(before) : '')),
   saveCms: (code: Schema['CmsPageCode'], input: Schema['CmsSaveRequest']) => request<Schema['CmsSavedData']>('cms/' + code, 'PUT', input),
   changeCms: (code: Schema['CmsPageCode'], action: 'publish' | 'withdraw' | 'rollback', input: Schema['CmsPublicationRequest'] | Schema['CmsRollbackRequest']) => request<Schema['CmsSavedData']>('cms/' + code + '/' + action, 'POST', input),

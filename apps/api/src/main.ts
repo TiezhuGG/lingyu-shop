@@ -1,12 +1,14 @@
 import 'reflect-metadata';
 import { Body, Controller, Get, HttpCode, Module, Post, ServiceUnavailableException, UseGuards } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppAuthenticationGuard, CurrentAppPrincipal, CustomerSessionService, DatabaseService, FoundationModule, HttpBoundaryFilter, installShutdown, parseBackendConfig, parseContractProbe, parseDevelopmentLogin, parseRefreshSession, RequestId, requestIdMiddleware } from '@lingyu/server-modules';
 import type { AppPrincipal } from '@lingyu/server-modules';
 import { AdminAuthController, AdminIamController } from '@lingyu/server-modules';
 import { PublicStorefrontController, AdminStorefrontController } from '@lingyu/server-modules';
 import { PublicCatalogController, AdminCatalogController } from '@lingyu/server-modules';
 import { PublicTextCmsController, AdminTextCmsController } from '@lingyu/server-modules';
+import { AdminAssetController } from '@lingyu/server-modules';
 
 @Controller('health')
 class HealthController {
@@ -61,9 +63,11 @@ class AppAuthenticationController {
 }
 async function main(): Promise<void> {
   const config = parseBackendConfig(process.env);
-  @Module({ imports: [FoundationModule.register('api', config)], controllers: [HealthController, ContractProbeController, AppAuthenticationController, AdminAuthController, AdminIamController, PublicStorefrontController, AdminStorefrontController, PublicCatalogController, AdminCatalogController, PublicTextCmsController, AdminTextCmsController] })
+  @Module({ imports: [FoundationModule.register('api', config)], controllers: [HealthController, ContractProbeController, AppAuthenticationController, AdminAuthController, AdminIamController, PublicStorefrontController, AdminStorefrontController, PublicCatalogController, AdminCatalogController, PublicTextCmsController, AdminTextCmsController, AdminAssetController] })
   class AppModule {}
-  const app = await NestFactory.create(AppModule, { abortOnError: false, logger: false });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { abortOnError: false, logger: false });
+  // JSON base64 transport is bounded at 2 MiB decoded; DTO limits still apply to other requests.
+  app.useBodyParser('json', { limit: '3mb' });
   app.use(requestIdMiddleware);
   app.use('/api/v1/app/auth', (_request: unknown, response: { setHeader(name: string, value: string): void }, next: () => void) => {
     response.setHeader('cache-control', 'no-store');

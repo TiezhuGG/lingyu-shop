@@ -1,5 +1,24 @@
 # 开发进度
 
+## 2026-10-24：T04-A1 开发CMS图片资产（完成）
+
+main已包含用户合并f71dbb0，批初干净。从main创建t04-a1-assets，读取AGENTS（无局部规则）、tasks/progress/development、路线/映射、ADR-002/003、当前私有存储/CMS规格及总体存储设计；先保存changes设计，沿用本机开发存储、生产关闭。T04-A拆A1开发CMS图片基础，完整社区图文/审核、生产存储和真实扫描仍未交付。
+
+交付：Asset自有asset_upload表、第八迁移（追加FK/约束/索引，无seed）、AssetService和薄后台Controller，API/Worker复用装配；OpenAPI单一来源与生成类型、三项逐商城RBAC权限、后台票据/上传/解码确认/本人分页/私有预览/撤销确认。uploadId与声明MIME/大小/SHA256绑定，10分钟、最大2MiB；相同输入重试幂等、不同输入409、错属主404；不接外部owner/store/key/path/status。JSON base64上限3MiB，实际字节/摘要/签名/canonical编码验证，不能用客户端声明冒充实际内容。
+
+图片检查：官方npm registry核对sharp0.35.5和Node>=20.9.0后新增精确依赖，Windows实际解码/重编码通过。原pnpm add重算既有supports-color peer，已保留原lock所有既有解析，只增加sharp及必需原生可选包，冻结安装再次通过；框架/ORM/Node/pnpm未升级。ImageInspectionPort开发实现完整解码，限制4096边长/1600万像素、拒绝损坏/不匹配格式/多页，重新编码PNG移除EXIF与尾随载荷。结果仅DEVELOPMENT_READY/developmentOnly=true，不产生生产READY或声称恶意内容扫描完成。没有公开静态目录，私有PNG读取复核IAM/归属/当前版本及文件保护，no-store/nosniff。
+
+事务：IAM→会话→Asset，Serializable有限重试；文件和解码在事务外，前后分别实时授权与状态复核。状态/成功审计同事务；审计失败无资产状态残留，撤销或撤权后在途确认不能恢复资格。每商城100张票据/累计声明64MiB（包含过期与撤销），单进程2个上传/解码工作。保守额度、清理/保留治理尚无自动入口；失败可留私有孤儿，不按内容key自动删除以免损伤其他引用。CMS后续通过公开事务接口检查同范围/用途/状态，本批不发布Banner。
+
+环境：用户已启动Docker，定位用户安装目录AppData/Local/Programs/DockerDesktop（引擎29.9.2），原终端PATH缺docker及凭据助手，补本次进程PATH后拉取既有锁定镜像并启动项目Compose，PostgreSQL/Redis healthy、loopback端口。事前确认无已有容器/卷、无.env；生成忽略.env的随机凭据与两个认证密钥，不输出凭据；创建业务/隔离测试库，部署八迁移、重复无待部署。忽略.env启用ASSET_LOCAL_DIRECTORY至项目.local-tools/assets，实际业务目录未因配置创建；无默认管理员/商城/商品/图片，未改系统PATH、删卷或生产配置。
+
+验证：完整workspace build（含微信产物）、typecheck、check、contracts:verify和冻结安装通过；普通45/45、最终真实隔离PG/API68/68，零失败/零跳过。覆盖权限/CSRF/归属/未知字段、并发相同票据、异输入409、MIME伪装400、编码/大小/摘要、损坏图片不获资格、过期、撤销重放/并发、审计回滚、在途撤销、API重启、持久配额、撤权与SQL约束。空随机schema执行全部迁移回滚通过；七迁移非空商城/管理员再应用第八迁移保持既有数据，通过后整体回滚。开发过程中修正缺失id未拒绝、测试审计列名和升级测试夹具updated_at缺失，最终无未解决失败；最后MIME验证调整后重建server-modules/typecheck并通过真实API回归。未以首次失败或旧证据结项。
+
+浏览器：用户明确允许生成纯色测试PNG经本机后台上传。仅隔离测试库一次性账号，实际选择320×160纯色文件→申请/上传(STORED)→解码确认(DEVELOPMENT_READY)→本人私有预览→刷新后读取恢复→撤销至版本4、预览资格移除→登出；无应用error，document/scrollWidth均1239，图片自然尺寸320×160。截图docs/acceptance/evidence/t04-a1/admin-private-preview.jpg和admin-revoked.jpg已视觉检查。没有上传个人素材或经营图片。验收脚本stdin已关闭，改为核实PID/父子关系后精确停止自有API/Vite/脚本，再事务清理本次账号/商城/资产/对应审计及已核验随机目录，未动其他服务；临时脚本已删除。Docker开发容器保留运行。
+
+限制：无生产扫描/存储、社区发布审核、公开Banner、自动清理、微信真机或Linux原生解码新证据；H5未新增复验。启动命令与端口不变，增加可选私有目录变量及第八迁移。批末只读核对业务/测试store/admin_account/asset_upload均0，自有3000/5173服务已停止。审阅tracked diff及全部新服务/界面/迁移/测试/规格/生成类型/截图，diff --check通过，无密钥/个人资料/依赖目录或制品。保留本地差异，未创建commit、合并或push。下一项T03-C2固定图片Banner/促销商品专区/更多菜单，开发图片与生产扫描门槛仍分开；完整T04-A保持进行中。
+
+
 ## 2026-10-24：T03-C0-F1 Windows 私有图片暂存修复（完成）
 
 用户要求继续下一个任务。main已包含用户提交1bea023，工作区干净；读取根规则、任务/进度、开发方式、路线、相关ADR、CMS/资产规格及总体设计存储章节，无局部AGENTS。从main创建t03-c0-f1-windows-store。为T04-A本机上传依赖先完成可独立验收的Windows修复，不提前宣称资产上传或CMS图片已交付；先保存changes设计再实现。

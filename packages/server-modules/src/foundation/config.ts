@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { isAbsolute, parse, resolve } from 'node:path';
 
 export type ServiceName = 'api' | 'worker';
 export type RuntimeEnvironment = 'development' | 'test' | 'production';
@@ -18,6 +19,7 @@ export interface BackendConfig {
   readonly port: number;
   readonly authentication: AuthenticationConfig;
   readonly adminOrigin: string;
+  readonly assetDirectory?: string;
 }
 const invalid = (field: string): never => { throw new Error('Invalid configuration: ' + field); };
 function integer(env: NodeJS.ProcessEnv, field: string, fallback: number, min: number, max: number): number {
@@ -51,6 +53,9 @@ export function parseBackendConfig(env: NodeJS.ProcessEnv): BackendConfig {
       url.pathname === '/lingyu_shop_poc' ||
       (environment === 'test' ? url.pathname !== '/lingyu_shop_test' : url.pathname === '/lingyu_shop_test')) return invalid('DATABASE_URL');
   const developmentLoginEnabled = boolean(env, 'AUTH_DEVELOPMENT_LOGIN_ENABLED', false);
+  const assetDirectory = env.ASSET_LOCAL_DIRECTORY || undefined;
+  if (assetDirectory && (environment === 'production' || !isAbsolute(assetDirectory) || resolve(assetDirectory) === parse(resolve(assetDirectory)).root ||
+      (process.platform === 'win32' && !/^[a-z]:[\\/]/i.test(assetDirectory)))) return invalid('ASSET_LOCAL_DIRECTORY');
   if (environment === 'production' && developmentLoginEnabled) return invalid('AUTH_DEVELOPMENT_LOGIN_ENABLED');
   const accessSigningKey = base64urlSecret(env, 'AUTH_ACCESS_SIGNING_KEY');
   const refreshTokenPepper = base64urlSecret(env, 'AUTH_REFRESH_TOKEN_PEPPER');
@@ -64,6 +69,7 @@ export function parseBackendConfig(env: NodeJS.ProcessEnv): BackendConfig {
   return Object.freeze({
     environment, databaseUrl: env.DATABASE_URL!,
     adminOrigin,
+    assetDirectory,
     poolMax: integer(env, 'DB_POOL_MAX', 5, 1, 20),
     databaseTimeoutMs: integer(env, 'DB_TIMEOUT_MS', 3000, 100, 30000),
     shutdownTimeoutMs: integer(env, 'SHUTDOWN_TIMEOUT_MS', 10000, 1000, 60000),

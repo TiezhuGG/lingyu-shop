@@ -19,13 +19,14 @@
   "dependencies": {
     "@lingyu/contracts": "workspace:*",
     "@nestjs/common": "12.1.2",
+    "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
     "@prisma/client-runtime-utils": "7.10.0",
-    "@prisma/adapter-pg": "7.10.0",
     "ajv": "8.20.0",
     "pg": "8.23.1",
     "reflect-metadata": "0.2.2",
-    "rxjs": "7.8.2"
+    "rxjs": "7.8.2",
+    "sharp": "0.35.5"
   },
   "devDependencies": {
     "@types/pg": "8.23.1",

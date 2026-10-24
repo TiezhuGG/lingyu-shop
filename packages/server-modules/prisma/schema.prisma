@@ -54,8 +54,31 @@ model Store {
   catalogCategories CatalogCategory[]
   catalogProducts   CatalogProduct[]
   cmsTextPages      CmsTextPage[]
+  assets            AssetUpload[]
 
   @@map("store")
+}
+
+model AssetUpload {
+  id           String @id @db.Uuid
+  storeId      String @map("store_id") @db.Uuid
+  ownerId      String @map("owner_id") @db.Uuid
+  purpose      String @default("CMS_IMAGE") @db.VarChar(16)
+  mime         String @db.VarChar(16)
+  size         Int
+  sha256       String @db.VarChar(64)
+  status       String @default("ISSUED") @db.VarChar(24)
+  version      Int @default(1)
+  rawKey       String? @map("raw_key") @db.VarChar(68)
+  readyKey     String? @map("ready_key") @db.VarChar(68)
+  width        Int?
+  height       Int?
+  expiresAt    DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  store        Store @relation(fields: [storeId], references: [id], onDelete: Restrict)
+  owner        AdminAccount @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  @@index([storeId, ownerId, id])
+  @@map("asset_upload")
 }
 
 model CmsTextPage {
@@ -204,6 +227,7 @@ model AdminAccount {
   createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   grants           AdminGrant[]
   sessions         AdminSession[]
+  assets           AssetUpload[]
 
   @@map("admin_account")
 }
