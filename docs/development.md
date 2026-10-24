@@ -2,9 +2,9 @@
 
 ## 实测基线
 
-当前运行要求仍以根 package.json 的 Node 24.21.0 / pnpm 12.9.1 为准。Linux 上已安装的 Node 24.22.0 / pnpm 12.14.0 不替代锁定基线；本地开发请在对应终端切换到锁定版本，不能靠关闭 engines 校验当作兼容验收。下表中的 Windows 路径是历史环境。
+当前运行要求以根 package.json 为准。用户已授权采用本电脑的 Node 24.22.1 / pnpm 11.25.0，替代原 Node 24.21.0 / pnpm 12.9.1；CI 同步此版本。保留 engines 与冻结依赖安装检查，不升级框架或 ORM。下表中的旧版本和路径是历史环境。
 
-原始实测日期 2026-10-07；当前 Linux 工作区为 `/home/lhf/桌面/lingyu-shop`。下表及 Windows 路径仅保留历史记录，当前运行时要求与工程命令以本页后续章节、根 package.json 为准；批次证据只写入 progress。
+原始实测日期 2026-10-07；当前工作区为 `C:\Users\Administrator\Desktop\lingyu-shop`，此前 Linux 工作区为 `/home/lhf/桌面/lingyu-shop`。下表仅保留历史记录，当前运行时要求与工程命令以本页后续章节、根 package.json 为准；批次证据只写入 progress。
 
 | 工具 | 实测版本 | 路径/说明 |
 |---|---|---|
@@ -95,7 +95,7 @@ API/Worker dev 先编译、再监视 dist；修改源码需另开终端执行 `p
 uni-app 源码不能直接作为原生微信小程序编译；`app.json` 由 uni 编译生成，不在仓库根目录或 `src` 中手写。根 `project.config.json` 的 `miniprogramRoot` 指向 `apps/miniapp/dist/build/mp-weixin/`，可以导入仓库根目录进行构建产物预览：
 
 1. 在仓库根目录运行 `pnpm.cmd --filter @lingyu/miniapp build`，等待 Build complete。
-2. 微信开发者工具打开 `C:\Users\lll\Desktop\lingyu-shop`，重新编译；若工具仍使用旧配置，关闭项目再重新打开。
+2. 微信开发者工具打开 `C:\Users\Administrator\Desktop\lingyu-shop`，重新编译；若工具仍使用旧配置，使用“项目 → 重新打开此项目”后再编译。首次安装依赖或整批替换构建产物后，热重载可能保留旧状态；出现页面重复和 FLOW_DEPTH 渲染错误时也先重新打开项目。
 3. 确认产物目录包含 `app.json`、`app.js`、`app.wxss`。修改 Vue/TS 源码后重新运行上述构建，再点击工具里的编译。
 
 也可以直接导入 `C:\Users\lll\Desktop\lingyu-shop\apps\miniapp\dist\build\mp-weixin`，使用该目录生成的项目配置。实时开发则运行 `pnpm.cmd --filter @lingyu/miniapp dev:mp-weixin`，保持进程运行，导入 `apps/miniapp/dist/dev/mp-weixin`；不要将 build 与 dev 目录混用。微信 watch 命令仍未在本机实测，H5 服务不会生成微信产物。

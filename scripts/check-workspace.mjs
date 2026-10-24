@@ -7,7 +7,7 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const readJson = path => JSON.parse(readFileSync(resolve(root, path), 'utf8'));
 const pkg = readJson('package.json');
 assert.equal(pkg.private, true);
-assert.equal(pkg.packageManager, 'pnpm@12.9.1');
+assert.equal(pkg.packageManager, 'pnpm@' + pkg.engines.pnpm);
 assert.equal(process.versions.node, pkg.engines.node, 'Node version differs from baseline');
 assert.match(readFileSync(resolve(root, 'pnpm-workspace.yaml'), 'utf8'), /apps\/\*/);
 assert.match(readFileSync(resolve(root, 'pnpm-workspace.yaml'), 'utf8'), /packages\/\*/);

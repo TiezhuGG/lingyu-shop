@@ -1,5 +1,17 @@
 # 开发进度
 
+## 2026-10-24：T01-B1-F2 本机运行时与微信编译恢复
+
+用户授权采用本机Node24.22.1/pnpm11.25.0，替代原24.21.0/12.9.1。读取根规则、任务/进度、开发说明、ADR和既有微信修复设计；无局部AGENTS。从main新建t01-b1-f2-local-runtime，保留用户两份微信配置差异。D:\nodejs\node.exe与终端Node均24.22.1；可用pnpm.cmd为11.25.0（Codex bundled fallback，D:\nodejs无pnpm.cmd）。根packageManager/engines与CI同步，工程检查从manifest比对pnpm声明；框架/ORM/lockfile不变。
+
+根因：node_modules与微信产物不存在，miniprogramRoot正确，无需置空。冻结安装750包成功；全workspace build/typecheck、check通过；四页及app.json/app.js/app.wxss和每页json/js/wxml/wxss完整。首次沙箱构建受esbuild父目录访问限制，宿主重跑通过；业务Prisma客户端随构建生成，无数据库连接/迁移。
+
+使用computer-use技能验证微信工具Stable2.02.2608080、基础库3.17.4。产物更新后热重载曾出现重复标题与FLOW_DEPTH；经“项目→重新打开此项目”后点击编译，发现页卡片与我的页正常，控制台无红色错误，仅预加载/自动热重载提示。CLI engine build因安全服务端口关闭未执行，不以退出码0当通过；未开启该端口、上传或发布。不代表微信真机/真实服务验收。
+
+普通测试宿主与沙箱均36/38：local-image-store根路径'/'拒绝断言及合法写入LOCAL_IMAGE_STORE_UNAVAILABLE失败。现有适配涉及Windows路径解析/realpath比较，Windows兼容与ACL未验收；不放宽保护或跳过测试，需独立修复，不声称完整运行时回归通过。未运行数据库、H5、远程CI或微信真机。启动命令不变，源码修改后重新build，H5不生成微信产物。
+
+收尾：同步tasks/development，审阅全部tracked diff（含用户两份微信配置），无未跟踪文件，diff --check通过；依赖/生成客户端/dist被忽略。保留差异，未创建commit、合并或push。下一业务任务仍为T04-A资产子能力→T03-C2；图片暂存Windows兼容另验收。
+
 ## 2026-10-20：T03-C1 故事/协议纯文本 CMS（完成）
 
 批初 main 干净，用户已合并 C0（10cd689）；从 main 新建 `t03-c1-text-cms`，无 codex 前缀。读取根 AGENTS（无局部规则）、tasks/progress、路线/映射、ADR-002/003、开发说明、既有 C0/CMS 设计及总体设计 CMS/版本/权限/审计章节；先保存 C1 设计，再实施。沿用纯商城与开发图片存储/生产关闭的决策，本批不接图片、Banner 或任意外链。
